@@ -1,0 +1,183 @@
+<!-- categories.ejs (Body Content Only) -->
+<div class="categories-container">
+  <div class="categories-header">
+    <div class="header-content">
+      <h1 class="page-title">Categories</h1>
+      <p class="page-subtitle">Manage your luxury watch collections</p>
+    </div>
+    <button type="button" id="openAddModal" class="btn-add-category" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+      <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>Add Category</span>
+    </button>
+  </div>
+
+  <div class="categories-card">
+    <div class="table-wrapper">
+      <table class="categories-table">
+        <thead>
+          <tr>
+            <th class="col-id">#</th>
+            <th class="col-category">Category</th>
+            <th class="col-description">Description</th>
+            <th class="col-items">Items</th>
+            <th class="col-status">Status</th>
+            <th class="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="categoryList">
+          <tr>
+            <td colspan="6" class="loading-cell">
+              <div class="loading-spinner"></div>
+              <span>Loading categories...</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Add Category Modal -->
+<div class="modal fade" id="addCategoryModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content premium-modal">
+      <div class="modal-header">
+        <h5 class="modal-title">Add New Category</h5>
+        <button type="button" class="btn-close-custom" data-bs-dismiss="modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="addForm" enctype="multipart/form-data">
+          <div class="form-group">
+            <label class="form-label">Category Name</label>
+            <input type="text" id="nameInput" class="form-input" placeholder="Enter category name" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="descInput" rows="4" class="form-textarea" placeholder="Enter category description (optional)"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Category Image</label>
+            <div class="file-upload-wrapper">
+              <input id="imageInput" type="file" accept="image/*" class="file-input">
+              <div class="file-upload-box">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p class="upload-text">Click to upload or drag and drop</p>
+                <p class="upload-hint">PNG, JPG up to 5MB</p>
+              </div>
+            </div>
+            <div id="imagePreviewWrapper" class="image-preview-wrapper" style="display:none;">
+              <img id="imagePreview" src="" alt="preview" class="image-preview">
+              <button type="button" class="btn-remove-image" onclick="removeImagePreview()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn-primary">Create Category</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Category Modal -->
+<div class="modal fade" id="editCategoryModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content premium-modal">
+      <div class="modal-header">
+        <h5 class="modal-title">Edit Category</h5>
+        <button type="button" class="btn-close-custom" data-bs-dismiss="modal">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"/>
+            <line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="editForm" enctype="multipart/form-data">
+          <input type="hidden" id="editCategoryId">
+
+          <div class="form-group">
+            <label class="form-label">Category Name</label>
+            <input type="text" id="editNameInput" class="form-input" placeholder="Enter category name" required>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Description</label>
+            <textarea id="editDescInput" rows="4" class="form-textarea" placeholder="Enter category description (optional)"></textarea>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Category Image</label>
+            <div class="file-upload-wrapper">
+              <input id="editImageInput" type="file" accept="image/*" class="file-input">
+              <div class="file-upload-box">
+                <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                  <polyline points="17 8 12 3 7 8"/>
+                  <line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                <p class="upload-text">Click to upload or drag and drop</p>
+                <p class="upload-hint">PNG, JPG up to 5MB</p>
+              </div>
+            </div>
+            <div id="editImagePreviewWrapper" class="image-preview-wrapper" style="display:none;">
+              <img id="editImagePreview" src="" alt="preview" class="image-preview">
+              <button type="button" class="btn-remove-image" onclick="removeEditImagePreview()">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"/>
+                  <line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </div>
+            <div id="currentImageWrapper" class="current-image-wrapper">
+              <small class="current-image-label">Current image:</small>
+              <div id="currentImageBox"></div>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
+            <button type="submit" class="btn-primary">Save Changes</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  window.CATEGORY_FALLBACK_IMAGE = '/mnt/data/6ace21aa-f1ff-46f1-8811-7cbdf51575c8.png';
+  
+  function removeImagePreview() {
+    document.getElementById('imageInput').value = '';
+    document.getElementById('imagePreviewWrapper').style.display = 'none';
+  }
+  
+  function removeEditImagePreview() {
+    document.getElementById('editImageInput').value = '';
+    document.getElementById('editImagePreviewWrapper').style.display = 'none';
+  }
+</script>
+
+<% contentFor('pageJS') %>

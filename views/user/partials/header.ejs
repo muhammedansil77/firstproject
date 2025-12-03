@@ -1,0 +1,218 @@
+<!-- Header - ULTRA PREMIUM LUXURY DESIGN WITH SEARCH -->
+<header class="relative border-b border-amber-500/20 backdrop-blur-xl bg-gradient-to-b from-slate-950 via-slate-950/98 to-slate-950/95 sticky top-0 z-50 shadow-2xl shadow-black/50">
+  <div class="max-w-7xl mx-auto px-10 py-6">
+    <div class="flex items-center justify-between">
+      
+      <!-- Logo Section -->
+      <div class="flex items-center gap-5">
+        <!-- Animated Logo -->
+        <div class="relative group">
+          <div class="absolute inset-0 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 rounded-xl opacity-20 blur-lg group-hover:opacity-40 transition-all duration-500"></div>
+          <div class="relative bg-slate-900/50 backdrop-blur p-3 rounded-xl border border-amber-500/30 group-hover:border-amber-400/60 transition-all duration-300">
+            <svg class="w-7 h-7 text-amber-400 group-hover:text-amber-300 transition-colors" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="1.5"/>
+              <circle cx="12" cy="12" r="6.5" stroke="currentColor" stroke-width="1" opacity="0.6"/>
+              <path d="M12 6V12L16 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+        </div>
+        
+        <!-- Brand Name -->
+        <div class="flex flex-col">
+          <h1 class="text-4xl font-bold text-white tracking-widest leading-none">LUXTIME</h1>
+          <p class="text-xs text-amber-400/80 tracking-[0.2em] mt-1 font-medium">PREMIUM TIMEPIECES</p>
+        </div>
+      </div>
+
+      <!-- Navigation + Search + User Section -->
+      <div class="flex items-center gap-12">
+        
+        <!-- Category Navigation -->
+        <nav class="hidden xl:flex items-center gap-12">
+
+  <% 
+    // Filter categories -> only show active + not deleted
+    const visibleCategories = (categories || []).filter(c => c && c.active !== false && c.isDeleted !== true);
+  %>
+
+  <% if (visibleCategories.length) { %>
+    <% visibleCategories.forEach(function(cat, idx) { 
+         const catUrl = (cat.slug) ? '/user/category/' + cat.slug : '/user/category/' + cat._id;
+         const isActive = currentPath && currentPath.startsWith('/user/category/' + (cat.slug || cat._id));
+    %>
+      <a href="<%= catUrl %>" class="relative group">
+        <span class="text-xs tracking-[0.15em] uppercase font-semibold transition-all duration-300 <%= isActive ? 'text-amber-400' : 'text-gray-300 hover:text-amber-400' %>">
+          <%= cat.name %>
+        </span>
+        <span class="absolute bottom-0 left-0 w-0 h-0.5 bg-gradient-to-r from-amber-400 to-amber-500 transition-all duration-500 group-hover:w-full <%= isActive ? 'w-full' : '' %>"></span>
+      </a>
+    <% }); %>
+  <% } else { %>
+    <!-- Fallback links -->
+    <a href="/user/category/men" class="relative group">
+      <span class="text-xs tracking-[0.15em] uppercase font-semibold text-gray-300 hover:text-amber-400 transition-all duration-300">Men</span>
+    </a>
+    <a href="/user/category/women" class="relative group">
+      <span class="text-xs tracking-[0.15em] uppercase font-semibold text-gray-300 hover:text-amber-400 transition-all duration-300">Women</span>
+    </a>
+  <% } %>
+
+</nav>
+
+        <!-- Search Bar - Header Search -->
+        <div class="hidden md:flex items-center relative">
+          <div class="relative group">
+            <input type="text" id="header-search" placeholder="Search..." 
+                   class="px-5 py-3 pr-12 bg-slate-900/60 backdrop-blur border border-amber-500/30 rounded-full text-sm text-white placeholder-gray-500 hover:border-amber-400/60 focus:border-amber-400 focus:outline-none transition-all duration-300 w-48 group-focus-within:w-64">
+            <button onclick="performHeaderSearch()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-400 transition-colors duration-300">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mobile Search Icon -->
+        <button id="mobile-search-btn" onclick="toggleMobileSearch()" class="flex md:hidden text-gray-300 hover:text-amber-400 transition-colors duration-300">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </button>
+
+        <!-- User Account Section -->
+        <div class="flex items-center gap-8">
+          <% if (isLoggedIn) { %>
+            <!-- LOGGED IN STATE -->
+            <div class="hidden lg:flex items-center gap-4 pr-8 border-r border-amber-500/20">
+              <div class="text-right">
+                <p class="text-xs text-gray-400 tracking-widest uppercase font-medium">Welcome back</p>
+                <p class="text-lg font-bold text-amber-400 tracking-wide"><%= userName %></p>
+              </div>
+              <div class="w-12 h-12 rounded-full bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white font-bold text-lg shadow-lg">
+                <%= userName.charAt(0).toUpperCase() %>
+              </div>
+            </div>
+
+            <!-- Logout Link -->
+            <a href="/user/logout" class="relative px-6 py-2.5 group hidden lg:block">
+              <span class="text-xs tracking-[0.15em] uppercase font-semibold text-gray-300 group-hover:text-amber-400 transition-colors duration-300">Logout</span>
+              <span class="absolute bottom-1 left-0 w-0 h-0.5 bg-amber-400 transition-all duration-300 group-hover:w-full"></span>
+            </a>
+
+            <!-- Mobile Logout -->
+            <a href="/user/logout" class="lg:hidden text-xs tracking-[0.15em] uppercase font-semibold text-gray-300 hover:text-amber-400 transition-colors">Logout</a>
+
+          <% } else { %>
+            <!-- NOT LOGGED IN STATE -->
+            
+            <!-- Sign In Button - Bordered Style (Hidden on Mobile) -->
+            <a href="/user/login" class="hidden md:inline-block relative px-7 py-3 group overflow-hidden">
+              <div class="absolute inset-0 border-2 border-amber-400/50 rounded-full group-hover:border-amber-400 transition-all duration-300"></div>
+              <div class="absolute inset-0 bg-gradient-to-r from-amber-500/0 via-amber-500/10 to-amber-500/0 opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-full"></div>
+              <span class="relative z-10 text-xs tracking-[0.15em] uppercase font-bold text-amber-200 group-hover:text-amber-300 transition-colors duration-300">
+                Sign In
+              </span>
+            </a>
+
+            <!-- Create Account Button - Solid Gold -->
+            <a href="/user/signup" class="relative px-8 py-3 group overflow-hidden rounded-full">
+              <!-- Background Glow -->
+              <div class="absolute inset-0 bg-gradient-to-r from-amber-500 via-amber-400 to-yellow-500 rounded-full opacity-0 group-hover:opacity-100 transition-opacity duration-300 blur-md"></div>
+              
+              <!-- Main Button -->
+              <div class="relative z-10 bg-gradient-to-r from-amber-400 to-amber-500 hover:from-amber-500 hover:to-amber-600 rounded-full px-8 py-3 transition-all duration-300 group-hover:shadow-2xl group-hover:shadow-amber-500/50 transform group-hover:-translate-y-0.5">
+                <span class="text-xs tracking-[0.15em] uppercase font-bold text-slate-900 flex items-center gap-2">
+                  <span class="hidden sm:inline">Create Account</span>
+                  <span class="sm:hidden">Sign Up</span>
+                  <svg class="w-4 h-4 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                  </svg>
+                </span>
+              </div>
+            </a>
+          <% } %>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Mobile Search Bar (Initially Hidden) -->
+    <div id="mobile-search-container" class="hidden md:hidden mt-4 pb-4">
+      <div class="relative">
+        <input type="text" id="mobile-search" placeholder="Search products..." 
+               class="w-full px-5 py-3 pr-12 bg-slate-900/60 backdrop-blur border border-amber-500/30 rounded-full text-sm text-white placeholder-gray-500 hover:border-amber-400/60 focus:border-amber-400 focus:outline-none transition-all duration-300">
+        <button onclick="performHeaderSearch()" class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500 hover:text-amber-400 transition-colors duration-300">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Decorative Bottom Border -->
+  <div class="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-amber-500/30 to-transparent"></div>
+</header>
+
+<script>
+  function toggleMobileSearch() {
+    const container = document.getElementById('mobile-search-container');
+    const btn = document.getElementById('mobile-search-btn');
+    
+    container.classList.toggle('hidden');
+    
+    if (!container.classList.contains('hidden')) {
+      setTimeout(() => {
+        document.getElementById('mobile-search').focus();
+      }, 100);
+    }
+  }
+
+  function performHeaderSearch() {
+    const searchInput = document.getElementById('header-search') || document.getElementById('mobile-search');
+    const query = searchInput.value.trim();
+    
+    if (query) {
+      // Navigate to shop with search query
+      window.location.href = `/user/shop?search=${encodeURIComponent(query)}`;
+    }
+  }
+
+  // Allow Enter key to trigger search
+  document.addEventListener('DOMContentLoaded', function() {
+    const headerSearch = document.getElementById('header-search');
+    const mobileSearch = document.getElementById('mobile-search');
+    
+    if (headerSearch) {
+      headerSearch.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') performHeaderSearch();
+      });
+    }
+    
+    if (mobileSearch) {
+      mobileSearch.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') performHeaderSearch();
+      });
+    }
+  });
+</script>
+
+<style>
+  /* Smooth scrollbar styling */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    background: #b45309;
+    border-radius: 4px;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    background: #d97706;
+  }
+</style>

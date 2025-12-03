@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
+
+  <!-- Defensive page title: never reference undefined directly -->
+  <title><%= (typeof pageTitle !== 'undefined' && pageTitle) ? pageTitle : 'Timepiece Emporium' %></title>
+
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Manrope:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Tailwind config BEFORE CDN -->
+ <script>
+  // Use `extend` so we don't remove Tailwind's default palette (slate, amber, etc.)
+  window.tailwind = window.tailwind || {};
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          display: ['"Playfair Display"', 'serif'],
+          sans: ['Manrope', 'sans-serif']
+        },
+        colors: {
+          /* Add your custom names (won't remove defaults) */
+          gold: {
+            50: '#fdfbf7', 100: '#f8f3e8', 200: '#edb511',
+            300: '#d4a00f', 400: '#c9ba91', 500: '#b69267'
+          },
+          dark: {
+            900: '#0a0a0a',
+            800: '#0f0f0f',
+            700: '#1a1a1a'
+          }
+        },
+        boxShadow: {
+          'luxury': '0 20px 60px -15px rgba(212, 175, 55, 0.15)'
+        }
+      }
+    }
+  };
+</script>
+
+<script src="https://cdn.tailwindcss.com"></script>
+  <!-- Page-specific CSS (defensive) -->
+  <% if (typeof pageCss !== 'undefined' && pageCss) { %>
+    <link rel="stylesheet" href="/user/css/<%= pageCss %>">
+  <% } %>
+
+  <style>
+    :root { --lux-amber: #d4af37; }
+    body { font-family: 'Manrope', sans-serif; background: linear-gradient(180deg,#0b0b0b,#151515); color: #fff; overflow-x: hidden; }
+  </style>
+</head>
+<body class="text-white">
+
+  <!-- Header partial -->
+  <%- include('../partials/header') %>
+
+  <!-- Body content -->
+  <main>
+    <%- body %>
+  </main>
+
+  <!-- Footer partial -->
+  <%- include('../partials/footer') %>
+
+  <!-- Page-specific JS (defensive) -->
+  <% if (typeof pageJs !== 'undefined' && pageJs) { %>
+    <script src="/user/js/<%= pageJs %>"></script>
+  <% } %>
+
+  <script>console.log('Layout OK — pageTitle:', <%= JSON.stringify(typeof pageTitle !== 'undefined' ? pageTitle : null) %>);</script>
+</body>
+</html>

@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta charset="utf-8" />
+  <title>LuxTime - Create Account</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700;800&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary-gold: #d4af37;
+      --primary-dark: #b8942a;
+      --dark-bg: #0a0a0a;
+      --dark-card: #1a1a1a;
+      --border-gold: #3a3a3a;
+    }
+    
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1518 50%, #0a0a0a 100%);
+      min-height: 100vh;
+    }
+    
+    .logo-text {
+      font-family: 'Playfair Display', serif;
+      font-weight: 700;
+      letter-spacing: 1px;
+    }
+    
+    .form-control, .form-select {
+      background: rgba(26, 26, 26, 0.8);
+      border: 1px solid #3a3a3a;
+      color: #fff;
+      padding: 0.75rem 1rem;
+      padding-left: 3rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+      background: rgba(26, 26, 26, 0.95);
+      border-color: var(--primary-gold);
+      color: #fff;
+      box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.15);
+    }
+    
+    .form-control::placeholder {
+      color: #8a8a8a;
+    }
+    
+    .input-icon {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #b8b8b8;
+      z-index: 10;
+      pointer-events: none;
+    }
+    
+    .password-toggle {
+      position: absolute;
+      right: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      color: #b8b8b8;
+      cursor: pointer;
+      z-index: 10;
+      padding: 0.25rem;
+    }
+    
+    .password-toggle:hover {
+      color: var(--primary-gold);
+    }
+    
+    .btn-primary-gold {
+      background: linear-gradient(135deg, var(--primary-gold) 0%, var(--primary-dark) 100%);
+      border: none;
+      color: #000;
+      font-weight: 600;
+      padding: 0.875rem 2rem;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    }
+    
+    .btn-primary-gold:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(212, 175, 55, 0.4);
+      background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary-gold) 100%);
+    }
+    
+    .btn-outline-gold {
+      border: 1px solid var(--primary-gold);
+      color: var(--primary-gold);
+      font-weight: 500;
+      padding: 0.75rem 1.5rem;
+      transition: all 0.3s ease;
+    }
+    
+    .btn-outline-gold:hover {
+      background: var(--primary-gold);
+      color: #000;
+      border-color: var(--primary-gold);
+    }
+    
+    .card-premium {
+      background: rgba(26, 26, 26, 0.7);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+    }
+    
+    .form-check-input {
+      background-color: rgba(26, 26, 26, 0.8);
+      border: 1px solid #3a3a3a;
+      width: 1.25rem;
+      height: 1.25rem;
+    }
+    
+    .form-check-input:checked {
+      background-color: var(--primary-gold);
+      border-color: var(--primary-gold);
+    }
+    
+    .form-check-input:focus {
+      box-shadow: 0 0 0 0.25rem rgba(212, 175, 55, 0.15);
+    }
+    
+    .strength-bar {
+      height: 4px;
+      border-radius: 2px;
+      background: #2a2a2a;
+      transition: all 0.3s ease;
+    }
+    
+    .strength-bar.active {
+      background: var(--primary-gold);
+    }
+    
+    .divider-text {
+      position: relative;
+      text-align: center;
+      margin: 2rem 0;
+    }
+    
+    .divider-text::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 50%;
+      width: 100%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, #3a3a3a, transparent);
+    }
+    
+    .divider-text span {
+      position: relative;
+      background: rgba(26, 26, 26, 0.9);
+      padding: 0 1rem;
+      color: #8a8a8a;
+      font-size: 0.875rem;
+    }
+    
+    .link-gold {
+      color: var(--primary-gold);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.3s ease;
+    }
+    
+    .link-gold:hover {
+      color: var(--primary-dark);
+    }
+    
+    .modal-premium .modal-content {
+      background: rgba(26, 26, 26, 0.95);
+      backdrop-filter: blur(20px);
+      border: 1px solid rgba(212, 175, 55, 0.3);
+    }
+    
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      margin: 0 auto 1.5rem;
+      background: linear-gradient(135deg, var(--primary-gold), var(--primary-dark));
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: scaleIn 0.5s ease;
+    }
+    
+    @keyframes scaleIn {
+      from {
+        transform: scale(0);
+        opacity: 0;
+      }
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+    
+    .spinner-border-gold {
+      border-color: var(--primary-gold);
+      border-right-color: transparent;
+    }
+    
+    @media (max-width: 768px) {
+      .card-premium {
+        margin: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <nav class="navbar navbar-dark sticky-top" style="background: rgba(10, 10, 10, 0.95); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(212, 175, 55, 0.1);">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-3" href="/">
+        <div class="bg-warning rounded-3 p-2" style="width: 48px; height: 48px; display: flex; align-items: center; justify-content: center;">
+          <i class="bi bi-clock-history fs-4 text-dark"></i>
+        </div>
+        <div>
+          <h1 class="logo-text mb-0 fs-4 text-white">LuxTime</h1>
+          <small class="text-secondary d-none d-sm-block" style="font-size: 0.75rem;">Premium Timepieces</small>
+        </div>
+      </a>
+      <a href="/user/login" class="btn btn-outline-gold btn-sm">Sign In</a>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main class="py-5">
+    <div class="container">
+      <div class="row justify-content-center">
+        <div class="col-12 col-md-10 col-lg-8 col-xl-6">
+          
+          <!-- Card -->
+          <div class="card card-premium border-0 rounded-4 shadow-lg">
+            <div class="card-body p-4 p-sm-5">
+              
+              <!-- Title -->
+              <div class="text-center mb-4">
+                <h2 class="display-5 fw-bold text-white mb-2" style="font-family: 'Playfair Display', serif;">Create Account</h2>
+                <p class="text-secondary mb-0">Join the LuxTime community</p>
+              </div>
+
+           <% if (message) { %>
+  <div class="alert alert-danger text-center fw-semibold" role="alert">
+    <%= message %>
+  </div>
+<% } %>
+              <!-- Form -->
+              <form id="signupForm" action="/user/signup" method="post">
+                
+                <!-- Full Name -->
+                <div class="mb-4">
+                  <label for="fullName" class="form-label text-white fw-medium">
+                    Full Name <span class="text-warning">*</span>
+                  </label>
+                  <div class="position-relative">
+                    <span class="input-icon">
+                      <i class="bi bi-person"></i>
+                    </span>
+                    <input type="text" class="form-control" id="fullName" name="fullName" placeholder="John Doe" required minlength="2">
+                  </div>
+                  <div class="invalid-feedback d-block" id="fullNameError"></div>
+                </div>
+
+                <!-- Email -->
+                <div class="mb-4">
+                  <label for="email" class="form-label text-white fw-medium">
+                    Email Address <span class="text-warning">*</span>
+                  </label>
+                  <div class="position-relative">
+                    <span class="input-icon">
+                      <i class="bi bi-envelope"></i>
+                    </span>
+                    <input type="email" class="form-control" id="email" name="email" placeholder="john@example.com" required>
+                  </div>
+                  <div class="invalid-feedback d-block" id="emailError"></div>
+                </div>
+
+                <!-- Password -->
+                <div class="mb-4">
+                  <label for="password" class="form-label text-white fw-medium">
+                    Password <span class="text-warning">*</span>
+                  </label>
+                  <div class="position-relative">
+                    <span class="input-icon">
+                      <i class="bi bi-lock"></i>
+                    </span>
+                    <input type="password" class="form-control" id="password" name="password" placeholder="••••••••" required minlength="8">
+                    <button type="button" class="password-toggle" data-target="password">
+                      <i class="bi bi-eye" id="passwordEye"></i>
+                    </button>
+                  </div>
+                  <div class="invalid-feedback d-block" id="passwordError"></div>
+                  
+                  <!-- Password Strength -->
+                  <div class="mt-2">
+                    <div class="d-flex gap-1 mb-2">
+                      <div class="strength-bar flex-fill" data-strength="1"></div>
+                      <div class="strength-bar flex-fill" data-strength="2"></div>
+                      <div class="strength-bar flex-fill" data-strength="3"></div>
+                      <div class="strength-bar flex-fill" data-strength="4"></div>
+                    </div>
+                    <small class="text-secondary" id="strengthText">Password strength</small>
+                  </div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="mb-4">
+                  <label for="confirmPassword" class="form-label text-white fw-medium">
+                    Confirm Password <span class="text-warning">*</span>
+                  </label>
+                  <div class="position-relative">
+                    <span class="input-icon">
+                      <i class="bi bi-check-circle"></i>
+                    </span>
+                    <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" placeholder="••••••••" required>
+                    <button type="button" class="password-toggle" data-target="confirmPassword">
+                      <i class="bi bi-eye" id="confirmPasswordEye"></i>
+                    </button>
+                  </div>
+                  <div class="invalid-feedback d-block" id="confirmPasswordError"></div>
+                </div>
+
+                <!-- Referral Code -->
+                <div class="mb-4">
+                  <label for="referralCode" class="form-label text-white fw-medium">
+                    Referral Code <span class="text-secondary small">(Optional)</span>
+                  </label>
+                  <div class="position-relative">
+                    <span class="input-icon">
+                      <i class="bi bi-gift"></i>
+                    </span>
+                    <input type="text" class="form-control" id="referralCode" name="referralCode" placeholder="Enter referral code" maxlength="20">
+                  </div>
+                  <small class="text-secondary d-block mt-1">Get exclusive benefits with a referral code</small>
+                </div>
+
+                <!-- Terms Checkbox -->
+                <div class="mb-4">
+                  <div class="form-check">
+                    <input class="form-check-input" type="checkbox" id="terms" name="terms" required>
+                    <label class="form-check-label text-secondary" for="terms">
+                      I agree to the <a href="#" class="link-gold">Terms and Conditions</a> and <a href="#" class="link-gold">Privacy Policy</a>
+                    </label>
+                  </div>
+                  <div class="invalid-feedback d-block" id="termsError"></div>
+                </div>
+
+                <!-- Submit Button -->
+               <!-- Create Account Button as Anchor Tag -->
+<button type="submit" id="createAccountBtn" class="btn btn-primary-gold w-100 py-3 mb-3">
+  <span class="btn-text">Create Account</span>
+  <span class="btn-loader d-none" id="btnLoader">
+    <span class="spinner-border spinner-border-sm spinner-border-gold" role="status">
+      <span class="visually-hidden">Loading...</span>
+    </span>
+  </span>
+</button>
+       <!-- Divider -->
+                <div class="divider-text">
+                  <span>Or continue with</span>
+                </div>
+
+                <!-- Social Login -->
+              <a href="/auth/google" class="btn btn-outline-gold w-100 py-3 d-flex align-items-center justify-content-center text-decoration-none">
+  <i class="bi bi-google me-2"></i>
+  <span>Continue with Google</span>
+</a>
+              </form>
+
+              <!-- Sign In Link -->
+              <p class="text-center text-secondary mt-4 mb-0">
+                Already have an account?
+                <a href="/user/login" class="link-gold ms-1">Sign in</a>
+              </p>
+            </div>
+          </div>
+
+          <!-- Footer Note -->
+          <p class="text-center text-secondary mt-4 px-3" style="font-size: 0.875rem;">
+            By creating an account, you agree to receive marketing emails from LuxTime.<br class="d-none d-sm-block"> You can unsubscribe at any time.
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Success Modal -->
+  <div class="modal fade modal-premium" id="successModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content rounded-4 border-0 shadow-lg">
+        <div class="modal-body p-5 text-center">
+          <div class="success-icon">
+            <i class="bi bi-check-lg text-dark" style="font-size: 2.5rem;"></i>
+          </div>
+          <h3 class="text-white fw-bold mb-3" style="font-family: 'Playfair Display', serif;">Account Created!</h3>
+          <p class="text-secondary mb-4">Welcome to LuxTime. Your account has been successfully created.</p>
+          <button type="button" class="btn btn-primary-gold px-5 py-3" data-bs-dismiss="modal">
+            Get Started
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/user/js/script.js"></script>
+</body>
+</html>

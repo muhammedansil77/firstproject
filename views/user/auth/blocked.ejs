@@ -1,0 +1,25 @@
+<!-- views/user/blocked.ejs -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title><%= title || 'Account blocked' %></title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Inter, system-ui, Arial, sans-serif; background: #111; color:#fff; margin:0; padding:0; display:flex; align-items:center; justify-content:center; min-height:100vh; }
+    .card { max-width:720px; padding:36px; background:linear-gradient(180deg,#1f1b12,#211c11); border-radius:12px; box-shadow:0 12px 40px rgba(0,0,0,0.6); text-align:center; border:1px solid rgba(198,186,147,0.08); }
+    h1 { margin:0 0 8px; font-size:28px; color:#c6ba93; }
+    p { margin:0 0 18px; color:#f5eecd; opacity:0.95; }
+    .support { display:inline-block; padding:10px 18px; border-radius:10px; background:linear-gradient(90deg,#c6ba93,#d6c28a); color:#231f0f; text-decoration:none; font-weight:700; }
+    .small { margin-top:12px; color:#c6ba93; font-size:13px; opacity:0.9; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Account blocked</h1>
+    <p><%= message || 'Your account has been blocked by the administrator. You cannot sign in at this time.' %></p>
+    <a class="support" href="mailto:support@yourdomain.com">Contact support</a>
+    <div class="small">If you believe this is a mistake, please contact support.</div>
+  </div>
+</body>
+</html>

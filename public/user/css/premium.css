@@ -1,0 +1,100 @@
+/* TIMEPIECE EMPORIUM – ULTRA PREMIUM CSS */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes shimmer { 0% { background-position: -1000px 0; } 100% { background-position: 1000px 0; } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+* { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+
+.premium-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 1rem;
+  background: rgba(42, 38, 24, 0.3);
+}
+.premium-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(237,181,17,0.15), transparent);
+  transition: left 0.7s;
+}
+.premium-card:hover::before { left: 100%; }
+.premium-card:hover { transform: translateY(-12px); box-shadow: 0 30px 60px rgba(0,0,0,0.5); }
+
+.image-zoom > div { transition: transform 0.9s ease; }
+.image-zoom:hover > div { transform: scale(1.12); }
+
+.premium-button {
+  position: relative;
+  overflow: hidden;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+}
+.premium-button::before {
+  content: '';
+  position: absolute;
+  top: 0; left: -100%;
+  width: 100%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+  transition: left 0.6s;
+}
+.premium-button:hover::before { left: 100%; }
+.premium-button:hover { transform: translateY(-4px); box-shadow: 0 15px 40px rgba(237,181,17,0.5); }
+
+.nav-link { position: relative; padding-bottom: 6px; }
+.nav-link::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0;
+  width: 0; height: 2px;
+  background: linear-gradient(90deg, #edb511, #c9ba91);
+  transition: width 0.4s ease;
+}
+.nav-link:hover::after { width: 100%; }
+
+.text-gradient {
+  background: linear-gradient(135deg, #edb511 0%, #ffd700 50%, #edb511 100%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: shimmer 4s linear infinite;
+}
+
+.luxury-border { border: 1px solid rgba(237,181,17,0.25); position: relative; border-radius: 1rem; }
+.luxury-border::before {
+  content: ''; position: absolute; inset: -2px;
+  background: linear-gradient(45deg, #edb511, transparent, #d4a00f);
+  border-radius: inherit; opacity: 0; transition: opacity 0.5s; z-index: -1;
+}
+.luxury-border:hover::before { opacity: 0.7; }
+
+.collection-overlay {
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 30%, rgba(0,0,0,0.85) 100%);
+  opacity: 0.7; transition: opacity 0.5s;
+}
+.premium-card:hover .collection-overlay { opacity: 0.9; }
+
+.hero-gradient { background: linear-gradient(135deg, rgba(0,0,0,0.6) 0%, rgba(33,30,17,0.7) 100%); }
+.backdrop-luxury { background: rgba(33,30,17,0.85); backdrop-filter: blur(16px); }
+.icon-hover:hover { transform: scale(1.15) rotate(8deg); filter: brightness(1.3); }
+.price-tag { font-family: 'Playfair Display', serif; font-weight: 700; letter-spacing: 1.5px; color: #edb511; }
+.luxury-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(237,181,17,0.6), transparent); margin: 3rem 0; }
+
+.scroll-reveal { opacity: 0; animation: fadeInUp 1s ease forwards; }
+.scroll-reveal:nth-child(1) { animation-delay: 0.1s; }
+.scroll-reveal:nth-child(2) { animation-delay: 0.25s; }
+.scroll-reveal:nth-child(3) { animation-delay: 0.40s; }
+.scroll-reveal:nth-child(4) { animation-delay: 0.55s; }
+
+.premium-shadow { box-shadow: 0 25px 50px -12px rgba(0,0,0,0.6); }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #111; }
+::-webkit-scrollbar-thumb { background: linear-gradient(#edb511, #c9ba91); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #edb511; box-shadow: 0 0 10px #edb511; }
+
+html { scroll-behavior: smooth; }

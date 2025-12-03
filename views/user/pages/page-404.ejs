@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>404 - Page Not Found | Timepiece Emporium</title>
+  
+  <link rel="stylesheet" href="/css/app.css" /> <!-- your main CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            gold: { 400: '#edb511', 200: '#f4d03f', 600: '#d4a00f' },
+            dark: { 700: '#1a1610', 800: '#120f0a', 900: '#0c0a06' },
+          },
+          fontFamily: { display: ['Cinzel', 'serif'], sans: ['Inter', 'sans-serif'] },
+        },
+      },
+    }
+  </script>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body class="bg-dark-900 text-white min-h-screen flex flex-col">
+
+
+
+  <!-- 404 Hero Section -->
+  <section class="flex-1 flex items-center justify-center px-8 py-24">
+    <div class="max-w-4xl mx-auto text-center">
+      
+      <!-- Large 404 with golden glow -->
+      <h1 class="font-display text-[180px] lg:text-[280px] leading-none font-bold tracking-tighter 
+                 bg-gradient-to-b from-gold-400 to-gold-600 bg-clip-text text-transparent
+                 drop-shadow-2xl animate-pulse">
+        404
+      </h1>
+
+      <!-- Broken watch illustration effect (pure CSS) -->
+      <div class="my-8 relative">
+        <div class="w-48 h-48 mx-auto rounded-full border-8 border-gold-400/30 relative overflow-hidden">
+          <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-gold-400/10 to-transparent animate-spin-slow"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-24 bg-gold-400 origin-bottom"></div>
+          <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-2 bg-gold-400/60 blur-xl"></div>
+        </div>
+        <div class="absolute inset-0 flex items-center justify-center">
+          <div class="w-64 h-1 bg-gold-600/20 blur-3xl"></div>
+        </div>
+      </div>
+
+      <!-- Message -->
+      <h2 class="text-4xl lg:text-6xl font-display font-bold mt-10 mb-4">
+        Time is Lost
+      </h2>
+      <p class="text-xl lg:text-2xl text-gray-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+        The page you are looking for has vanished like a rare prototype — 
+        it may never have existed, or perhaps it was simply ahead of its time.
+      </p>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-col sm:flex-row gap-6 justify-center items-center mt-12">
+        <a href="/" class="group px-10 py-5 bg-gold-400 text-dark-900 font-semibold text-lg rounded-lg 
+                           hover:bg-gold-200 transition-all duration-300 shadow-2xl hover:shadow-gold-400/50
+                           flex items-center gap-3 uppercase tracking-wider">
+          <svg class="w-6 h-6 group-hover:-translate-x-1 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12h18m-18 0l7-7m-7 7l7 7"/>
+          </svg>
+          Return Home
+        </a>
+
+        <a href="/collections" class="px-10 py-5 border-2 border-gold-400/50 text-gold-400 font-semibold text-lg rounded-lg
+                                      hover:bg-gold-400 hover:text-dark-900 transition-all duration-300 uppercase tracking-wider">
+          Explore Collection
+        </a>
+      </div>
+
+      <!-- Fun micro-copy -->
+      <p class="text-sm text-gray-500 mt-16 uppercase tracking-widest">
+        Error 404 • Page Not Found • Since Never
+      </p>
+    </div>
+  </section>
+
+  <!-- Include your footer if you have one -->
+  <%- include('../partials/footer') %>
+
+  <style>
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .animate-spin-slow { animation: spin-slow 20s linear infinite; }
+  </style>
+</body>
+</html>

@@ -1,0 +1,403 @@
+<main class="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] text-white antialiased">
+  <div class="max-w-7xl mx-auto px-6 py-12">
+
+    <!-- Breadcrumb with enhanced styling -->
+    <nav class="text-sm text-gray-400 mb-8 flex items-center gap-2">
+      <a href="/" class="hover:text-[#d4af37] transition-colors duration-300">Home</a>
+      <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <a href="/user/shop" class="hover:text-[#d4af37] transition-colors duration-300">Shop</a>
+      <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+      <span class="text-[#d4af37] font-medium">
+        <%= product?.name || "Product" %>
+      </span>
+    </nav>
+
+    <!-- Main grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-12 items-start">
+
+      <!-- LEFT: GALLERY (Enhanced) -->
+      <div class="lg:col-span-2">
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-3xl p-8 border border-[#2a2a2a] shadow-2xl backdrop-blur-sm">
+
+          <!-- Main Image with premium frame -->
+          <div class="relative rounded-2xl overflow-hidden bg-black shadow-2xl group">
+            <div class="absolute inset-0 bg-gradient-to-tr from-[#d4af37]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+           <img 
+  id="main-product-image"
+  src="<%= product?.images && product.images.length ? (product.images[0].startsWith('/') ? product.images[0] : '/' + product.images[0]) : '/uploads/placeholder.png' %>"
+  alt="<%= product?.name %>"
+  class="w-full h-[600px] object-cover transition-transform duration-700 group-hover:scale-105" 
+/>
+
+            <!-- Zoom indicator -->
+            <div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-2 rounded-lg text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/>
+              </svg>
+              Hover to zoom
+            </div>
+          </div>
+
+          <!-- Thumbnails with premium styling -->
+          <div class="mt-6 grid grid-cols-4 sm:grid-cols-6 gap-4" id="thumbnailsGrid">
+  <% 
+    // choose gallery source: variant images preferred
+    const gallery = (selectedVariant && Array.isArray(selectedVariant.images) && selectedVariant.images.length) 
+      ? selectedVariant.images 
+      : (Array.isArray(product.images) ? product.images : []);
+    const gallerySlice = gallery.slice(0, 12); // limit to 12 thumbs
+  %>
+
+  <% if (gallerySlice.length) { %>
+    <% gallerySlice.forEach((img, idx) => { 
+         const src = (typeof img === 'string' && img.startsWith('/')) ? img : ('/' + img);
+    %>
+      <button 
+        type="button"
+        class="thumb group relative w-full h-24 rounded-xl overflow-hidden border-2 border-[#2a2a2a] hover:border-[#d4af37] bg-[#0b0b0b] transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#d4af37]/20 thumb-btn"
+        data-thumb-index="<%= idx %>"
+        aria-label="Thumbnail <%= idx+1 %>"
+      >
+        <img src="<%= src %>" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 thumb-img" />
+        <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+      </button>
+    <% }) %>
+  <% } else { %>
+    <div class="col-span-4 text-center text-gray-500 py-8 bg-[#0b0b0b] rounded-xl border border-[#2a2a2a]">No images available</div>
+  <% } %>
+</div>
+
+
+        </div>
+
+        <!-- Product Details Sections (Below Gallery) -->
+        <div class="mt-8 space-y-6">
+
+          <!-- Highlights Section -->
+          <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center gap-2 mb-4">
+              <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <h3 class="text-xl font-semibold text-gray-100">Product Highlights</h3>
+            </div>
+
+            <% if (product?.highlights?.length) { %>
+              <ul class="space-y-3">
+                <% product.highlights.forEach(h => { %>
+                  <li class="flex items-start gap-3 text-gray-300">
+                    <span class="w-1.5 h-1.5 rounded-full bg-[#d4af37] mt-2 flex-shrink-0"></span>
+                    <span><%= h %></span>
+                  </li>
+                <% }) %>
+              </ul>
+            <% } else { %>
+              <div class="text-gray-500 text-center py-4">No highlights available.</div>
+            <% } %>
+          </div>
+
+          <!-- Reviews Section -->
+          <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl p-6 shadow-xl">
+            <div class="flex items-center justify-between mb-6">
+              <div class="flex items-center gap-2">
+                <svg class="w-5 h-5 text-[#d4af37]" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                </svg>
+                <h3 class="text-xl font-semibold text-gray-100">Customer Reviews</h3>
+              </div>
+              <% const safeRating = product?.avgRating || 0; %>
+              <% if (safeRating > 0) { %>
+                <div class="flex items-center gap-2 bg-[#d4af37]/10 px-4 py-2 rounded-full border border-[#d4af37]/30">
+                  <span class="text-2xl font-bold text-[#d4af37]"><%= safeRating.toFixed(1) %></span>
+                  <span class="text-yellow-400">★</span>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Add Review Button -->
+            <div class="mb-6">
+              <button id="write-review-btn" class="w-full px-6 py-3 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-semibold hover:shadow-xl hover:shadow-[#d4af37]/30 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                </svg>
+                Write a Review
+              </button>
+            </div>
+
+            <% if (reviews?.length) { %>
+              <div class="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                <% reviews.forEach(r => { %>
+                  <div class="p-5 bg-[#0f0f0f] rounded-xl border border-[#252525] hover:border-[#d4af37]/30 transition-all duration-300 hover:shadow-lg">
+                    <div class="flex justify-between items-start mb-3">
+                      <div>
+                        <div class="font-semibold text-gray-100 flex items-center gap-2">
+                          <span class="w-8 h-8 rounded-full bg-gradient-to-br from-[#d4af37] to-[#b8941f] flex items-center justify-center text-black text-sm font-bold">
+                            <%= (r.userName || 'A').charAt(0).toUpperCase() %>
+                          </span>
+                          <%= r.userName || 'Anonymous' %>
+                        </div>
+                        <div class="text-xs text-gray-500 mt-1 ml-10"><%= new Date(r.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }) %></div>
+                      </div>
+                      <div class="flex items-center gap-1 bg-yellow-400/10 px-3 py-1 rounded-full border border-yellow-400/30">
+                        <span class="text-yellow-400 font-bold"><%= r.rating %></span>
+                        <span class="text-yellow-400 text-sm">★</span>
+                      </div>
+                    </div>
+                    <div class="text-gray-300 leading-relaxed ml-10"><%= r.comment %></div>
+                  </div>
+                <% }) %>
+              </div>
+            <% } else { %>
+              <div class="text-center py-12">
+                <svg class="w-16 h-16 text-gray-600 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"/>
+                </svg>
+                <p class="text-gray-400 text-lg">No reviews yet</p>
+                <p class="text-gray-600 text-sm mt-1">Be the first to review this product</p>
+              </div>
+            <% } %>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: PRODUCT INFO & PURCHASE (Sticky Sidebar) -->
+      <div class="lg:col-span-1">
+        <div class="sticky top-6 space-y-6">
+
+          <!-- Product Info Card -->
+          <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl p-6 shadow-2xl">
+            
+            <!-- Title -->
+            <div class="mb-6">
+              <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2">
+                <%= product?.name %>
+              </h1>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                <%= product?.description || '' %>
+              </p>
+            </div>
+
+            <!-- Rating + Stock -->
+            <div class="flex items-center justify-between mb-6 pb-6 border-b border-[#252525]">
+              <div class="flex items-center gap-2">
+                <% if ((product?.avgRating || 0) > 0) { %>
+                  <div class="flex items-center gap-1 bg-yellow-400/10 px-3 py-1.5 rounded-full border border-yellow-400/30">
+                    <span class="text-yellow-400 font-bold text-lg"><%= (product?.avgRating || 0).toFixed(1) %></span>
+                    <span class="text-yellow-400">★</span>
+                  </div>
+                  <span class="text-gray-500 text-xs">(<%= reviews?.length || 0 %>)</span>
+                <% } else { %>
+                  <span class="text-gray-500 text-sm">No ratings</span>
+                <% } %>
+              </div>
+
+              <!-- Stock Badge -->
+              <div>
+                <% if (product?.isDeleted || product?.isBlocked || product?.isUnavailable) { %>
+                  <span class="px-3 py-1.5 rounded-full bg-red-600/20 text-red-400 text-xs font-semibold border border-red-600/30">Unavailable</span>
+                <% } else { %>
+                  <% if ((totalStock ?? 0) <= 0) { %>
+                    <span class="px-3 py-1.5 rounded-full bg-gray-700/50 text-gray-300 text-xs font-semibold border border-gray-600">Sold Out</span>
+                  <% } else if (totalStock < 50) { %>
+                    <span class="px-3 py-1.5 rounded-full bg-yellow-600/20 text-yellow-400 text-xs font-semibold border border-yellow-600/30 animate-pulse">Only <%= totalStock %> left</span>
+                  <% } else { %>
+                    <span class="px-3 py-1.5 rounded-full bg-green-600/20 text-green-400 text-xs font-semibold border border-green-600/30">In Stock</span>
+                  <% } %>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- COLOR/VARIANT SELECTOR -->
+<% if (colorGroups && Object.keys(colorGroups).length > 1) { %>
+  <div class="mb-6 pb-6 border-b border-[#252525]">
+    <div class="text-xs text-gray-500 mb-3">Select Color</div>
+    <div class="flex flex-wrap gap-3">
+      <% Object.keys(colorGroups).forEach((colorName, index) => {
+           const colorVariants = colorGroups[colorName];
+           const firstVariant = colorVariants[0];
+           const isSelected = selectedVariant && firstVariant && String(selectedVariant._id) === String(firstVariant._id);
+
+           // prepare images array (normalized to start with '/')
+           const imgArr = (firstVariant && Array.isArray(firstVariant.images) && firstVariant.images.length)
+             ? firstVariant.images.map(i => (typeof i === 'string' && i.startsWith('/') ? i : ('/' + i)))
+             : (Array.isArray(product.images) ? product.images.map(i => (typeof i === 'string' && i.startsWith('/') ? i : ('/' + i))) : []);
+      %>
+        <button
+          type="button"
+          class="variant-btn group relative px-4 py-2.5 rounded-lg border-2 transition-all duration-300 hover:scale-105 <%= isSelected ? 'selected' : '' %>"
+          data-variant-id="<%= firstVariant?._id %>"
+          data-variant-color="<%= colorName %>"
+          data-variant-price="<%= firstVariant?.salePrice || firstVariant?.regularPrice || product.price || 0 %>"
+          data-variant-stock="<%= firstVariant?.stock || 0 %>"
+          data-variant-image="<%= imgArr[0] || '' %>"
+          data-variant-images='<%- JSON.stringify(imgArr) %>'
+        >
+          <div class="flex items-center gap-2">
+            <% if (firstVariant && firstVariant.colorCode) { %>
+              <span
+                class="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg"
+                style="background-color: <%= firstVariant.colorCode %>;"
+              ></span>
+            <% } else { %>
+              <!-- Default color indicator if no colorCode -->
+              <span class="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-gray-400 to-gray-600"></span>
+            <% } %>
+            <span class="font-medium text-sm"><%= colorName %></span>
+          </div>
+
+          <!-- Selected indicator -->
+          <div class="absolute inset-0 rounded-lg border-2 border-[#d4af37] opacity-0 group-[.selected]:opacity-100 transition-opacity pointer-events-none"></div>
+          <div class="absolute -top-1 -right-1 w-5 h-5 bg-[#d4af37] rounded-full opacity-0 group-[.selected]:opacity-100 transition-opacity flex items-center justify-center">
+            <svg class="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+            </svg>
+          </div>
+        </button>
+      <% }) %>
+    </div>
+  </div>
+<% } %>
+
+            <!-- PRICE CARD -->
+            <div class="mb-6">
+              <div class="text-xs text-gray-500 mb-1">Price</div>
+              <% 
+                const finalPrice =
+                  selectedVariant?.salePrice 
+                  || selectedVariant?.regularPrice
+                  || product.finalPrice 
+                  || product.salePrice 
+                  || product.price 
+                  || product.minPrice 
+                  || null;
+              %>
+              <div class="flex items-baseline gap-2">
+                <span id="display-price" class="text-5xl font-black bg-gradient-to-r from-[#d4af37] to-[#f4d03f] bg-clip-text text-transparent">
+                  ₹<%= finalPrice ? Number(finalPrice).toLocaleString() : '—' %>
+                </span>
+                <span class="text-gray-500 text-sm">incl. tax</span>
+              </div>
+            </div>
+
+            <!-- Error Message -->
+            <div id="error-msg" class="hidden mb-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg text-red-400 text-sm"></div>
+
+            <!-- Action Buttons -->
+            <div class="space-y-3">
+              <button id="add-to-cart" 
+                class="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-bold text-lg hover:shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                </svg>
+                Add to Cart
+              </button>
+              <button id="buy-now" 
+                class="w-full px-6 py-4 rounded-xl border-2 border-[#d4af37] text-[#d4af37] font-semibold text-lg hover:bg-[#d4af37]/10 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                </svg>
+                Buy Now
+              </button>
+            </div>
+
+            <!-- Trust Badges -->
+            <div class="mt-6 pt-6 border-t border-[#252525] grid grid-cols-2 gap-4">
+              <div class="flex items-center gap-2 text-xs text-gray-400">
+                <svg class="w-4 h-4 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                </svg>
+                Secure Checkout
+              </div>
+              <div class="flex items-center gap-2 text-xs text-gray-400">
+                <svg class="w-4 h-4 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                </svg>
+                Quality Assured
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Related Products -->
+<!-- Related Products -->
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl p-6 shadow-xl">
+  <div class="flex items-center gap-2 mb-5">
+    <svg class="w-6 h-6 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+    </svg>
+    <h3 class="text-xl font-bold text-gray-100">You May Also Like</h3>
+  </div>
+
+  <% if (related && related.length > 0) { %>
+    <div class="space-y-4">
+      <% related.forEach(rp => { 
+          // Ensure we have a valid link
+          const productLink = `/user/shop/${rp.slug || rp._id}`;
+          // Get the first image or placeholder
+          const firstImage = rp.image || '/uploads/placeholder.png';
+          // Check if image exists
+          const hasValidImage = firstImage && firstImage !== '/uploads/placeholder.png';
+      %>
+        <a href="<%= productLink %>" 
+           class="block group transform hover:translate-x-1 transition-all duration-300">
+          <div class="flex items-center gap-4 p-4 rounded-xl bg-[#0f0f0f]/50 border border-[#252525] hover:border-[#d4af37]/40 hover:bg-[#0f0f0f] hover:shadow-xl hover:shadow-[#d4af37]/10">
+            
+            <!-- Image -->
+            <div class="relative w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden bg-black">
+              <img src="<%= firstImage %>" 
+                   alt="<%= rp.name %>"
+                   class="w-full h-full object-cover <%= hasValidImage ? 'group-hover:scale-110 transition-transform duration-500' : '' %>"
+                   onerror="this.onerror=null; this.src='/uploads/placeholder.png'; this.classList.remove('group-hover:scale-110')"/>
+              <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            </div>
+
+            <!-- Details -->
+            <div class="flex-1 min-w-0">
+              <h4 class="font-medium text-gray-200 group-hover:text-[#d4af37] transition-colors line-clamp-2 text-sm mb-2">
+                <%= rp.name %>
+              </h4>
+              <div class="flex items-center gap-2">
+                <% if (rp.displayPrice && rp.displayPrice > 0) { %>
+                  <span class="text-lg font-bold text-[#d4af37]">
+                    ₹<%= rp.displayPrice.toLocaleString('en-IN') %>
+                  </span>
+                <% } else { %>
+                  <span class="text-gray-500 text-sm">Price on request</span>
+                <% } %>
+              </div>
+            </div>
+
+            <!-- Arrow -->
+            <svg class="w-5 h-5 text-gray-600 group-hover:text-[#d4af37] flex-shrink-0 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+            </svg>
+          </div>
+        </a>
+      <% }) %>
+    </div>
+  <% } else { %>
+    <div class="text-center py-12 text-gray-500">
+      <svg class="w-16 h-16 mx-auto mb-3 opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+      </svg>
+      <p class="text-sm">No related products found</p>
+      <p class="text-xs text-gray-600 mt-1">Try browsing our collection</p>
+      <a href="/user/shop" class="inline-block mt-4 px-4 py-2 bg-[#d4af37]/10 text-[#d4af37] text-sm rounded-lg hover:bg-[#d4af37]/20 transition-colors">
+        Browse Collection
+      </a>
+    </div>
+  <% } %>
+</div>
+
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</main>
