@@ -111,7 +111,8 @@
         </div>
 
         <!-- OTP FORM -->
-        <form id="otpForm" class="mb-4">
+        <form id="otpForm" data-endpoint="/user/verify-forgot-otp">
+
 
           <!-- OTP Inputs -->
           <div class="d-flex justify-content-center gap-3 mb-3">
@@ -207,12 +208,13 @@
       }
 
       try {
-        const res = await fetch("/user/verify-otp", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          credentials: "include",
-          body: JSON.stringify({ otp })
-        });
+       // change the fetch in the page served by loadForgetVerifyOtpPage
+const res = await fetch("/user/verify-forgot-otp", {
+  method: "POST",
+  headers: { "Content-Type": "application/json" },
+  credentials: "include",
+  body: JSON.stringify({ otp })
+});
 
         const data = await res.json();
 
@@ -233,10 +235,8 @@
       if (!resendBtn.classList.contains("enabled")) return;
 
       try {
-        const res = await fetch("/user/resend-otp", {
-          method: "POST",
-          credentials: "include"
-        });
+       const res = await fetch("/user/resend-forgot-otp", { method: "POST", credentials: "include" });
+
 
         const data = await res.json();
         alert(data.message || "New OTP sent!");

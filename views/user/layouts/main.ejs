@@ -45,10 +45,21 @@
 </script>
 
 <script src="https://cdn.tailwindcss.com"></script>
+<!-- intl-tel-input CSS -->
+<link
+  rel="stylesheet"
+  href="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/css/intlTelInput.css"
+/>
+
   <!-- Page-specific CSS (defensive) -->
   <% if (typeof pageCss !== 'undefined' && pageCss) { %>
     <link rel="stylesheet" href="/user/css/<%= pageCss %>">
   <% } %>
+  <!-- Include SweetAlert2 -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<!-- Razorpay Checkout (GLOBAL) -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
 
   <style>
     :root { --lux-amber: #d4af37; }
@@ -67,11 +78,31 @@
 
   <!-- Footer partial -->
   <%- include('../partials/footer') %>
+ <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+ <!-- intl-tel-input JS -->
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/intlTelInput.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js"></script>
+
+ <script>
+  // Inject product data early (only on product pages)
+  <% if (typeof product !== 'undefined') { %>
+    window.PRODUCT_DATA = {
+      productId: "<%= product._id %>",
+      selectedVariantId: "<%= selectedVariant ? selectedVariant._id : '' %>",
+      totalStock: <%= typeof totalStock === 'number' ? totalStock : 0 %>
+    };
+    console.log("✅ PRODUCT_DATA injected from layout:", window.PRODUCT_DATA);
+  <% } %>
+</script>
 
   <!-- Page-specific JS (defensive) -->
   <% if (typeof pageJs !== 'undefined' && pageJs) { %>
     <script src="/user/js/<%= pageJs %>"></script>
   <% } %>
+  <div id="toast-container"
+     class="fixed top-5 right-5 z-[9999] space-y-3">
+</div>
+
 
   <script>console.log('Layout OK — pageTitle:', <%= JSON.stringify(typeof pageTitle !== 'undefined' ? pageTitle : null) %>);</script>
 </body>

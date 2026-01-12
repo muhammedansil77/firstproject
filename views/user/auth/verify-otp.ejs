@@ -25,7 +25,7 @@
       border-bottom: 1px solid #3a3630;
       background-color: #211e11;
     }
-    
+
     .container {
       max-width: 1280px;
       margin-left: auto;
@@ -176,6 +176,39 @@
       transform: translateY(0);
     }
     
+    /* Button loading spinner */
+    .submit-btn.loading {
+      pointer-events: none;
+      opacity: 0.8;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(33, 30, 17, 0.3);
+      border-top: 3px solid #211e11;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+      vertical-align: middle;
+      margin-right: 8px;
+    }
+
+    /* Small spinner for resend button */
+    .spinner-sm {
+      width: 16px;
+      height: 16px;
+      border: 2px solid rgba(237, 188, 43, 0.3);
+      border-top: 2px solid #edbc2b;
+      margin-right: 6px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+    
     .resend-section {
       text-align: center;
       margin-top: 1.5rem;
@@ -190,6 +223,9 @@
       cursor: not-allowed;
       opacity: 0.5;
       transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
     }
     
     .resend-btn.enabled {
@@ -201,6 +237,12 @@
     
     .resend-btn.enabled:hover {
       color: #d4a825;
+    }
+
+    .resend-btn.loading {
+      pointer-events: none;
+      opacity: 0.7;
+      cursor: not-allowed;
     }
     
     /* Toast Notification Styles */
@@ -401,8 +443,8 @@
           </div>
 
           <!-- Submit Button -->
-          <button type="submit" class="submit-btn">
-            Verify Account
+          <button type="submit" class="submit-btn" id="verifyBtn">
+            <span class="btn-text">Verify Account</span>
           </button>
         </form>
 
@@ -487,6 +529,8 @@
     const resendBtn = document.getElementById('resendBtn');
     const resendText = document.getElementById('resendText');
     const otpForm = document.getElementById('otpForm');
+    const verifyBtn = document.getElementById('verifyBtn');
+    const btnText = verifyBtn.querySelector('.btn-text');
 
     // Auto-focus & navigation
     inputs.forEach((input, index) => {
@@ -579,13 +623,18 @@
         return;
       }
 
-      // Check if expired
       if (timeLeft <= 0) {
         showToast("OTP has expired. Please request a new code.", "error");
         return;
       }
 
+      // 🔄 Show loading state
+      verifyBtn.classList.add('loading');
+      verifyBtn.disabled = true;
+      btnText.innerHTML = `<span class="spinner"></span> Verifying...`;
+
       try {
+        // Simulate API call (replace with actual fetch)
         const res = await fetch('/user/verify-otp', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -598,27 +647,37 @@
         if (data.success) {
           showToast("Verification successful! Redirecting...", "success");
           setTimeout(() => {
-            window.location.href = data.redirect || "/user/login";
+            window.location.href = data.redirect || "/user/dashboard";
           }, 1500);
         } else {
           showToast(data.message || "Invalid OTP. Please try again.", "error");
-          // Clear inputs
           inputs.forEach(i => i.value = '');
           inputs[0].focus();
         }
       } catch (err) {
         console.error(err);
         showToast("Network error. Please check your connection.", "error");
+      } finally {
+        // 🔁 Restore button state
+        verifyBtn.classList.remove('loading');
+        verifyBtn.disabled = false;
+        btnText.textContent = "Verify Account";
       }
     });
 
-    // Resend OTP
+    // Resend OTP with loading state
     resendBtn.addEventListener('click', async () => {
-      if (!resendBtn.classList.contains('enabled')) {
-        return; // Prevent click before timer expires
+      if (!resendBtn.classList.contains('enabled') || resendBtn.classList.contains('loading')) {
+        return; // Prevent click before timer expires or during loading
       }
 
+      // 🔄 Show loading state for resend button
+      resendBtn.classList.add('loading');
+      resendBtn.disabled = true;
+      resendText.innerHTML = `<span class="spinner spinner-sm"></span> Sending...`;
+
       try {
+        // Simulate API call (replace with actual fetch)
         const res = await fetch('/user/resend-otp', { 
           method: 'POST',
           credentials: 'include'
@@ -642,8 +701,29 @@
       } catch (err) {
         console.error(err);
         showToast("Failed to resend OTP. Please try again.", "error");
+      } finally {
+        // 🔁 Restore resend button state
+        resendBtn.classList.remove('loading');
+        resendBtn.disabled = false;
+        
+        if (timeLeft <= 0) {
+          resendBtn.classList.add('enabled');
+          resendText.textContent = "Resend Code Now";
+        } else {
+          resendText.textContent = `Resend code in ${timeLeft}s`;
+        }
       }
     });
+
+    // Optional: Display actual email (if available from previous page)
+    function displayUserEmail() {
+      const urlParams = new URLSearchParams(window.location.search);
+      const email = urlParams.get('email') || localStorage.getItem('userEmail') || 'example@email.com';
+      document.getElementById('emailDisplay').textContent = email;
+    }
+
+    // Call on page load
+    displayUserEmail();
   </script>
 </body>
 </html>

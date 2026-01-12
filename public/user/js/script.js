@@ -1,14 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
-  // -------------------------
-  // Password toggle (Bootstrap Icons)
-  // -------------------------
+ 
   document.querySelectorAll('.password-toggle').forEach(button => {
     button.addEventListener('click', function() {
       const targetId = this.getAttribute('data-target');
       const input = document.getElementById(targetId);
       if (!input) return;
 
-      // find <i> inside the button (bootstrap icon)
+    
       const icon = this.querySelector('i');
       if (input.type === 'password') {
         input.type = 'text';
@@ -26,9 +24,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // -------------------------
-  // Password strength checker
-  // -------------------------
+ 
   const passwordInput = document.getElementById('password');
   const strengthBars = Array.from(document.querySelectorAll('.strength-bar'));
   const strengthText = document.getElementById('strengthText');
@@ -38,7 +34,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const password = this.value || '';
       const strength = calculatePasswordStrength(password);
 
-      // update bars: add active class for filled bars
+      
       strengthBars.forEach((bar, i) => {
         if (i < strength.score) {
           bar.classList.add('active');
@@ -56,13 +52,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // -------------------------
-  // Form validation + submit handling
-  // -------------------------
+ 
+ 
   const form = document.getElementById('signupForm');
   if (form) {
     form.addEventListener('submit', function(e) {
-      // clear previous errors
+
       clearErrors();
 
       if (!validateForm()) {
@@ -70,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
       }
 
-      // show loading state and disable button
+    
       const submitBtn = this.querySelector('button[type="submit"], #createAccountBtn');
       if (submitBtn) {
         const btnText = submitBtn.querySelector('.btn-text');
@@ -84,26 +79,25 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // -------------------------
-  // Close modal (Bootstrap-friendly)
-  // -------------------------
+
+
   window.closeModal = function() {
     const modalEl = document.getElementById('successModal');
     if (!modalEl) return;
-    // If bootstrap modal JS exists, use it
+    
     try {
-      // bootstrap 5
+     
       const bsModal = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
       bsModal.hide();
     } catch (e) {
-      // fallback
+    
       modalEl.classList.add('d-none');
     }
-    // redirect to login by default
+  
     window.location.href = '/user/login';
   };
 
-  // helper: clear inline errors and invalid-feedback containers
+ 
   function clearErrors() {
     const ids = ['fullNameError','emailError','passwordError','confirmPasswordError','termsError','serverMessage'];
     ids.forEach(id => {
@@ -111,31 +105,31 @@ document.addEventListener('DOMContentLoaded', function() {
       if (el) el.textContent = '';
     });
 
-    // clear any invalid-feedback elements
+    
     document.querySelectorAll('.invalid-feedback').forEach(el => {
       el.textContent = '';
     });
   }
 });
 
-// ---------- Password strength util ----------
+
 function calculatePasswordStrength(password) {
   let score = 0;
   let message = 'Password strength';
 
   if (!password) return { score: 0, message };
 
-  // length
+ 
   if (password.length >= 8) score++;
   if (password.length >= 12) score++;
 
-  // complexity
+
   if (/[A-Z]/.test(password)) score++;
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  // Normalize score to 0..4
-  if (score <= 1) score = 1; // ensure 1 minimum if any condition met (optional)
+  
+  if (score <= 1) score = 1;
   score = Math.min(4, score);
 
   const messages = ['Very weak','Weak','Fair','Good','Strong'];
@@ -144,20 +138,18 @@ function calculatePasswordStrength(password) {
 
 function getStrengthColor(score) {
   const colors = [
-    '#ef4444', // 0 / fallback
-    '#f97316', // 1
-    '#eab308', // 2
-    '#84cc16', // 3
-    '#10b981'  // 4
+    '#ef4444',
+    '#f97316', 
+    '#eab308', 
+    '#84cc16',
+    '#10b981' 
   ];
   return colors[score] || colors[0];
 }
 
-// ---------- Form validation ----------
 function validateForm() {
   let isValid = true;
 
-  // full name
   const fullName = document.getElementById('fullName');
   if (!fullName || fullName.value.trim().length < 2) {
     const el = document.getElementById('fullNameError');
@@ -165,7 +157,7 @@ function validateForm() {
     isValid = false;
   }
 
-  // email
+
   const email = document.getElementById('email');
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   if (!email || !emailRegex.test(email.value.trim())) {
@@ -174,7 +166,7 @@ function validateForm() {
     isValid = false;
   }
 
-  // password
+
   const password = document.getElementById('password');
   if (!password || password.value.length < 8) {
     const el = document.getElementById('passwordError');
@@ -182,7 +174,7 @@ function validateForm() {
     isValid = false;
   }
 
-  // confirm
+
   const confirmPassword = document.getElementById('confirmPassword');
   if (!confirmPassword || password.value !== confirmPassword.value) {
     const el = document.getElementById('confirmPasswordError');
@@ -190,7 +182,7 @@ function validateForm() {
     isValid = false;
   }
 
-  // terms
+
   const terms = document.getElementById('terms');
   if (!terms || !terms.checked) {
     const el = document.getElementById('termsError');
@@ -200,3 +192,34 @@ function validateForm() {
 
   return isValid;
 }
+// Validate referral code format
+document.getElementById('referralCode')?.addEventListener('blur', function() {
+  const code = this.value.trim().toUpperCase();
+  const errorElement = document.getElementById('referralCodeError') || 
+                       document.createElement('div');
+  
+  if (!this.value.trim()) return; // Empty is allowed
+  
+  // Basic validation: 6-20 characters, alphanumeric
+  if (code.length < 6 || code.length > 20) {
+    errorElement.className = 'text-warning small mt-1';
+    errorElement.textContent = 'Referral code should be 6-20 characters';
+    if (!document.getElementById('referralCodeError')) {
+      errorElement.id = 'referralCodeError';
+      this.parentNode.appendChild(errorElement);
+    }
+  } else if (!/^[A-Z0-9]+$/.test(code)) {
+    errorElement.className = 'text-warning small mt-1';
+    errorElement.textContent = 'Referral code should contain only letters and numbers';
+    if (!document.getElementById('referralCodeError')) {
+      errorElement.id = 'referralCodeError';
+      this.parentNode.appendChild(errorElement);
+    }
+  } else {
+    // Remove error if exists
+    const existingError = document.getElementById('referralCodeError');
+    if (existingError) {
+      existingError.remove();
+    }
+  }
+});

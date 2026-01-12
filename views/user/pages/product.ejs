@@ -1,5 +1,9 @@
+<div class="w-full px-0 py-0 admin-content-page"
+     style="background: linear-gradient(...); min-height: 100vh;">
+
 <main class="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] text-white antialiased">
-  <div class="max-w-7xl mx-auto px-6 py-12">
+ <div class="w-full px-10 py-12">
+
 
     <!-- Breadcrumb with enhanced styling -->
     <nav class="text-sm text-gray-400 mb-8 flex items-center gap-2">
@@ -24,23 +28,33 @@
         <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-3xl p-8 border border-[#2a2a2a] shadow-2xl backdrop-blur-sm">
 
           <!-- Main Image with premium frame -->
-          <div class="relative rounded-2xl overflow-hidden bg-black shadow-2xl group">
-            <div class="absolute inset-0 bg-gradient-to-tr from-[#d4af37]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
-           <img 
-  id="main-product-image"
-  src="<%= product?.images && product.images.length ? (product.images[0].startsWith('/') ? product.images[0] : '/' + product.images[0]) : '/uploads/placeholder.png' %>"
-  alt="<%= product?.name %>"
-  class="w-full h-[600px] object-cover transition-transform duration-700 group-hover:scale-105" 
-/>
+        <div 
+  id="main-image-wrapper"
+  class="relative rounded-2xl overflow-hidden bg-black shadow-2xl group cursor-zoom-in"
+>
+  <div class="absolute inset-0 bg-gradient-to-tr from-[#d4af37]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
 
-            <!-- Zoom indicator -->
-            <div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-2 rounded-lg text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
-              <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/>
-              </svg>
-              Hover to zoom
-            </div>
-          </div>
+  <img 
+    id="main-product-image"
+  src="<%= product?.images && product.images.length 
+  ? (product.images[0].startsWith('http') 
+      ? product.images[0] 
+      : '/' + product.images[0]) 
+  : '/uploads/placeholder.png' %>"
+
+    alt="<%= product?.name %>"
+    class="w-full h-[600px] object-cover transition-transform duration-200" 
+  />
+
+  <!-- Zoom indicator, keep as is if you like -->
+  <div class="absolute bottom-4 right-4 bg-black/60 backdrop-blur-md px-3 py-2 rounded-lg text-xs text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity">
+    <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0zM10 7v6m3-3H7"/>
+    </svg>
+    Hover to zoom
+  </div>
+</div>
+
 
           <!-- Thumbnails with premium styling -->
           <div class="mt-6 grid grid-cols-4 sm:grid-cols-6 gap-4" id="thumbnailsGrid">
@@ -54,7 +68,11 @@
 
   <% if (gallerySlice.length) { %>
     <% gallerySlice.forEach((img, idx) => { 
-         const src = (typeof img === 'string' && img.startsWith('/')) ? img : ('/' + img);
+        const src =
+  typeof img === 'string' && img.startsWith('http')
+    ? img
+    : '/' + img;
+
     %>
       <button 
         type="button"
@@ -196,20 +214,27 @@
                 <% } %>
               </div>
 
-              <!-- Stock Badge -->
-              <div>
-                <% if (product?.isDeleted || product?.isBlocked || product?.isUnavailable) { %>
-                  <span class="px-3 py-1.5 rounded-full bg-red-600/20 text-red-400 text-xs font-semibold border border-red-600/30">Unavailable</span>
-                <% } else { %>
-                  <% if ((totalStock ?? 0) <= 0) { %>
-                    <span class="px-3 py-1.5 rounded-full bg-gray-700/50 text-gray-300 text-xs font-semibold border border-gray-600">Sold Out</span>
-                  <% } else if (totalStock < 50) { %>
-                    <span class="px-3 py-1.5 rounded-full bg-yellow-600/20 text-yellow-400 text-xs font-semibold border border-yellow-600/30 animate-pulse">Only <%= totalStock %> left</span>
-                  <% } else { %>
-                    <span class="px-3 py-1.5 rounded-full bg-green-600/20 text-green-400 text-xs font-semibold border border-green-600/30">In Stock</span>
-                  <% } %>
-                <% } %>
-              </div>
+             <!-- Stock Badge -->
+<div>
+  <span 
+    id="variant-stock-badge"
+    class="px-3 py-1.5 rounded-full text-xs font-semibold border
+           <%= (selectedVariant?.stock || 0) <= 0 
+              ? 'bg-gray-700/50 text-gray-300 border-gray-600'
+              : (selectedVariant?.stock < 50 
+                  ? 'bg-yellow-600/20 text-yellow-400 border-yellow-600/30 animate-pulse'
+                  : 'bg-green-600/20 text-green-400 border-green-600/30')
+           %>">
+    <% if ((selectedVariant?.stock || 0) <= 0) { %>
+      Out of Stock
+    <% } else if (selectedVariant.stock < 50) { %>
+      Only <%= selectedVariant.stock %> left
+    <% } else { %>
+      In Stock (<%= selectedVariant.stock %>)
+    <% } %>
+  </span>
+</div>
+
             </div>
 
             <!-- COLOR/VARIANT SELECTOR -->
@@ -217,48 +242,68 @@
   <div class="mb-6 pb-6 border-b border-[#252525]">
     <div class="text-xs text-gray-500 mb-3">Select Color</div>
     <div class="flex flex-wrap gap-3">
-      <% Object.keys(colorGroups).forEach((colorName, index) => {
-           const colorVariants = colorGroups[colorName];
-           const firstVariant = colorVariants[0];
-           const isSelected = selectedVariant && firstVariant && String(selectedVariant._id) === String(firstVariant._id);
+<% Object.keys(colorGroups).forEach((colorName, index) => {
+     const colorVariants = colorGroups[colorName];
+     const firstVariant = colorVariants[0];
+     const isSelected = selectedVariant && firstVariant && String(selectedVariant._id) === String(firstVariant._id);
+     
+     // Get offer data for this variant
+     const offerData = firstVariant?.offerData || {
+       hasOffer: false,
+       discountedPrice: firstVariant?.salePrice || firstVariant?.regularPrice || firstVariant?.price || 0,
+       basePrice: firstVariant?.salePrice || firstVariant?.regularPrice || firstVariant?.price || 0,
+       discountLabel: null,
+       title: '',
+       discountAmount: 0
+     };
+     
+     // Prepare images array
+     const imgArr = (firstVariant && Array.isArray(firstVariant.images) && firstVariant.images.length)
+       ?firstVariant.images.map(i =>
+  i.startsWith('http') ? i : '/' + i
+)
 
-           // prepare images array (normalized to start with '/')
-           const imgArr = (firstVariant && Array.isArray(firstVariant.images) && firstVariant.images.length)
-             ? firstVariant.images.map(i => (typeof i === 'string' && i.startsWith('/') ? i : ('/' + i)))
-             : (Array.isArray(product.images) ? product.images.map(i => (typeof i === 'string' && i.startsWith('/') ? i : ('/' + i))) : []);
-      %>
-        <button
-          type="button"
-          class="variant-btn group relative px-4 py-2.5 rounded-lg border-2 transition-all duration-300 hover:scale-105 <%= isSelected ? 'selected' : '' %>"
-          data-variant-id="<%= firstVariant?._id %>"
-          data-variant-color="<%= colorName %>"
-          data-variant-price="<%= firstVariant?.salePrice || firstVariant?.regularPrice || product.price || 0 %>"
-          data-variant-stock="<%= firstVariant?.stock || 0 %>"
-          data-variant-image="<%= imgArr[0] || '' %>"
-          data-variant-images='<%- JSON.stringify(imgArr) %>'
-        >
-          <div class="flex items-center gap-2">
-            <% if (firstVariant && firstVariant.colorCode) { %>
-              <span
-                class="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg"
-                style="background-color: <%= firstVariant.colorCode %>;"
-              ></span>
-            <% } else { %>
-              <!-- Default color indicator if no colorCode -->
-              <span class="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-gray-400 to-gray-600"></span>
-            <% } %>
-            <span class="font-medium text-sm"><%= colorName %></span>
-          </div>
+       : (Array.isArray(product.images) ? product.images.map(i => (typeof i === 'string' && i.startsWith('/') ? i : ('/' + i))) : []);
+%>
+  <button
+    type="button"
+    class="variant-btn group relative px-4 py-2.5 rounded-lg border-2 transition-all duration-300 hover:scale-105 <%= isSelected ? 'selected' : '' %>"
+    data-variant-id="<%= firstVariant?._id %>"
+    data-variant-color="<%= colorName %>"
+    data-variant-price="<%= offerData.discountedPrice || 0 %>"
+    data-variant-stock="<%= firstVariant?.stock || 0 %>"
+    data-variant-image="<%= imgArr[0] || '' %>"
+    data-variant-images='<%- JSON.stringify(imgArr) %>'
+    data-offer-has="<%= offerData.hasOffer %>"
+    data-offer-title="<%= offerData.title || '' %>"
+    data-offer-discount-type="<%= offerData.discountType || '' %>"
+    data-offer-discount-value="<%= offerData.discountValue || 0 %>"
+    data-offer-discounted-price="<%= offerData.discountedPrice || 0 %>"
+    data-offer-base-price="<%= offerData.basePrice || 0 %>"
+    data-offer-discount-label="<%= offerData.discountLabel || '' %>"
+    data-offer-discount-amount="<%= offerData.discountAmount || 0 %>"
+  >
+    <div class="flex items-center gap-2">
+      <% if (firstVariant && firstVariant.colorCode) { %>
+        <span
+          class="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg"
+          style="background-color: <%= firstVariant.colorCode %>;"
+        ></span>
+      <% } else { %>
+        <span class="w-6 h-6 rounded-full border-2 border-white/20 shadow-lg bg-gradient-to-br from-gray-400 to-gray-600"></span>
+      <% } %>
+      <span class="font-medium text-sm"><%= colorName %></span>
+    </div>
 
-          <!-- Selected indicator -->
-          <div class="absolute inset-0 rounded-lg border-2 border-[#d4af37] opacity-0 group-[.selected]:opacity-100 transition-opacity pointer-events-none"></div>
-          <div class="absolute -top-1 -right-1 w-5 h-5 bg-[#d4af37] rounded-full opacity-0 group-[.selected]:opacity-100 transition-opacity flex items-center justify-center">
-            <svg class="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
-            </svg>
-          </div>
-        </button>
-      <% }) %>
+    <!-- Selected indicator -->
+    <div class="absolute inset-0 rounded-lg border-2 border-[#d4af37] opacity-0 group-[.selected]:opacity-100 transition-opacity pointer-events-none"></div>
+    <div class="absolute -top-1 -right-1 w-5 h-5 bg-[#d4af37] rounded-full opacity-0 group-[.selected]:opacity-100 transition-opacity flex items-center justify-center">
+      <svg class="w-3 h-3 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+      </svg>
+    </div>
+  </button>
+<% }) %>
     </div>
   </div>
 <% } %>
@@ -276,12 +321,47 @@
                   || product.minPrice 
                   || null;
               %>
-              <div class="flex items-baseline gap-2">
-                <span id="display-price" class="text-5xl font-black bg-gradient-to-r from-[#d4af37] to-[#f4d03f] bg-clip-text text-transparent">
-                  ₹<%= finalPrice ? Number(finalPrice).toLocaleString() : '—' %>
-                </span>
-                <span class="text-gray-500 text-sm">incl. tax</span>
-              </div>
+  <div class="flex flex-col gap-2">
+
+  <% if (offer && discountedPrice && discountAmount > 0) { %>
+
+    <!-- Discount badge -->
+    <span class="inline-block w-fit px-3 py-1 text-xs font-bold rounded-full
+                 bg-green-500/20 text-green-400 border border-green-500/30">
+      <%= discountLabel %>
+    </span>
+
+    <!-- Prices -->
+    <div class="flex items-baseline gap-3">
+      <!-- Original price -->
+      <span class="text-lg text-gray-500 line-through">
+        ₹<%= Number(basePrice).toLocaleString('en-IN') %>
+      </span>
+
+      <!-- Discounted price -->
+      <span id="display-price"
+            class="text-5xl font-black bg-gradient-to-r from-[#d4af37] to-[#f4d03f]
+                   bg-clip-text text-transparent">
+        ₹<%= Number(discountedPrice).toLocaleString('en-IN') %>
+      </span>
+
+      <span class="text-gray-500 text-sm">incl. tax</span>
+    </div>
+
+  <% } else { %>
+
+    <!-- Normal price -->
+    <span id="display-price"
+          class="text-5xl font-black bg-gradient-to-r from-[#d4af37] to-[#f4d03f]
+                 bg-clip-text text-transparent">
+      ₹<%= basePrice ? Number(basePrice).toLocaleString('en-IN') : '—' %>
+    </span>
+
+  <% } %>
+
+</div>
+
+
             </div>
 
             <!-- Error Message -->
@@ -289,13 +369,13 @@
 
             <!-- Action Buttons -->
             <div class="space-y-3">
-              <button id="add-to-cart" 
-                class="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-bold text-lg hover:shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-                </svg>
-                Add to Cart
-              </button>
+             <button
+  id="add-to-cart"
+  type="button"
+  class="w-full px-6 py-4 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-bold text-lg hover:shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
+  Add to Cart
+</button>
+
               <button id="buy-now" 
                 class="w-full px-6 py-4 rounded-xl border-2 border-[#d4af37] text-[#d4af37] font-semibold text-lg hover:bg-[#d4af37]/10 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,7 +419,11 @@
           // Ensure we have a valid link
           const productLink = `/user/shop/${rp.slug || rp._id}`;
           // Get the first image or placeholder
-          const firstImage = rp.image || '/uploads/placeholder.png';
+        const firstImage =
+  rp.image && rp.image.startsWith('http')
+    ? rp.image
+    : '/' + (rp.image || 'uploads/placeholder.png');
+
           // Check if image exists
           const hasValidImage = firstImage && firstImage !== '/uploads/placeholder.png';
       %>
@@ -401,3 +485,15 @@
 
   </div>
 </main>
+<script>
+  window.PRODUCT_DATA = {
+    productId: "<%= product && product._id ? product._id : '' %>",
+    selectedVariantId: "<%= selectedVariant && selectedVariant._id ? selectedVariant._id : '' %>",
+    totalStock: <%= typeof totalStock === 'number' ? totalStock : 0 %>
+  };
+
+  console.log("✅ PRODUCT_DATA:", window.PRODUCT_DATA);
+</script>
+
+
+

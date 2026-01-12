@@ -1,12 +1,10 @@
-// public/user/js/shop-filters.js
 (function () {
-  // Get current category from URL
+  
   function getCurrentCategory() {
     const urlParams = new URLSearchParams(window.location.search);
     return urlParams.get('category');
   }
 
-  // Get category from select
   function getSelectCategory() {
     const sel = document.getElementById('category-select');
     if (!sel) return 'all';
@@ -27,21 +25,17 @@
     window.location.href = url.href;
   }
 
-  // MAIN FILTER FUNCTION
   window.applyFilter = function () {
     const url = new URL(window.location.href);
     
-    // Clear page when applying new filters
     url.searchParams.delete('page');
     
-    // Get values
     const category = getSelectCategory();
     const sortBy = document.getElementById('sort-by')?.value || '';
     const minPrice = document.getElementById('price-from')?.value;
     const maxPrice = document.getElementById('price-to')?.value;
     const searchField = document.getElementById('search-field')?.value?.trim();
     
-    // Apply filters
     setParamOrDelete(url, 'category', category);
     setParamOrDelete(url, 'sort', sortBy);
     setParamOrDelete(url, 'min', minPrice);
@@ -73,7 +67,6 @@
 
   window.clearAllFilters = function () {
     const url = new URL(window.location.href);
-    // Keep only the base URL
     window.location.href = url.pathname;
   };
 
@@ -100,11 +93,192 @@
     navigate(url);
   };
 
-  // Initialize page - set selected values from URL
+  // ==================== WISHLIST FUNCTIONS ====================
+  
+  // Add to/remove from wishlist
+  window.toggleWishlist = async function(productId, variantId, button) {
+    try {
+      console.log('🎯 toggleWishlist called:', { productId, variantId });
+      
+      // Check if variantId is valid
+      if (!variantId || variantId === 'null' || variantId === '') {
+        alert('Please select a variant first');
+        return;
+      }
+      
+      // Get current state from button
+      const isCurrentlyInWishlist = button.classList.contains('bg-red-500/20');
+      console.log('Current state:', isCurrentlyInWishlist ? 'IN wishlist' : 'NOT in wishlist');
+      
+      // Show loading state
+      const originalHTML = button.innerHTML;
+      button.innerHTML = `
+        <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+        </svg>
+        <span class="text-xs">Processing...</span>
+      `;
+      button.disabled = true;
+      
+      // Determine endpoint and method
+      const endpoint = isCurrentlyInWishlist 
+        ? `/user/api/wishlist/remove/${productId}`
+        : `/user/api/wishlist/add`;
+      
+      const method = isCurrentlyInWishlist ? 'DELETE' : 'POST';
+      
+      console.log('📤 API call:', method, endpoint);
+      
+      // Make API request
+      const response = await fetch(endpoint, {
+        method: method,
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({ 
+          productId, 
+          variantId 
+        })
+      });
+      // 🔐 Not logged in
+if (response.status === 401) {
+  showNotification('Please login to use wishlist ❤️', 'error');
+
+  // Optional: redirect after delay
+  setTimeout(() => {
+    window.location.href = '/user/login';
+  }, 1500);
+
+  return;
+}
+
+      
+      console.log('📥 Response status:', response.status);
+      
+      // Parse response
+      const result = await response.json();
+      console.log('📦 Response data:', result);
+      
+      if (!response.ok) {
+        throw new Error(result.message || 'Request failed');
+      }
+      
+      // Update button UI
+      if (isCurrentlyInWishlist) {
+        // Remove from wishlist - change to "Save"
+        button.classList.remove('bg-red-500/20', 'text-red-400', 'border-red-500/40');
+        button.classList.add('bg-gray-900/50', 'text-gray-300', 'border-gray-700');
+        button.innerHTML = `
+          <svg class="w-4 h-4 text-gray-400 group-hover/wishlist:text-red-400 group-hover/wishlist:scale-110 transition-all" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          <span class="text-xs font-medium text-gray-400 group-hover/wishlist:text-red-400">Save</span>
+        `;
+        button.title = "Add to wishlist";
+      } else {
+        // Add to wishlist - change to "Saved"
+        button.classList.remove('bg-gray-900/50', 'text-gray-300', 'border-gray-700');
+        button.classList.add('bg-red-500/20', 'text-red-400', 'border-red-500/40');
+        button.innerHTML = `
+          <svg class="w-4 h-4 text-red-500 group-hover/wishlist:scale-110 transition-transform" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
+          </svg>
+          <span class="text-xs font-medium">Saved</span>
+        `;
+        button.title = "Remove from wishlist";
+      }
+      
+      button.disabled = false;
+      
+      // Show success message
+      showNotification(
+        result.message || (isCurrentlyInWishlist ? 'Removed from wishlist' : 'Added to wishlist!'), 
+        'success'
+      );
+      
+    } catch (error) {
+      console.error('❌ toggleWishlist error:', error);
+      
+      // Restore button to original state
+      button.innerHTML = originalHTML;
+      button.disabled = false;
+      
+      // Show error message
+      showNotification(error.message || 'Failed to update wishlist', 'error');
+    }
+  };
+  
+  // Show notification
+  window.showNotification = function(message, type = 'info') {
+    // Remove existing notifications
+    const existing = document.querySelector('.notification-toast');
+    if (existing) existing.remove();
+    
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.className = `notification-toast fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full ${
+      type === 'success' ? 'bg-green-600/90 backdrop-blur-sm' : 
+      type === 'error' ? 'bg-red-600/90 backdrop-blur-sm' : 
+      'bg-blue-600/90 backdrop-blur-sm'
+    } text-white border border-white/10`;
+    
+    // Add icon based on type
+    let icon = '';
+    if (type === 'success') {
+      icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
+    } else if (type === 'error') {
+      icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>';
+    } else {
+      icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>';
+    }
+    
+    notification.innerHTML = `
+      <div class="flex items-center">
+        ${icon}
+        <span>${message}</span>
+        <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white/70 hover:text-white">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+    `;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+      notification.classList.remove('translate-x-full');
+    }, 10);
+    
+    // Auto remove after 3 seconds
+    setTimeout(() => {
+      notification.classList.add('translate-x-full');
+      setTimeout(() => notification.remove(), 300);
+    }, 3000);
+  };
+  
+  // Update wishlist count in navbar
+  window.updateWishlistCount = function() {
+    const countElement = document.querySelector('.wishlist-count');
+    if (countElement) {
+      fetch('/user/api/wishlist/count')
+        .then(res => res.json())
+        .then(data => {
+          if (data.count !== undefined) {
+            countElement.textContent = data.count;
+          }
+        })
+        .catch(console.error);
+    }
+  };
+
   document.addEventListener('DOMContentLoaded', function() {
     const urlParams = new URLSearchParams(window.location.search);
     
-    // Set category select
     const categorySelect = document.getElementById('category-select');
     if (categorySelect) {
       const currentCategory = urlParams.get('category');
@@ -114,8 +288,7 @@
         categorySelect.value = 'all';
       }
     }
-    
-    // Set sort select
+   
     const sortSelect = document.getElementById('sort-by');
     if (sortSelect) {
       const currentSort = urlParams.get('sort');
@@ -124,15 +297,37 @@
       }
     }
     
-    // Set price inputs
     const minInput = document.getElementById('price-from');
     const maxInput = document.getElementById('price-to');
     if (minInput) minInput.value = urlParams.get('min') || '';
     if (maxInput) maxInput.value = urlParams.get('max') || '';
     
-    // Set search input
     const searchInput = document.getElementById('search-field');
     if (searchInput) searchInput.value = urlParams.get('search') || '';
+    
+    // Debug: Check if wishlist function is loaded
+    console.log('✅ toggleWishlist function loaded:', typeof window.toggleWishlist === 'function');
   });
 
 })();
+
+// Add CSS animations for wishlist
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes heartBeat {
+    0% { transform: scale(1); }
+    25% { transform: scale(1.1); }
+    50% { transform: scale(0.95); }
+    100% { transform: scale(1); }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+`;
+document.head.appendChild(style);

@@ -1,0 +1,587 @@
+<!-- Main Content Section -->
+<div class="container-fluid">
+    <div class="card shadow-lg">
+        <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+            <div>
+                <h4 class="mb-0"><i class="bi bi-percent me-2"></i> Offers Management</h4>
+                <small class="opacity-75">Manage product and category offers</small>
+            </div>
+            <button type="button" class="btn btn-light" onclick="openCreateModal()">
+                <i class="bi bi-plus-circle me-2"></i> Create New Offer
+            </button>
+        </div>
+        <!-- Toast Container -->
+<div id="toast-container"
+     class="position-fixed top-0 end-0 p-3"
+     style="z-index: 1080;">
+</div>
+<script>
+  window.flashMessages = <%- JSON.stringify({
+    success: success_msg || null,
+    error: error_msg || null
+  }) %>;
+</script>
+
+<!-- External JS (MUST be after flashMessages) -->
+<script src="/admin/js/offer.js"></script>
+
+        
+        <div class="card-body">
+            <!-- Filter Section -->
+            <div class="card border-light mb-4">
+                <div class="card-body">
+                    <form id="filterForm" class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">Search</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" name="search" placeholder="Search offers..." value="<%= query.search || '' %>">
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Type</label>
+                            <select class="form-select" name="type">
+                                <option value="">All Types</option>
+                                <option value="product" <%= query.type === 'product' ? 'selected' : '' %>>Product Offers</option>
+                                <option value="category" <%= query.type === 'category' ? 'selected' : '' %>>Category Offers</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Status</label>
+                            <select class="form-select" name="status">
+                                <option value="">All Status</option>
+                                <option value="active" <%= query.status === 'active' ? 'selected' : '' %>>Active</option>
+                                <option value="upcoming" <%= query.status === 'upcoming' ? 'selected' : '' %>>Upcoming</option>
+                                <option value="expired" <%= query.status === 'expired' ? 'selected' : '' %>>Expired</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <div class="d-flex gap-2 w-100">
+                                <button type="submit" class="btn btn-primary flex-grow-1">
+                                    <i class="bi bi-funnel me-1"></i> Apply Filters
+                                </button>
+                                <a href="/admin/offers" class="btn btn-outline-secondary">
+                                    <i class="bi bi-arrow-clockwise"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Offers Table -->
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th width="250">Offer Details</th>
+                            <th width="200">Type & Target</th>
+                            <th width="150">Discount</th>
+                            <th width="200">Validity</th>
+                            <th width="100">Status</th>
+                            <th width="120" class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <% if (offers.length === 0) { %>
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="text-muted">
+                                        <i class="bi bi-percent-circle display-4 d-block mb-3"></i>
+                                        <h5>No offers found</h5>
+                                        <p class="mb-0">Create your first offer to get started</p>
+                                        <button class="btn btn-primary mt-3" onclick="openCreateModal()">
+                                            <i class="bi bi-plus-circle me-1"></i> Create Offer
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                        <% } else { %>
+                            <% offers.forEach(function(offer) { %>
+                            <tr class="align-middle">
+                                <td>
+                                    <div class="d-flex align-items-start">
+                                        <div class="me-3">
+                                            <div class="bg-light rounded p-2">
+                                                <i class="bi bi-percent text-primary fs-4"></i>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h6 class="mb-1 fw-bold"><%= offer.title %></h6>
+                                            <% if (offer.description) { %>
+                                                <p class="text-muted mb-1 small"><%= offer.description %></p>
+                                            <% } %>
+                                            <small class="text-muted">
+                                                <i class="bi bi-calendar me-1"></i>
+                                                Created: <%= new Date(offer.createdAt).toLocaleDateString() %>
+                                            </small>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="badge <%= offer.type === 'product' ? 'bg-info' : 'bg-purple' %> mb-2">
+                                            <%= offer.type.charAt(0).toUpperCase() + offer.type.slice(1) %> Offer
+                                        </span>
+                                        <% if (offer.type === 'product' && offer.product) { %>
+                                            <div class="d-flex align-items-center">
+                                                <% if (offer.product.images && offer.product.images.length > 0) { %>
+                                                    <img src="<%= offer.product.images[0] %>" 
+                                                         alt="<%= offer.product.name %>"
+                                                         class="rounded me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                                <% } else { %>
+                                                    <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                                        <i class="bi bi-image text-white"></i>
+                                                    </div>
+                                                <% } %>
+                                                <span class="small"><%= offer.product.name %></span>
+                                            </div>
+                                        <% } else if (offer.type === 'category' && offer.category) { %>
+                                            <div class="d-flex align-items-center">
+                                                <% if (offer.category.imagePath) { %>
+                                                    <img src="<%= offer.category.imagePath %>" 
+                                                         alt="<%= offer.category.name %>"
+                                                         class="rounded me-2" style="width: 30px; height: 30px; object-fit: cover;">
+                                                <% } else { %>
+                                                    <div class="bg-secondary rounded me-2 d-flex align-items-center justify-content-center" style="width: 30px; height: 30px;">
+                                                        <i class="bi bi-tag text-white"></i>
+                                                    </div>
+                                                <% } %>
+                                                <span class="small"><%= offer.category.name %></span>
+                                            </div>
+                                        <% } %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span class="fw-bold <%= offer.discountType === 'percentage' ? 'text-success' : 'text-primary' %>">
+                                            <% if (offer.discountType === 'percentage') { %>
+                                                <%= offer.discountValue %>% OFF
+                                            <% } else { %>
+                                                ₹<%= offer.discountValue %> OFF
+                                            <% } %>
+                                        </span>
+                                        <% if (offer.maxDiscountAmount && offer.discountType === 'percentage') { %>
+                                            <small class="text-muted">Max ₹<%= offer.maxDiscountAmount %></small>
+                                        <% } %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <small class="text-muted mb-1">
+                                            <i class="bi bi-calendar-plus me-1"></i>
+                                            <%= new Date(offer.startDate).toLocaleDateString() %>
+                                        </small>
+                                        <small class="text-muted">
+                                            <i class="bi bi-calendar-minus me-1"></i>
+                                            <%= new Date(offer.endDate).toLocaleDateString() %>
+                                        </small>
+                                        <% const now = new Date(); 
+                                           const daysRemaining = Math.ceil((new Date(offer.endDate) - now) / (1000 * 60 * 60 * 24)); %>
+                                        <% if (daysRemaining >= 0 && daysRemaining <= 7) { %>
+                                            <span class="badge bg-warning mt-1">
+                                                <%= daysRemaining === 0 ? 'Ends today' : daysRemaining + ' days left' %>
+                                            </span>
+                                        <% } %>
+                                    </div>
+                                </td>
+                                <td>
+                                    <% let statusClass = 'secondary'; 
+                                       let statusText = offer.currentStatus;
+                                       
+                                       if (offer.currentStatus === 'active') {
+                                           statusClass = 'success';
+                                       } else if (offer.currentStatus === 'upcoming') {
+                                           statusClass = 'primary';
+                                       } else if (offer.currentStatus === 'expired') {
+                                           statusClass = 'danger';
+                                       } else if (offer.currentStatus === 'inactive') {
+                                           statusClass = 'secondary';
+                                       }
+                                    %>
+                                    <span class="badge bg-<%= statusClass %>">
+                                        <%= statusText.charAt(0).toUpperCase() + statusText.slice(1) %>
+                                    </span>
+                                </td>
+                               <td class="text-end">
+    <div class="d-flex justify-content-end gap-2">
+        <button type="button" class="btn btn-sm btn-outline-primary" 
+                onclick="openEditModal('<%= offer._id %>')" title="Edit">
+            <i class="bi bi-pencil"></i>
+        </button>
+        <button type="button" 
+                class="btn btn-sm <%= offer.isActive ? 'btn-outline-warning' : 'btn-outline-success' %>" 
+                onclick="toggleOfferStatus('<%= offer._id %>')" 
+                title="<%= offer.isActive ? 'Deactivate' : 'Activate' %>">
+            <i class="bi <%= offer.isActive ? 'bi-toggle-off' : 'bi-toggle-on' %>"></i>
+        </button>
+        <button type="button" class="btn btn-sm btn-outline-danger" 
+                onclick="deleteOffer('<%= offer._id %>')" title="Delete">
+            <i class="bi bi-trash"></i>
+        </button>
+    </div>
+</td>
+                            </tr>
+                            <% }); %>
+                        <% } %>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination -->
+            <% if (totalPages > 1) { %>
+                <nav class="d-flex justify-content-between align-items-center mt-4">
+                    <div class="text-muted">
+                        Showing <%= (currentPage - 1) * 10 + 1 %> to <%= Math.min(currentPage * 10, totalOffers) %> of <%= totalOffers %> offers
+                    </div>
+                    <ul class="pagination mb-0">
+                        <% if (currentPage > 1) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="/admin/offers?page=<%= currentPage - 1 %><%= query.type ? '&type=' + query.type : '' %><%= query.status ? '&status=' + query.status : '' %><%= query.search ? '&search=' + query.search : '' %>">
+                                    <i class="bi bi-chevron-left"></i>
+                                </a>
+                            </li>
+                        <% } %>
+
+                        <% for (let i = 1; i <= totalPages; i++) { %>
+                            <% if (i === currentPage) { %>
+                                <li class="page-item active">
+                                    <span class="page-link"><%= i %></span>
+                                </li>
+                            <% } else if (i >= currentPage - 2 && i <= currentPage + 2) { %>
+                                <li class="page-item">
+                                    <a class="page-link" href="/admin/offers?page=<%= i %><%= query.type ? '&type=' + query.type : '' %><%= query.status ? '&status=' + query.status : '' %><%= query.search ? '&search=' + query.search : '' %>"><%= i %></a>
+                                </li>
+                            <% } %>
+                        <% } %>
+
+                        <% if (currentPage < totalPages) { %>
+                            <li class="page-item">
+                                <a class="page-link" href="/admin/offers?page=<%= currentPage + 1 %><%= query.type ? '&type=' + query.type : '' %><%= query.status ? '&status=' + query.status : '' %><%= query.search ? '&search=' + query.search : '' %>">
+                                    <i class="bi bi-chevron-right"></i>
+                                </a>
+                            </li>
+                        <% } %>
+                    </ul>
+                </nav>
+            <% } %>
+        </div>
+    </div>
+</div>
+
+<!-- Create/Edit Offer Modal -->
+<div class="modal fade" id="offerModal" tabindex="-1" aria-labelledby="offerModalLabel" aria-hidden="true" data-bs-backdrop="static">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-gradient-primary text-white">
+                <h5 class="modal-title" id="offerModalLabel">Create New Offer</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="offerForm" method="POST">
+                <div class="modal-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label required">Offer Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="Summer Sale, Diwali Special" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Description</label>
+                            <textarea name="description" class="form-control" rows="2" placeholder="Optional description"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label required">Offer Type</label>
+                        <div class="row">
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check card border-2" style="cursor: pointer;">
+                                    <input class="form-check-input" type="radio" name="type" id="typeProduct" value="product" required onclick="toggleTargetSelection('product')">
+                                    <label class="form-check-label p-3" for="typeProduct">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <div class="bg-info bg-opacity-10 rounded-circle p-2">
+                                                    <i class="bi bi-box text-info fs-4"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 fw-bold">Product Offer</h6>
+                                                <p class="text-muted mb-0 small">Apply discount to specific product</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <div class="form-check card border-2" style="cursor: pointer;">
+                                    <input class="form-check-input" type="radio" name="type" id="typeCategory" value="category" required onclick="toggleTargetSelection('category')">
+                                    <label class="form-check-label p-3" for="typeCategory">
+                                        <div class="d-flex align-items-center">
+                                            <div class="me-3">
+                                                <div class="bg-purple bg-opacity-10 rounded-circle p-2">
+                                                    <i class="bi bi-tags text-purple fs-4"></i>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-1 fw-bold">Category Offer</h6>
+                                                <p class="text-muted mb-0 small">Apply discount to entire category</p>
+                                            </div>
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search and Select Container -->
+                    <div class="mb-3" id="targetSection" style="display: none;">
+                        <label class="form-label required">Select Target</label>
+                        
+                        <!-- Product Search and Select -->
+                        <div id="productSearchContainer" style="display: none;">
+                            <div class="searchable-dropdown">
+                                <div class="input-group mb-2">
+                                    <input type="text" 
+                                           class="form-control product-search" 
+                                           placeholder="Search products..."
+                                           id="productSearchInput">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="searchProducts()">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                <select name="targetId" 
+                                        id="productSelect"
+                                        class="form-select"
+                                        size="5"
+                                        style="height: auto; max-height: 200px; overflow-y: auto;">
+                                    <option value="">Select a product...</option>
+                                </select>
+                                <small class="text-muted">Type to search and select from results</small>
+                            </div>
+                        </div>
+                        
+                        <!-- Category Search and Select -->
+                        <div id="categorySearchContainer" style="display: none;">
+                            <div class="searchable-dropdown">
+                                <div class="input-group mb-2">
+                                    <input type="text" 
+                                           class="form-control category-search" 
+                                           placeholder="Search categories..."
+                                           id="categorySearchInput">
+                                    <button class="btn btn-outline-secondary" type="button" onclick="searchCategories()">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                                <select name="targetId" 
+                                        id="categorySelect"
+                                        class="form-select"
+                                        size="5"
+                                        style="height: auto; max-height: 200px; overflow-y: auto;">
+                                    <option value="">Select a category...</option>
+                                </select>
+                                <small class="text-muted">Type to search and select from results</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rest of your form fields remain the same -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label required">Discount Type</label>
+                            <select name="discountType" class="form-select" required onchange="toggleDiscountFields()">
+                                <option value="">Select type</option>
+                                <option value="percentage">Percentage (%)</option>
+                                <option value="fixed">Fixed Amount (₹)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label required">Discount Value</label>
+                            <div class="input-group">
+                                <input type="number" name="discountValue" class="form-control" step="0.01" min="0" placeholder="e.g., 20" required>
+                                <span class="input-group-text" id="discountSuffix"></span>
+                            </div>
+                        </div>
+                        <div class="col-md-4" id="maxDiscountField" style="display: none;">
+                            <label class="form-label">Max Discount (₹)</label>
+                            <input type="number" name="maxDiscountAmount" class="form-control" step="0.01" min="0" placeholder="Optional">
+                            <small class="form-text text-muted">Caps percentage discount</small>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label required">Start Date</label>
+                            <input type="datetime-local" name="startDate" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label required">End Date</label>
+                            <input type="datetime-local" name="endDate" class="form-control" required>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Priority (1-10)</label>
+                            <select name="priority" class="form-select">
+                                <% for (let i = 1; i <= 10; i++) { %>
+                                    <option value="<%= i %>" <%= i === 1 ? 'selected' : '' %>><%= i %></option>
+                                <% } %>
+                            </select>
+                            <small class="form-text text-muted">Higher number = Higher priority</small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Min Purchase (₹)</label>
+                            <input type="number" name="minPurchaseAmount" class="form-control" step="0.01" min="0" placeholder="Optional">
+                            <small class="form-text text-muted">Minimum cart value</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary" id="submitBtn">Create Offer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Confirmation Modal -->
+<div class="modal fade" id="confirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header border-0">
+                <h5 class="modal-title">Confirmation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body text-center py-4">
+                <i class="bi bi-question-circle display-4 text-warning mb-3"></i>
+                <h5 id="confirmTitle">Are you sure?</h5>
+                <p id="confirmMessage" class="text-muted">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer border-0 justify-content-center">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger" id="confirmActionBtn">Confirm</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+/* Custom Styles */
+:root {
+    --bs-purple: #6f42c1;
+    --bs-bg-purple: #6f42c1;
+}
+
+.bg-purple {
+    background-color: var(--bs-purple) !important;
+}
+
+.text-purple {
+    color: var(--bs-purple) !important;
+}
+
+.border-purple {
+    border-color: var(--bs-purple) !important;
+}
+
+.bg-gradient-primary {
+    background: linear-gradient(135deg, #0d6efd 0%, #0b5ed7 100%);
+}
+
+.form-check.card {
+    transition: all 0.3s;
+    border-radius: 10px;
+}
+
+.form-check.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+.form-check-input:checked ~ .form-check-label {
+    border-color: #0d6efd !important;
+    background-color: rgba(13, 110, 253, 0.05);
+}
+
+.form-check.card[for="typeCategory"]:has(.form-check-input:checked) {
+    border-color: var(--bs-purple) !important;
+    background-color: rgba(111, 66, 193, 0.05);
+}
+
+.required:after {
+    content: " *";
+    color: #dc3545;
+}
+
+.table-hover tbody tr {
+    transition: all 0.2s;
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    transform: scale(1.002);
+}
+
+.badge {
+    padding: 0.4em 0.8em;
+    font-weight: 500;
+}
+
+.btn-group-sm .btn {
+    padding: 0.25rem 0.5rem;
+    border-radius: 0.375rem !important;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.alert {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.card {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card-header {
+    border-bottom: none;
+}
+
+.input-group-text {
+    background-color: #f8f9fa;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+</style>
+
+<script>
+  window.flashMessages = {
+    success: "<%= success_msg || '' %>",
+    error: "<%= error_msg || '' %>"
+  };
+</script>
+<script src="/admin/js/offer.js"></script>

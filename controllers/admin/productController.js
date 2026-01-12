@@ -15,9 +15,30 @@ function safeUnlink(filepath) {
   try {
     if (fs.existsSync(filepath)) fs.unlinkSync(filepath);
   } catch (e) {
-    // ignore
+  
   }
 }
+import cloudinary from '../../config/cloudinary.js';
+function getCloudinaryPublicId(url) {
+  if (!url || !url.includes('cloudinary.com')) return null;
+
+  // Remove version + extension
+  const parts = url.split('/');
+  const uploadIndex = parts.indexOf('upload');
+
+  if (uploadIndex === -1) return null;
+
+  const publicPath = parts
+    .slice(uploadIndex + 1)
+    .join('/')
+    .replace(/^v\d+\//, '')
+    .replace(/\.[^/.]+$/, '');
+
+  return publicPath;
+}
+
+
+
 
 function escapeRegex(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -26,6 +47,11 @@ function escapeRegex(s) {
 export const renderManageProducts = async (req, res) => {
   try {
     const products = await Product.find({ isDeleted: false })
+      .populate({ path: 'category', select: 'name' })
+      .populate({
+        path: 'variants',
+        select: 'images color stock price salePrice isListed'
+      })
       .sort({ createdAt: -1 })
       .lean();
 
@@ -54,8 +80,19 @@ export async function listProducts(req, res) {
     const limit = Math.max(1, Math.min(100, parseInt(req.query.limit || '10', 10)));
     const q = (req.query.q || '').trim();
     const category = (req.query.category || '').trim();
+    const status = (req.query.status || '').trim();
+    const sort = (req.query.sort || '').trim(); 
 
     const filter = { isDeleted: false };
+
+    
+    if (status && status !== 'all') {
+     
+      if (!['name_asc', 'name_desc', 'newest', 'oldest', 'price_low', 'price_high'].includes(status)) {
+        filter.status = status;
+      }
+    }
+
 
     if (q) {
       filter.$or = [
@@ -63,37 +100,96 @@ export async function listProducts(req, res) {
         { description: { $regex: escapeRegex(q), $options: 'i' } }
       ];
     }
-
-    if (category && category !== 'all') {
      
+    if (category && category !== 'all') {
       if (mongoose.Types.ObjectId.isValid(category)) {
         filter.category = new mongoose.Types.ObjectId(category);
       } else {
-    
         let resolved = null;
         try {
-          resolved = await Category.findOne({ name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' } }, { _id: 1 }).lean();
+          resolved = await Category.findOne(
+            { name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' } },
+            { _id: 1 }
+          ).lean();
         } catch (e) {
           console.warn('listProducts: category resolve error', e && e.message);
         }
         if (resolved && resolved._id) {
           filter.category = resolved._id;
         } else {
-        
           filter.category = { $regex: '^' + escapeRegex(category) + '$', $options: 'i' };
         }
       }
     }
-
+  // const menCategory = await Category.findOne({name:"Men"}).lean();
+  // if(menCategory){
+  //   filter.category=menCategory._id;
+  // }
     const skip = (page - 1) * limit;
+
+   
+    let sortOption = { createdAt: -1 }; 
+    
+    switch(sort) {
+      case 'newest':
+        sortOption = { createdAt: -1 };
+        break;
+      case 'oldest':
+        sortOption = { createdAt: 1 };
+        break;
+      case 'name_asc':
+        sortOption = { name: 1 };
+        break;
+      case 'name_desc':
+        sortOption = { name: -1 };
+        break;
+      case 'price_low':
+        sortOption = { 'variants.price': 1 };
+        break;
+      case 'price_high':
+        sortOption = { 'variants.price': -1 };
+        break;
+      default:
+        sortOption = { createdAt: -1 };
+    }
+
+  
+    if (['name_asc', 'name_desc', 'newest', 'oldest', 'price_low', 'price_high'].includes(status)) {
+  
+      switch(status) {
+        case 'name_asc':
+          sortOption = { name: 1 };
+          break;
+        case 'name_desc':
+          sortOption = { name: -1 };
+          break;
+        case 'newest':
+          sortOption = { createdAt: -1 };
+          break;
+        case 'oldest':
+          sortOption = { createdAt: 1 };
+          break;
+        case 'price_low':
+          sortOption = { 'variants.price': 1 };
+          break;
+        case 'price_high':
+          sortOption = { 'variants.price': -1 };
+          break;
+      }
+    }
 
     const [total, products] = await Promise.all([
       Product.countDocuments(filter),
       Product.find(filter)
-        .populate('category')
-        .sort({ createdAt: -1 })
+        .populate({ path: 'category', select: 'name' })
+        .populate({
+          path: 'variants',
+          select: 'images color stock price salePrice isListed'
+        })
+        .sort(sortOption) 
         .skip(skip)
         .limit(limit)
+        .sort(sortOption)
         .lean()
     ]);
 
@@ -115,6 +211,62 @@ export async function listProducts(req, res) {
     return res.status(500).json({ success: false, message: 'Server error listing products' });
   }
 }
+
+export const getProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    console.log('Fetching product for edit:', id);
+    
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ 
+        success: false, 
+        message: 'Invalid product ID' 
+      });
+    }
+
+  
+    const product = await Product.findById(id)
+      .populate('category', 'name _id')
+      .populate({
+        path: 'variants',
+        select: 'images color stock price salePrice isListed'
+      })
+      .lean();
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Product not found' 
+      });
+    }
+
+    console.log('Product found:', product.name, 'Variants:', product.variants?.length);
+
+    return res.json({
+      success: true,
+      product: {
+        _id: product._id,
+        name: product.name,
+        description: product.description || '',
+        category: product.category,
+        images: product.images || [],
+        variants: product.variants || [],
+        status: product.status || 'active',
+        createdAt: product.createdAt,
+        updatedAt: product.updatedAt
+      }
+    });
+
+  } catch (err) {
+    console.error('getProduct error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error fetching product',
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
 
 
 export const createProduct = async (req, res) => {
@@ -200,32 +352,24 @@ console.log('SAFE variantIndices:', variantIndices);
 
    
     async function processFilesForVariant(idx) {
-      const uploadedFiles = variantFilesMap[idx] || [];
-      const saved = [];
-      for (const f of uploadedFiles) {
-        try {
-          const savedPath = await processVariantImage(f); 
-          if (savedPath) {
-            const clean = String(savedPath).replace(/^\/+/, '').replace(/\\/g, '/');
-            saved.push(clean);
-            tempSavedFilesForCleanup.push(clean);
-            console.log(`createProduct: processVariantImage saved for idx=${idx}:`, clean);
-          } else {
-            console.warn(`createProduct: processVariantImage returned falsy for idx=${idx}`);
-          }
-        } catch (e) {
-          console.warn('createProduct: processVariantImage failed idx', idx, e && e.message);
-        }
-      }
-      return saved;
+  const uploadedFiles = variantFilesMap[idx] || [];
+  const saved = [];
+  for (const f of uploadedFiles) {
+    const savedPath = await processVariantImage(f);
+    if (savedPath) {
+      saved.push(savedPath); // ✅ SAVE CLOUDINARY URL DIRECTLY
     }
+  }
+  return saved;
+}
+
 
     
     let savedProductFilenames = [];
     if (productFiles.length > 0) {
       try {
-        const saved = await processProductImages(productFiles); 
-        savedProductFilenames = (saved || []).map(s => String(s).replace(/^\/+/, '').replace(/\\/g, '/')).filter(Boolean);
+       const saved = await processProductImages(productFiles);
+savedProductFilenames = saved;
         savedProductFilenames.forEach(p => tempSavedFilesForCleanup.push(p));
         console.log('createProduct: savedProductFilenames=', savedProductFilenames);
       } catch (e) {
@@ -312,11 +456,30 @@ console.log('SAFE variantIndices:', variantIndices);
         const mapEntry = variantMap[idx] || {};
         const v = Object.assign({}, mapEntry, payloadEntry || {});
 
-        const imgs = savedVariantPathsMap[idx] || [];
+            const imgs = savedVariantPathsMap[idx] || [];
         const stockNum = (typeof v.stock !== 'undefined' && v.stock !== null && v.stock !== '') ? Number(v.stock) : 0;
         const priceNum = (typeof v.price !== 'undefined' && v.price !== null && v.price !== '') ? Number(v.price) : null;
         const salePriceNum = (typeof v.salePrice !== 'undefined' && v.salePrice !== null && v.salePrice !== '') ? Number(v.salePrice) : null;
         const colorVal = (typeof v.color !== 'undefined' && v.color !== null && String(v.color).trim() !== '') ? v.color : null;
+
+        const humanIdx = Number(idx) + 1;
+
+        if (Number.isFinite(stockNum) && stockNum < 0) {
+          tempSavedFilesForCleanup.forEach(p => safeUnlinkRel(p));
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${humanIdx}: stock cannot be negative`
+          });
+        }
+
+        if (Number.isFinite(priceNum) && priceNum < 0) {
+          tempSavedFilesForCleanup.forEach(p => safeUnlinkRel(p));
+          return res.status(400).json({
+            success: false,
+            message: `Variant ${humanIdx}: price cannot be negative`
+          });
+        }
+
 
         let isListedFlag = false;
         if (typeof v.isListed !== 'undefined') {
@@ -362,229 +525,384 @@ console.log('SAFE variantIndices:', variantIndices);
   }
 };
 
+export const deleteProductImage = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { imagePath, variantId } = req.body;
+
+    if (!productId || !imagePath) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    // 🔹 Extract Cloudinary public_id
+    const publicId = getCloudinaryPublicId(imagePath);
+
+    if (variantId) {
+      const variant = await Variant.findOne({ _id: variantId, product: productId });
+      if (!variant) {
+        return res.status(404).json({ success: false, message: 'Variant not found' });
+      }
+
+      // ✅ EXACT MATCH (not includes)
+      variant.images = variant.images.filter(img => img !== imagePath);
+      await variant.save();
+    } else {
+      const product = await Product.findById(productId);
+      if (!product) {
+        return res.status(404).json({ success: false, message: 'Product not found' });
+      }
+
+      // ✅ EXACT MATCH
+      product.images = product.images.filter(img => img !== imagePath);
+      await product.save();
+    }
+
+    // ✅ DELETE FROM CLOUDINARY
+    if (publicId) {
+      await cloudinary.uploader.destroy(publicId);
+      console.log('Deleted from Cloudinary:', publicId);
+    }
+
+    return res.json({
+      success: true,
+      message: 'Image deleted successfully'
+    });
+
+  } catch (err) {
+    console.error('Delete image error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error deleting image'
+    });
+  }
+};
 
 
 export async function patchProduct(req, res) {
   try {
-    const id = req.params.id;
-    if (!id) return res.status(400).json({ success: false, message: 'Product id required' });
-
-    const product = await Product.findById(id);
-    if (!product) return res.status(404).json({ success: false, message: 'Product not found' });
-
-   
-    const { name, description, category } = req.body;
-    if (typeof name !== 'undefined' && name !== null) {
-      if (String(name).trim() === '') return res.status(400).json({ success: false, message: 'Name cannot be empty' });
-      product.name = String(name).trim();
+    const productId = req.params.id;
+    if (!productId) {
+      return res.status(400).json({ success: false, message: 'Product id required' });
     }
-    if (typeof description !== 'undefined') product.description = String(description);
 
-    if (typeof category !== 'undefined') {
-      if (!category) product.category = null;
-      else if (mongoose.Types.ObjectId.isValid(category)) product.category = new mongoose.Types.ObjectId(category);
-      else {
-        try {
-          const catDoc = await Category.findOne({ name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' } }, { _id: 1 }).lean();
-          if (catDoc && catDoc._id) product.category = catDoc._id;
-        } catch (e) { console.warn('patchProduct: category resolve error', e && e.message); }
+    const product = await Product.findById(productId);
+    if (!product) {
+      return res.status(404).json({ success: false, message: 'Product not found' });
+    }
+
+  
+    const { name, description, category } = req.body;
+
+    if (name !== undefined && name.trim() !== '') {
+      product.name = name.trim();
+    }
+    
+    if (description !== undefined) {
+      product.description = description;
+    }
+
+    if (category) {
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        product.category = category;
+      } else {
+        const cat = await Category.findOne({
+          name: new RegExp(`^${escapeRegex(category)}$`, 'i')
+        });
+        if (cat) {
+          product.category = cat._id;
+        }
       }
     }
 
-    const files = Array.isArray(req.files) ? req.files : (req.files ? Object.values(req.files).flat() : []);
 
-    const productFiles = (files || []).filter(f => ['productImages[]','productImages','images','images[]'].includes(f.fieldname));
+    const allFilesFlat = Array.isArray(req.files) ? req.files : (req.files ? Object.values(req.files).flat() : []);
+    const productFiles = allFilesFlat.filter(f => ['images', 'images[]', 'productImages', 'productImages[]'].includes(f.fieldname));
+    
+    if (productFiles.length > 0) {
+      const newImages = [];
+      for (const f of productFiles) {
+        try {
+         const saved = await processProductImages([f]);
+if (saved && saved[0]) {
+  newImages.push(saved[0]); // ✅ Cloudinary URL
+}
+        } catch (e) {
+          console.warn('Failed to process product image:', e.message);
+        }
+      }
+      if (newImages.length) {
+        product.images = [...product.images, ...newImages];
+      }
+    }
+
+   
+    await product.save();
+
+  
+    const variantsToUpdate = [];
+    
+    if (req.body.variants) {
+      try {
+        const variantsArray = typeof req.body.variants === 'string' 
+          ? JSON.parse(req.body.variants) 
+          : req.body.variants;
+        
+        if (Array.isArray(variantsArray)) {
+          variantsToUpdate.push(...variantsArray);
+        }
+      } catch (e) {
+        console.warn('Failed to parse variants array:', e.message);
+      }
+    }
 
   
     const variantFilesMap = {};
-    for (const f of files) {
-      const m = f.fieldname && f.fieldname.match(/^variants\[(\d+)\]\[image\](?:\[\])?$/);
-      if (m) {
-        const idx = m[1];
+    allFilesFlat.forEach(file => {
+      const match = file.fieldname && file.fieldname.match(/^variants\[(\d+)\]\[image\](?:\[\])?$/);
+      if (match) {
+        const idx = match[1];
         variantFilesMap[idx] = variantFilesMap[idx] || [];
-        variantFilesMap[idx].push(f);
-      }
-    }
-
-   
-    const variantsFromBody = {};
-    Object.keys(req.body || {}).forEach(k => {
-      const m = k.match(/^variants\[(\d+)\]\[(color|stock|price|salePrice|isListed)\]$/);
-      if (m) {
-        const idx = m[1];
-        const key = m[2];
-        variantsFromBody[idx] = variantsFromBody[idx] || {};
-        variantsFromBody[idx][key] = req.body[k];
+        variantFilesMap[idx].push(file);
       }
     });
 
-  
-    const variantsAreRefs = product.variants && product.variants.length && mongoose.Types.ObjectId.isValid(String(product.variants[0]));
-
  
-    let productSavedFilenames = [];
-    if (productFiles.length > 0) {
+    for (const variantData of variantsToUpdate) {
+      if (!variantData._id) {
+        console.warn('Variant missing _id, skipping:', variantData);
+        continue;
+      }
+
       try {
-       const saved = await processProductImages(productFiles);
-productSavedFilenames = (saved || []).map(s => String(s).replace(/^\/+/, '').replace(/\\/g, '/')).filter(Boolean);
-product.images = productSavedFilenames;
-
-      } catch (e) {
-        console.warn('patchProduct: processProductImages failed', e && e.message);
-      }
-    }
-
- 
-    let variantDocs = [];
-    if (variantsAreRefs) {
-      variantDocs = product.variants && product.variants.length ? await Variant.find({ _id: { $in: product.variants } }).sort({ _id: 1 }).exec() : [];
-    } else {
-      variantDocs = Array.isArray(product.variants) ? product.variants.map(v => Object.assign({}, v)) : [];
-    }
-
-   
-    const existingCount = variantDocs.length;
-    const fileIdxs = Object.keys(variantFilesMap).map(x => Number(x));
-    const maxFileIdx = fileIdxs.length ? Math.max(...fileIdxs) : -1;
-    const maxIdx = Math.max(existingCount - 1, maxFileIdx);
-
-
-    for (let idx = 0; idx <= maxIdx; idx++) {
-      const idxStr = String(idx);
-      const bodyV = variantsFromBody[idxStr];
-      const fileGroup = variantFilesMap[idxStr] || [];
-
-      if (!variantsAreRefs && !variantDocs[idx]) variantDocs[idx] = { images: [], color: null, stock: 0, price: null, salePrice: null, isListed: false };
-
-      if (bodyV) {
-        if (variantsAreRefs) {
-          const doc = variantDocs[idx];
-          if (doc) {
-            const updates = {};
-            if (typeof bodyV.color !== 'undefined') updates.color = bodyV.color;
-            if (typeof bodyV.stock !== 'undefined') updates.stock = Number(bodyV.stock) || 0;
-            if (typeof bodyV.price !== 'undefined') updates.price = Number(bodyV.price) || null;
-            if (typeof bodyV.salePrice !== 'undefined') updates.salePrice = (bodyV.salePrice ? Number(bodyV.salePrice) : null);
-            if (typeof bodyV.isListed !== 'undefined') updates.isListed = (bodyV.isListed === 'true' || bodyV.isListed === '1' || bodyV.isListed === true);
-            await Variant.findByIdAndUpdate(doc._id, updates).catch(()=>{});
-          }
-        } else {
-          if (typeof bodyV.color !== 'undefined') variantDocs[idx].color = bodyV.color;
-          if (typeof bodyV.stock !== 'undefined') variantDocs[idx].stock = Number(bodyV.stock) || 0;
-          if (typeof bodyV.price !== 'undefined') variantDocs[idx].price = Number(bodyV.price) || null;
-          if (typeof bodyV.salePrice !== 'undefined') variantDocs[idx].salePrice = (bodyV.salePrice ? Number(bodyV.salePrice) : null);
-          if (typeof bodyV.isListed !== 'undefined') variantDocs[idx].isListed = (bodyV.isListed === 'true' || bodyV.isListed === '1' || bodyV.isListed === true);
+        const variant = await Variant.findById(variantData._id);
+        
+        if (!variant) {
+          console.warn(`Variant ${variantData._id} not found`);
+          continue;
         }
-      }
 
+       
+        if (String(variant.product) !== String(productId)) {
+          console.warn(`Variant ${variantData._id} does not belong to product ${productId}`);
+          continue;
+        }
 
-      if (fileGroup.length) {
-        const savedPaths = [];
-        for (const f of fileGroup) {
-          try {
-           const savedPath = await processVariantImage(f);
-if (savedPath) savedPaths.push(String(savedPath).replace(/^\/+/, '').replace(/\\/g, '/'));
+        if (variantData.color !== undefined && variantData.color !== null && variantData.color.trim() !== '') {
+          variant.color = variantData.color.trim();
+        }
+        
+        if (variantData.stock !== undefined && variantData.stock !== null) {
+  const stockNum = Number(variantData.stock);
 
-          } catch (e) {
-            console.warn('patchProduct: failed saving variant image idx', idx, e && e.message);
+  if (isNaN(stockNum)) {
+    return res.status(400).json({
+      success: false,
+      message: 'Stock must be a valid number'
+    });
+  }
+
+  // if (stockNum < 0) 
+  // if(stockNum<0){
+  //   return res.status(400).json({
+  //     success:false,
+  //     message:'hjdbhdbh00..'
+  //   })
+  // }
+
+  variant.stock = stockNum;
+}
+
+        if (variantData.price !== undefined && variantData.price !== null) {
+          const priceNum = Number(variantData.price);
+          if (!isNaN(priceNum) && priceNum >= 0) {
+            variant.price = priceNum;
           }
         }
-        if (savedPaths.length) {
-          if (variantsAreRefs) {
-            const doc = variantDocs[idx];
-            if (doc) {
-            
-              if (Array.isArray(doc.images)) {
-                doc.images.forEach(old => { try { const p = path.join(process.cwd(),'public',old); if (fs.existsSync(p)) fs.unlinkSync(p); } catch (e){} });
-              }
-              await Variant.findByIdAndUpdate(doc._id, { $set: { images: savedPaths } }).catch(()=>{});
-            } else {
-          
-              const created = await Variant.create({
-                product: product._id,
-                images: savedPaths,
-                stock: 0,
-                color: null,
-                price: null,
-                isListed: false
-              });
-              product.variants = product.variants || [];
-              product.variants.push(created._id);
-              variantDocs[idx] = created;
-            }
+        
+        if (variantData.salePrice !== undefined && variantData.salePrice !== null) {
+          const salePriceNum = Number(variantData.salePrice);
+          if (!isNaN(salePriceNum) && salePriceNum >= 0) {
+            variant.salePrice = salePriceNum;
           } else {
-           
-            if (!variantDocs[idx]) variantDocs[idx] = { images: [], color: null, stock: 0, price: null };
-          
-            if (variantDocs[idx].images && variantDocs[idx].images.length) {
-              variantDocs[idx].images.forEach(old => { try { const p = path.join(process.cwd(),'public',old); if (fs.existsSync(p)) fs.unlinkSync(p); } catch(e){} });
+            variant.salePrice = null;
+          }
+        }
+        
+        if (variantData.isListed !== undefined) {
+          variant.isListed = variantData.isListed === true || variantData.isListed === 'true' || variantData.isListed === 1;
+        }
+       
+        
+        const variantIndex = variantsToUpdate.indexOf(variantData);
+        if (variantFilesMap[variantIndex] && variantFilesMap[variantIndex].length > 0) {
+          const newImages = [];
+          for (const file of variantFilesMap[variantIndex]) {
+            try {
+             const saved = await processVariantImage(file);
+if (saved) {
+  newImages.push(saved); // ✅ Cloudinary URL
+}
+            } catch (e) {
+              console.warn(`Failed to process variant image:`, e.message);
             }
-            variantDocs[idx].images = savedPaths;
+          }
+          if (newImages.length > 0) {
+            variant.images = [...variant.images, ...newImages];
           }
         }
+// ✅ DELETE VARIANT IMAGES (CLOUDINARY + DB)
+if (variantData.deletedImages) {
+  let deletedImages = [];
+
+  try {
+    deletedImages = JSON.parse(variantData.deletedImages);
+  } catch (e) {
+    deletedImages = [];
+  }
+
+  if (Array.isArray(deletedImages) && deletedImages.length > 0) {
+    for (const imgUrl of deletedImages) {
+      // Remove from DB
+      variant.images = variant.images.filter(img => img !== imgUrl);
+
+      // Remove from Cloudinary
+      const publicId = getCloudinaryPublicId(imgUrl);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+        console.log('Deleted variant image:', publicId);
       }
     }
-
-  
-    if (productSavedFilenames && productSavedFilenames.length) {
-      for (let i = 0; i < productSavedFilenames.length; i += 3) {
-        const imgs = productSavedFilenames.slice(i, i+3);
-        const idx = i / 3; 
-        if (!imgs.length) continue;
-        if (variantsAreRefs) {
-          const doc = variantDocs[idx];
-          if (doc) {
-           
-            if (doc.images && doc.images.length) doc.images.forEach(old => { try { const p = path.join(process.cwd(),'public',old); if (fs.existsSync(p)) fs.unlinkSync(p); } catch(e){} });
-            await Variant.findByIdAndUpdate(doc._id, { $set: { images: imgs } }).catch(()=>{});
-          } else {
-            const created = await Variant.create({
-              product: product._id,
-              images: imgs,
-              stock: 0,
-              color: null,
-              price: null,
-              isListed: false
-            });
-            product.variants = product.variants || [];
-            product.variants.push(created._id);
-            variantDocs[idx] = created;
-          }
-        } else {
-          if (!variantDocs[idx]) variantDocs[idx] = { images: imgs, color: null, stock: 0, price: null, isListed: false };
-          else {
-          
-            if (variantDocs[idx].images && variantDocs[idx].images.length) variantDocs[idx].images.forEach(old => { try { const p = path.join(process.cwd(),'public',old); if (fs.existsSync(p)) fs.unlinkSync(p); } catch(e){} });
-            variantDocs[idx].images = imgs;
-          }
-        }
-      }
-    }
-
- 
-    if (variantsAreRefs) {
-      await product.save();
-    } else {
-      product.variants = variantDocs.filter(Boolean);
-      await product.save();
-    }
-
-  
-    const finalProduct = variantsAreRefs ? await Product.findById(product._id).populate('variants').lean() : (product.toObject ? product.toObject() : product);
-    const finalVariants = finalProduct.variants || [];
-    for (let i = 0; i < finalVariants.length; i++) {
-      const v = finalVariants[i];
-      const imgs = (v && v.images) ? (Array.isArray(v.images) ? v.images : [v.images]) : [];
-      if (imgs.length < 3) {
-        return res.status(400).json({ success: false, message: `Variant ${i} must have at least 3 images (currently ${imgs.length}).` });
-      }
-    }
-
- 
-    const out = variantsAreRefs ? await Product.findById(product._id).populate('variants').lean() : (product.toObject ? product.toObject() : product);
-    return res.json({ success: true, product: out });
-  } catch (err) {
-    console.error('patchProduct error:', err);
-    return res.status(500).json({ success: false, message: 'Server error updating product', error: String(err) });
   }
 }
+
+    
+        await variant.save();
+        
+      } catch (error) {
+        console.error(`Error updating variant ${variantData._id}:`, error.message);
+      }
+    }
+
+ 
+    const updated = await Product.findById(productId)
+      .populate('category')
+      .populate('variants')
+      .lean();
+
+    return res.json({
+      success: true,
+      message: 'Product & variants updated successfully',
+      product: updated
+    });
+
+  } catch (err) {
+    console.error('PATCH PRODUCT ERROR:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error updating product',
+      error: err.message
+    });
+  }
+}
+
+export const blockProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { 
+        status: 'blocked',
+        updatedAt: Date.now()
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Product not found' 
+      });
+    }
+
+    return res.json({ 
+      success: true, 
+      message: 'Product blocked successfully',
+      product 
+    });
+  } catch (err) {
+    console.error('blockProduct error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error blocking product' 
+    });
+  }
+};
+
+
+export const unblockProduct = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const product = await Product.findByIdAndUpdate(
+      id,
+      { 
+        status: 'active',
+        updatedAt: Date.now()
+      },
+      { new: true }
+    );
+
+    if (!product) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Product not found' 
+      });
+    }
+
+    return res.json({ 
+      success: true, 
+      message: 'Product unblocked successfully',
+      product 
+    });
+  } catch (err) {
+    console.error('unblockProduct error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error unblocking product' 
+    });
+  }
+};
+
+
+export const toggleProductStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ 
+        success: false, 
+        message: 'Product not found' 
+      });
+    }
+
+    const newStatus = product.status === 'active' ? 'blocked' : 'active';
+    product.status = newStatus;
+    product.updatedAt = Date.now();
+    await product.save();
+
+    return res.json({ 
+      success: true, 
+      message: `Product ${newStatus === 'active' ? 'unblocked' : 'blocked'} successfully`,
+      status: newStatus,
+      product 
+    });
+  } catch (err) {
+    console.error('toggleProductStatus error:', err);
+    return res.status(500).json({ 
+      success: false, 
+      message: 'Server error toggling product status' 
+    });
+  }
+};

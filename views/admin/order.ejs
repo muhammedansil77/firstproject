@@ -1,0 +1,375 @@
+<!-- Main Content Area -->
+<div class="container-fluid py-4">
+  <!-- Page Header -->
+  <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center mb-4">
+    <div class="mb-3 mb-md-0">
+      <h1 class="h2 fw-bold text-dark mb-2">Orders Management</h1>
+      <p class="text-muted mb-0">View, manage, and track all customer orders</p>
+    </div>
+    
+    <!-- Order Stats -->
+    <div class="d-flex gap-3">
+      <div class="bg-white border rounded-3 p-3 shadow-sm">
+        <p class="text-muted small mb-1">Total Orders</p>
+        <p class="h4 fw-bold text-dark mb-0"><%= totalOrders %></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Filters Card -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body">
+      <!-- Status Filters -->
+      <div class="mb-4">
+        <h6 class="text-muted text-uppercase small fw-semibold mb-3">Filter by Status</h6>
+        <div class="d-flex flex-wrap gap-2">
+          <!-- Helper function to build URL -->
+          <% 
+            function buildStatusUrl(statusValue) {
+              const params = new URLSearchParams();
+              if (statusValue !== 'all') params.set('status', statusValue);
+              if (searchQuery) params.set('search', searchQuery);
+              if (sortBy !== 'newest') params.set('sort', sortBy);
+              if (startDate) params.set('startDate', startDate);
+              if (endDate) params.set('endDate', endDate);
+              return '/admin/orders?' + params.toString();
+            }
+          %>
+          
+          <a href="<%= buildStatusUrl('all') %>" 
+             class="btn <%= statusFilter === 'all' ? 'btn-primary' : 'btn-outline-secondary' %> btn-sm px-3 py-2">
+            All (<%= totalOrders %>)
+          </a>
+          <a href="<%= buildStatusUrl('Placed') %>" 
+             class="btn <%= statusFilter === 'Placed' ? 'btn-info text-white' : 'btn-outline-info' %> btn-sm px-3 py-2">
+            Placed (<%= statusCounts.Placed %>)
+          </a>
+          <a href="<%= buildStatusUrl('Confirmed') %>" 
+             class="btn <%= statusFilter === 'Confirmed' ? 'btn-warning' : 'btn-outline-warning' %> btn-sm px-3 py-2">
+            Confirmed (<%= statusCounts.Confirmed %>)
+          </a>
+          <a href="<%= buildStatusUrl('Shipped') %>" 
+             class="btn <%= statusFilter === 'Shipped' ? 'btn-primary' : 'btn-outline-primary' %> btn-sm px-3 py-2">
+            Shipped (<%= statusCounts.Shipped %>)
+          </a>
+          <a href="<%= buildStatusUrl('OutForDelivery') %>" 
+             class="btn <%= statusFilter === 'OutForDelivery' ? 'btn-warning' : 'btn-outline-warning' %> btn-sm px-3 py-2">
+            Out for Delivery (<%= statusCounts.OutForDelivery %>)
+          </a>
+          <a href="<%= buildStatusUrl('Delivered') %>" 
+             class="btn <%= statusFilter === 'Delivered' ? 'btn-success' : 'btn-outline-success' %> btn-sm px-3 py-2">
+            Delivered (<%= statusCounts.Delivered %>)
+          </a>
+          <a href="<%= buildStatusUrl('Cancelled') %>" 
+             class="btn <%= statusFilter === 'Cancelled' ? 'btn-danger' : 'btn-outline-danger' %> btn-sm px-3 py-2">
+            Cancelled (<%= statusCounts.Cancelled %>)
+          </a>
+        </div>
+      </div>
+
+      <!-- Search and Filters Form -->
+      <form id="searchForm" method="GET" action="/admin/orders">
+        <input type="hidden" name="page" value="1">
+        
+        <!-- Keep status in form if filtered -->
+        <% if (statusFilter && statusFilter !== 'all') { %>
+          <input type="hidden" name="status" value="<%= statusFilter %>">
+        <% } %>
+        
+        <div class="row g-3">
+          <!-- Search Input -->
+          <div class="col-md-3">
+            <div class="input-group">
+              <span class="input-group-text bg-light border-end-0">
+                <i class="fas fa-search text-muted"></i>
+              </span>
+              <input type="text" name="search" value="<%= searchQuery || '' %>" 
+                     class="form-control border-start-0" 
+                     placeholder="Search by order ID, name, phone...">
+            </div>
+          </div>
+
+          <!-- Sort Select -->
+          <div class="col-md-2">
+            <select name="sort" class="form-select" id="sortSelect">
+              <option value="newest" <%= sortBy === 'newest' ? 'selected' : '' %>>Newest First</option>
+              <option value="oldest" <%= sortBy === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+              <option value="amount-high" <%= sortBy === 'amount-high' ? 'selected' : '' %>>Amount: High to Low</option>
+              <option value="amount-low" <%= sortBy === 'amount-low' ? 'selected' : '' %>>Amount: Low to High</option>
+            </select>
+          </div>
+
+          <!-- Date Range -->
+          <div class="col-md-3">
+            <div class="row g-2">
+              <div class="col-6">
+                <input type="date" name="startDate" value="<%= startDate || '' %>" 
+                       class="form-control" id="startDate" placeholder="From">
+              </div>
+              <div class="col-6">
+                <input type="date" name="endDate" value="<%= endDate || '' %>" 
+                       class="form-control" id="endDate" placeholder="To">
+              </div>
+            </div>
+          </div>
+
+          <!-- Filter Buttons -->
+          <div class="col-md-4">
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-primary flex-grow-1">
+                <i class="fas fa-filter me-2"></i> Apply Filters
+              </button>
+              <button type="button" id="clearFiltersBtn" class="btn btn-outline-secondary">
+                <i class="fas fa-times me-2"></i> Clear
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Orders Table Card -->
+  <div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+      <!-- Table Responsive -->
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="border-0 ps-4">ORDER ID</th>
+              <th class="border-0">DATE & TIME</th>
+              <th class="border-0">CUSTOMER</th>
+              <th class="border-0">AMOUNT</th>
+              <th class="border-0">STATUS</th>
+              <th class="border-0 pe-4 text-end">ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% if (orders && orders.length > 0) { %>
+              <% orders.forEach(order => { %>
+                <tr>
+                  <!-- Order ID -->
+                  <td class="ps-4">
+                    <div class="fw-bold text-primary">
+                      <%= order.displayOrderNumber %>
+                    </div>
+                    <small class="text-muted">
+                      <%= order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentMethod || 'N/A' %>
+                    </small>
+                  </td>
+
+                  <!-- Date & Time -->
+                  <td>
+                    <div class="text-dark"><%= order.orderDate %></div>
+                  </td>
+
+                  <!-- Customer -->
+                  <td>
+                    <div class="fw-medium text-dark">
+                      <%= order.customerName %>
+                    </div>
+                    <div class="text-muted small">
+                      <%= order.customerPhone %>
+                    </div>
+                  </td>
+
+                  <!-- Amount -->
+                  <td>
+                    <div class="fw-bold text-dark">
+                      <%= order.formattedAmount %>
+                    </div>
+                    <div class="text-muted small">
+                      <%= order.items?.length || 0 %> items
+                    </div>
+                  </td>
+
+                  <!-- Status -->
+                  <td>
+                    <span class="badge <%= 
+                      order.orderStatus === 'Placed' ? 'bg-info' :
+                      order.orderStatus === 'Confirmed' ? 'bg-warning' :
+                      order.orderStatus === 'Shipped' ? 'bg-primary' :
+                      order.orderStatus === 'OutForDelivery' ? 'bg-warning text-dark' :
+                      order.orderStatus === 'Delivered' ? 'bg-success' :
+                      'bg-danger'
+                    %> px-3 py-2">
+                      <%= order.orderStatus || 'N/A' %>
+                    </span>
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="pe-4 text-end">
+                    <a href="/admin/orders/<%= order._id %>" 
+                       class="btn btn-sm btn-primary">
+                      <i class="fas fa-eye me-1"></i> View Details
+                    </a>
+                  </td>
+                </tr>
+              <% }); %>
+            <% } else { %>
+              <!-- Empty State -->
+              <tr>
+                <td colspan="6" class="text-center py-5">
+                  <div class="mb-3">
+                    <i class="fas fa-box-open fa-3x text-muted"></i>
+                  </div>
+                  <h5 class="text-muted mb-2">No Orders Found</h5>
+                  <p class="text-muted mb-4">
+                    <% if (statusFilter !== 'all' || searchQuery || startDate || endDate) { %>
+                      Try adjusting your search or filters
+                    <% } else { %>
+                      No orders have been placed yet
+                    <% } %>
+                  </p>
+                  <% if (statusFilter !== 'all' || searchQuery || startDate || endDate) { %>
+                    <a href="/admin/orders" class="btn btn-primary">
+                      Clear All Filters
+                    </a>
+                  <% } %>
+                </td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pagination -->
+    <% if (totalPages > 1) { %>
+      <div class="card-footer border-top bg-white">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center">
+          <div class="text-muted mb-3 mb-md-0">
+            Showing <%= ((currentPage - 1) * limit) + 1 %> to 
+            <%= Math.min(currentPage * limit, totalOrders) %> of 
+            <%= totalOrders %> orders
+          </div>
+          
+          <nav aria-label="Page navigation">
+            <ul class="pagination pagination-sm mb-0">
+              <!-- Previous Button -->
+              <% 
+                function buildPageUrl(pageNum) {
+                  const params = new URLSearchParams();
+                  params.set('page', pageNum);
+                  if (statusFilter && statusFilter !== 'all') params.set('status', statusFilter);
+                  if (searchQuery) params.set('search', searchQuery);
+                  if (sortBy !== 'newest') params.set('sort', sortBy);
+                  if (startDate) params.set('startDate', startDate);
+                  if (endDate) params.set('endDate', endDate);
+                  return '/admin/orders?' + params.toString();
+                }
+              %>
+              
+              <li class="page-item <%= currentPage === 1 ? 'disabled' : '' %>">
+                <a class="page-link" 
+                   href="<%= currentPage > 1 ? buildPageUrl(currentPage - 1) : '#' %>">
+                  &laquo;
+                </a>
+              </li>
+
+              <!-- Page Numbers -->
+              <% 
+                let startPage = Math.max(1, currentPage - 2);
+                let endPage = Math.min(totalPages, currentPage + 2);
+                
+                if (startPage > 1) { 
+              %>
+                <li class="page-item">
+                  <a class="page-link" 
+                     href="<%= buildPageUrl(1) %>">
+                    1
+                  </a>
+                </li>
+                <% if (startPage > 2) { %>
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                <% } %>
+              <% } %>
+              
+              <% for (let i = startPage; i <= endPage; i++) { %>
+                <li class="page-item <%= i === currentPage ? 'active' : '' %>">
+                  <a class="page-link" 
+                     href="<%= buildPageUrl(i) %>">
+                    <%= i %>
+                  </a>
+                </li>
+              <% } %>
+              
+              <% if (endPage < totalPages) { %>
+                <% if (endPage < totalPages - 1) { %>
+                  <li class="page-item disabled">
+                    <span class="page-link">...</span>
+                  </li>
+                <% } %>
+                <li class="page-item">
+                  <a class="page-link" 
+                     href="<%= buildPageUrl(totalPages) %>">
+                    <%= totalPages %>
+                  </a>
+                </li>
+              <% } %>
+
+              <!-- Next Button -->
+              <li class="page-item <%= currentPage === totalPages ? 'disabled' : '' %>">
+                <a class="page-link" 
+                   href="<%= currentPage < totalPages ? buildPageUrl(currentPage + 1) : '#' %>">
+                  &raquo;
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</div>
+
+<!-- Add JavaScript for better UX -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Clear filters button
+  const clearBtn = document.getElementById('clearFiltersBtn');
+  if (clearBtn) {
+    clearBtn.addEventListener('click', function() {
+      window.location.href = '/admin/orders';
+    });
+  }
+  
+  // Auto-submit sort change
+  const sortSelect = document.getElementById('sortSelect');
+  if (sortSelect) {
+    sortSelect.addEventListener('change', function() {
+      document.getElementById('searchForm').submit();
+    });
+  }
+  
+  // Validate date range
+  const startDateInput = document.getElementById('startDate');
+  const endDateInput = document.getElementById('endDate');
+  
+  if (startDateInput && endDateInput) {
+    endDateInput.min = startDateInput.value;
+    startDateInput.max = endDateInput.value;
+    
+    startDateInput.addEventListener('change', function() {
+      endDateInput.min = this.value;
+    });
+    
+    endDateInput.addEventListener('change', function() {
+      startDateInput.max = this.value;
+    });
+  }
+  
+  // Debug: Log filter values
+  console.log('Current Filters:', {
+    status: '<%= statusFilter %>',
+    search: '<%= searchQuery %>',
+    sort: '<%= sortBy %>',
+    startDate: '<%= startDate %>',
+    endDate: '<%= endDate %>',
+    page: '<%= currentPage %>'
+  });
+});
+</script>

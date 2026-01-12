@@ -1,39 +1,44 @@
-// routes/auth.js
-const express = require('express');
-const router = express.Router();
-const passport = require('passport');
+import express from 'express';
+import passport from 'passport';
 
-// simple logger to ensure route is hit
+const router = express.Router();
+
+
 router.get('/google', (req, res, next) => {
   console.log('GET /auth/google requested');
   next();
 }, passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/google/callback',
+
+router.get(
+  '/google/callback',
   passport.authenticate('google', {
-    failureRedirect: '/user/login?error=Google Login Failed'
+    failureRedirect: '/user/login?error=Google Login Failed',
+    session: false
   }),
   (req, res) => {
-
-    // Set the same session variables as normal login
+  
     req.session.userId = req.user._id;
     req.session.isLoggedIn = true;
     req.session.fullName = req.user.fullName;
 
     req.session.save(() => {
-      res.redirect('/user/home');
+      res.redirect('/user');
     });
   }
 );
+
+
+
 
 router.get('/logout', (req, res) => {
   req.logout(function(err) {
     if (err) console.error('logout error', err);
     req.session.destroy(() => {
       res.clearCookie('connect.sid');
-      res.redirect('/');
+      res.redirect('/user');
     });
   });
 });
 
-module.exports = router;
+export default router;

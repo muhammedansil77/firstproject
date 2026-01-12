@@ -1,0 +1,1333 @@
+<!-- views/user/pages/orderDetails.ejs -->
+<main class="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] text-white antialiased">
+  <!-- Breadcrumbs -->
+  <div class="w-full bg-gradient-to-r from-[#0b0b0b] to-[#151515] border-y border-[#2a2a2a]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="py-4" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+          <li>
+            <a href="/" class="text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              Home
+            </a>
+          </li>
+          <li class="flex items-center">
+            <svg class="w-4 h-4 mx-1 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </li>
+          <li>
+            <a href="/orders" class="text-gray-400 hover:text-[#d4af37] transition-colors">
+              My Orders
+            </a>
+          </li>
+          <li class="flex items-center">
+            <svg class="w-4 h-4 mx-1 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </li>
+          <li>
+            <span class="text-[#d4af37] font-medium" aria-current="page">
+              Order Details
+            </span>
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h1 class="text-3xl font-bold text-white">Order Details</h1>
+          <p class="text-gray-400 mt-2">View your order information and tracking</p>
+        </div>
+        
+       <div class="flex items-center gap-4">
+  <!-- Order Status -->
+  <div class="flex items-center gap-2">
+    <span class="text-gray-400">Order Status:</span>
+    <span class="px-4 py-2 rounded-full text-sm font-bold <%= 
+      order.orderStatus === 'Placed' ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30' :
+      order.orderStatus === 'Confirmed' ? 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/30' :
+      order.orderStatus === 'Shipped' ? 'bg-purple-500/10 text-purple-300 border border-purple-500/30' :
+      order.orderStatus === 'Delivered' ? 'bg-green-500/10 text-green-300 border border-green-500/30' :
+      order.orderStatus === 'Cancelled' ? 'bg-red-500/10 text-red-300 border border-red-500/30' :
+      'bg-gray-500/10 text-gray-300 border border-gray-500/30'
+    %>">
+      <%= order.orderStatus || 'Placed' %>
+    </span>
+  </div>
+  
+  <!-- Refund Status (only if exists) -->
+  <% if (refund && refund.status) { %>
+  <div class="flex items-center gap-2">
+    <span class="text-gray-400">Refund Status:</span>
+    <span class="px-4 py-2 rounded-full text-sm font-bold <%= 
+      refund.status === 'pending' ? 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/30' :
+      refund.status === 'approved' ? 'bg-green-500/10 text-green-300 border border-green-500/30' :
+      refund.status === 'pickup_scheduled' ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30' :
+      refund.status === 'picked_up' ? 'bg-purple-500/10 text-purple-300 border border-purple-500/30' :
+      refund.status === 'refund_initiated' ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30' :
+      refund.status === 'refund_completed' ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30' :
+      refund.status === 'rejected' ? 'bg-red-500/10 text-red-300 border border-red-500/30' :
+      'bg-gray-500/10 text-gray-300 border border-gray-500/30'
+    %>">
+      <%= refund.status.charAt(0).toUpperCase() + refund.status.slice(1).replace('_', ' ') %>
+    </span>
+  </div>
+  <% } %>
+</div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column (2/3) -->
+      <div class="lg:col-span-2 space-y-8">
+        
+        <!-- Order Items Card -->
+      <!-- Replace the Order Items section with: -->
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+  <div class="p-6 border-b border-[#2a2a2a]">
+    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+      </div>
+      Product Details
+    </h2>
+  </div>
+  
+  <div class="p-6">
+    <% if (order.item) { %>
+    <div class="flex flex-col md:flex-row gap-6">
+      <!-- Product Image -->
+      <div class="w-full md:w-1/3">
+        <div class="aspect-square rounded-xl overflow-hidden bg-[#1a1a1a]">
+          <% if (order.item.imageSrc) { %>
+            <img src="<%= order.item.imageSrc %>" 
+                 alt="<%= order.item.product.name %>"
+                 class="w-full h-full object-cover"
+                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\"w-full h-full bg-[#1a1a1a] rounded-lg flex items-center justify-center\"><svg class=\"w-16 h-16 text-gray-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"/></svg></div>';">
+          <% } else { %>
+            <div class="w-full h-full flex items-center justify-center">
+              <svg class="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+              </svg>
+            </div>
+          <% } %>
+        </div>
+      </div>
+      
+      <!-- Product Info -->
+      <div class="w-full md:w-2/3">
+        <h3 class="text-2xl font-bold text-white mb-4"><%= order.item.product.name %></h3>
+        
+        <!-- Variant Details -->
+        <% if (order.item.variant) { %>
+        <div class="flex flex-wrap gap-4 mb-6">
+          <% if (order.item.variant.color && order.item.variant.color !== 'null') { %>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400">Color:</span>
+            <div class="flex items-center gap-2">
+              <div class="w-6 h-6 rounded-full <%= 
+                order.item.variant.color.toLowerCase().includes('black') ? 'bg-gray-800 border border-gray-600' :
+                order.item.variant.color.toLowerCase().includes('white') ? 'bg-gray-300 border border-gray-400' :
+                order.item.variant.color.toLowerCase().includes('red') ? 'bg-red-500' :
+                order.item.variant.color.toLowerCase().includes('blue') ? 'bg-blue-500' :
+                order.item.variant.color.toLowerCase().includes('green') ? 'bg-green-500' :
+                'bg-gray-500'
+              %>"></div>
+              <span class="font-medium text-white"><%= order.item.variant.color %></span>
+            </div>
+          </div>
+          <% } %>
+          
+          <% if (order.item.variant.size && order.item.variant.size !== 'null') { %>
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400">Size:</span>
+            <span class="font-medium text-white"><%= order.item.variant.size %></span>
+          </div>
+          <% } %>
+          
+          <div class="flex items-center gap-2">
+            <span class="text-gray-400">Quantity:</span>
+            <span class="font-medium text-white"><%= order.item.quantity %></span>
+          </div>
+        </div>
+        <% } %>
+        
+        <!-- Price Details -->
+        <div class="space-y-3 mb-6">
+          <div class="flex justify-between">
+            <span class="text-gray-400">Unit Price</span>
+            <span class="text-[#d4af37] font-bold">
+              ₹<%= order.item.price.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+            </span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-400">Total Price</span>
+            <span class="text-[#d4af37] font-bold">
+              ₹<%= order.item.total.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+            </span>
+          </div>
+        </div>
+        
+        <!-- Product Description -->
+        <% if (order.item.product.description) { %>
+        <div class="mb-6">
+          <h4 class="text-lg font-bold text-white mb-2">Description</h4>
+          <p class="text-gray-300"><%= order.item.product.description %></p>
+        </div>
+        <% } %>
+        
+        <!-- Order Info -->
+        <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+          <div class="grid grid-cols-2 gap-4">
+            <div>
+              <p class="text-sm text-gray-400">Order Number</p>
+              <p class="font-bold text-white"><%= order.orderNumber %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-400">Order Date</p>
+              <p class="font-medium text-white">
+                <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                }) %>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <% } else { %>
+    <div class="text-center py-12">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-8 h-8 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+      </div>
+      <p class="text-gray-400">Product details not available</p>
+    </div>
+    <% } %>
+  </div>
+     <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+  <div class="p-6 border-b border-[#2a2a2a]">
+    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+      </div>
+      Order Timeline
+    </h2>
+  </div>
+  
+  <div class="p-6">
+    <div class="relative">
+      <!-- Vertical Timeline Line -->
+      <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-[#2a2a2a]"></div>
+      
+      <div class="space-y-10">
+        <!-- Order Placed -->
+        <div class="flex items-start relative">
+          <div class="flex-shrink-0 relative z-10">
+            <div class="w-12 h-12 rounded-full bg-green-500/10 border-2 border-green-500/30 flex items-center justify-center">
+              <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <!-- Connecting line down -->
+            <div class="absolute left-1/2 top-full -translate-x-1/2 w-0.5 h-10 bg-green-500/30"></div>
+          </div>
+          <div class="ml-6">
+            <h4 class="text-sm font-bold text-white">Order Placed</h4>
+            <p class="text-sm text-gray-400 mt-1">
+              <% if (order.createdAt) { %>
+              <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+              }) %>
+              <% } else { %>
+              Date not available
+              <% } %>
+            </p>
+          </div>
+        </div>
+        
+        <!-- Timeline Steps -->
+        <% const timelineSteps = [
+          { 
+            status: 'Confirmed', 
+            icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z', 
+            label: 'Order Confirmed', 
+            description: 'Your order has been confirmed and is being processed', 
+            color: 'yellow', 
+            active: ['Confirmed', 'Shipped', 'OutForDelivery', 'Delivered'].includes(order.orderStatus),
+            completed: ['Shipped', 'OutForDelivery', 'Delivered'].includes(order.orderStatus)
+          },
+          { 
+            status: 'Shipped', 
+            icon: 'M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z', 
+            label: 'Shipped', 
+            description: 'Your order has been shipped', 
+            color: 'purple', 
+            active: ['Shipped', 'OutForDelivery', 'Delivered'].includes(order.orderStatus),
+            completed: ['OutForDelivery', 'Delivered'].includes(order.orderStatus)
+          },
+          { 
+            status: 'OutForDelivery', 
+            icon: 'M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z', 
+            label: 'Out for Delivery', 
+            description: 'Your order is out for delivery today', 
+            color: 'orange', 
+            active: ['OutForDelivery', 'Delivered'].includes(order.orderStatus),
+            completed: order.orderStatus === 'Delivered'
+          },
+          { 
+            status: 'Delivered', 
+            icon: 'M5 13l4 4L19 7', 
+            label: 'Delivered', 
+            description: 'Your order has been successfully delivered', 
+            color: 'green', 
+            active: order.orderStatus === 'Delivered',
+            completed: true
+          }
+        ] %>
+        
+        <% timelineSteps.forEach((step, index) => { %>
+          <div class="flex items-start relative">
+            <div class="flex-shrink-0 relative z-10">
+              <% if (step.active) { %>
+                <!-- Completed/Active Step -->
+                <div class="w-12 h-12 rounded-full bg-<%= step.color %>-500/10 border-2 border-<%= step.color %>-500/30 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-<%= step.color %>-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= step.icon %>"/>
+                  </svg>
+                </div>
+              <% } else { %>
+                <!-- Inactive/Pending Step -->
+                <div class="w-12 h-12 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center">
+                  <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                </div>
+              <% } %>
+              
+              <!-- Connecting line down (except for last item) -->
+              <% if (index < timelineSteps.length - 1) { %>
+                <div class="absolute left-1/2 top-full -translate-x-1/2 w-0.5 h-10 
+                  <%= step.completed ? 'bg-' + step.color + '-500/30' : 'bg-gray-700' %>">
+                </div>
+              <% } %>
+            </div>
+            
+            <div class="ml-6">
+              <div class="flex items-center gap-2">
+                <h4 class="text-sm font-bold <%= step.active ? 'text-white' : 'text-gray-500' %>">
+                  <%= step.label %>
+                </h4>
+                <% if (step.active && step.status === order.orderStatus) { %>
+                  <span class="px-2 py-1 text-xs font-bold rounded-full bg-<%= step.color %>-500/20 text-<%= step.color %>-300">
+                    Current
+                  </span>
+                <% } %>
+              </div>
+              <p class="text-sm <%= step.active ? 'text-gray-400' : 'text-gray-600' %> mt-1">
+                <%= step.description %>
+              </p>
+            </div>
+          </div>
+        <% }) %>
+        
+        <!-- Cancelled Status (if applicable) -->
+        <% if (order.orderStatus === 'Cancelled') { %>
+          <div class="flex items-start relative">
+            <div class="flex-shrink-0 relative z-10">
+              <div class="w-12 h-12 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-6">
+              <h4 class="text-sm font-bold text-red-400">Order Cancelled</h4>
+              <p class="text-sm text-gray-400 mt-1">This order has been cancelled</p>
+            </div>
+          </div>
+        <% } %>
+        
+        <!-- Estimated Delivery -->
+        <% if (order.orderStatus !== 'Cancelled') { %>
+          <div class="flex items-start relative">
+            <div class="flex-shrink-0 relative z-10">
+              <div class="w-12 h-12 rounded-full bg-blue-500/10 border-2 border-blue-500/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-6">
+              <h4 class="text-sm font-bold text-white">Estimated Delivery</h4>
+              <% if (order.createdAt) { 
+                const deliveryDate = new Date(order.createdAt); 
+                deliveryDate.setDate(deliveryDate.getDate() + 7); 
+                const isDelivered = order.orderStatus === 'Delivered';
+              %>
+                <p class="text-sm <%= isDelivered ? 'text-green-400' : 'text-gray-400' %> mt-1">
+                  <% if (isDelivered) { %>
+                    <span class="flex items-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Delivered on <%= deliveryDate.toLocaleDateString('en-IN', { 
+                        weekday: 'long', 
+                        month: 'long', 
+                        day: 'numeric',
+                        year: 'numeric'
+                      }) %>
+                    </span>
+                  <% } else { %>
+                    <%= deliveryDate.toLocaleDateString('en-IN', { 
+                      weekday: 'long', 
+                      month: 'long', 
+                      day: 'numeric' 
+                    }) %>
+                  <% } %>
+                </p>
+              <% } else { %>
+                <p class="text-sm text-gray-400 mt-1">Date not available</p>
+              <% } %>
+            </div>
+          </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- Add this section AFTER the Order Timeline card -->
+<!-- Enhanced Refund Timeline Card -->
+<% if (refund && refund.status) { %>
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] mt-8">
+  <div class="p-6 border-b border-[#2a2a2a]">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div>
+        <h2 class="text-xl font-bold text-white flex items-center gap-3">
+          <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+            <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+            </svg>
+          </div>
+          Return & Refund Status
+        </h2>
+        <p class="text-gray-400 text-sm mt-2">Refund ID: <%= refund.refundId || 'REF-' + refund._id.toString().slice(-8).toUpperCase() %></p>
+      </div>
+      
+      <div class="flex items-center gap-3">
+        <span class="text-gray-400">Current Status:</span>
+        <span class="px-3 py-1.5 rounded-full text-sm font-bold 
+          <%= refund.status === 'pending' ? 'bg-yellow-500/10 text-yellow-300 border border-yellow-500/30' :
+             refund.status === 'approved' ? 'bg-green-500/10 text-green-300 border border-green-500/30' :
+             refund.status === 'pickup_scheduled' ? 'bg-blue-500/10 text-blue-300 border border-blue-500/30' :
+             refund.status === 'picked_up' ? 'bg-purple-500/10 text-purple-300 border border-purple-500/30' :
+             refund.status === 'refund_initiated' ? 'bg-indigo-500/10 text-indigo-300 border border-indigo-500/30' :
+             refund.status === 'refund_completed' ? 'bg-green-500/10 text-green-300 border border-green-500/30' :
+             refund.status === 'rejected' ? 'bg-red-500/10 text-red-300 border border-red-500/30' :
+             'bg-gray-500/10 text-gray-300 border border-gray-500/30' %>">
+          <%= refund.status.charAt(0).toUpperCase() + refund.status.slice(1).replace('_', ' ') %>
+        </span>
+      </div>
+    </div>
+  </div>
+  
+  <div class="p-6">
+    <!-- Refund Amount Information -->
+    <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Refund Amount</p>
+          <p class="text-[#d4af37] font-bold text-lg">
+            ₹<%= (refund.refundAmount || order.finalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+          </p>
+        </div>
+        
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Refund Method</p>
+          <p class="text-white">
+            <% const methodMap = {
+              'original_method': 'Original Payment Method',
+              'bank_transfer': 'Bank Transfer',
+              'upi': 'UPI',
+              'wallet_credit': 'Wallet Credit'
+            }; %>
+            <%= methodMap[refund.refundMethod] || refund.refundMethod || 'Original Payment Method' %>
+          </p>
+        </div>
+        
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Requested On</p>
+          <p class="text-white">
+            <%= refund.requestedAt ? new Date(refund.requestedAt).toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'short',
+              year: 'numeric'
+            }) : 'N/A' %>
+          </p>
+        </div>
+      </div>
+      
+      <% if (refund.estimatedCompletion) { %>
+      <div class="mt-4 pt-4 border-t border-[#2a2a2a]">
+        <div class="flex items-center gap-2 text-green-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+          <span class="text-sm">
+            Estimated completion: <%= new Date(refund.estimatedCompletion).toLocaleDateString('en-IN', {
+              weekday: 'short',
+              day: 'numeric',
+              month: 'short'
+            }) %>
+          </span>
+        </div>
+      </div>
+      <% } %>
+    </div>
+
+    <!-- Enhanced Timeline -->
+    <div class="space-y-8">
+      <!-- Timeline Header -->
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-bold text-white">Refund Timeline</h3>
+        <span class="text-sm text-gray-400">Track your refund progress</span>
+      </div>
+
+      <!-- Timeline Steps -->
+      <div class="relative">
+        <!-- Vertical Timeline Line -->
+        <div class="absolute left-6 top-0 bottom-0 w-0.5 bg-[#2a2a2a]"></div>
+        
+        <% 
+          // Define all refund steps with icons and status
+          const refundSteps = [
+            { 
+              value: 'pending', 
+              label: 'Request Submitted', 
+              icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z',
+              description: 'Your refund request has been submitted and is under review',
+              color: 'gray'
+            },
+            { 
+              value: 'approved', 
+              label: 'Request Approved', 
+              icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z',
+              description: 'Your refund request has been approved by our team',
+              color: 'green'
+            },
+            { 
+              value: 'pickup_scheduled', 
+              label: 'Pickup Scheduled', 
+              icon: 'M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z',
+              description: 'Return pickup has been scheduled with our logistics partner',
+              color: 'blue'
+            },
+            { 
+              value: 'picked_up', 
+              label: 'Item Picked Up', 
+              icon: 'M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4',
+              description: 'The return item has been picked up successfully',
+              color: 'purple'
+            },
+            { 
+              value: 'refund_initiated', 
+              label: 'Refund Initiated', 
+              icon: 'M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z',
+              description: 'Refund has been initiated to your account',
+              color: 'indigo'
+            },
+            { 
+              value: 'refund_completed', 
+              label: 'Refund Completed', 
+              icon: 'M5 13l4 4L19 7',
+              description: 'Refund has been successfully processed',
+              color: 'green'
+            },
+            { 
+              value: 'rejected', 
+              label: 'Request Rejected', 
+              icon: 'M6 18L18 6M6 6l12 12',
+              description: 'Refund request was not approved',
+              color: 'red',
+              isSpecial: true
+            }
+          ];
+          
+          // Find current step index
+          let currentStepIndex = refundSteps.findIndex(step => step.value === refund.status);
+          if (currentStepIndex === -1) currentStepIndex = 0;
+          
+          // Get dates for each step
+          const stepDates = {
+            'pending': refund.requestedAt,
+            'approved': refund.approvedAt,
+            'pickup_scheduled': refund.pickup_scheduledAt || refund.pickupScheduledAt,
+            'picked_up': refund.picked_upAt || refund.pickedUpAt,
+            'refund_initiated': refund.refund_initiatedAt || refund.refundInitiatedAt,
+            'refund_completed': refund.refund_completedAt || refund.refundCompletedAt,
+            'rejected': refund.rejectedAt
+          };
+        %>
+        
+        <!-- Show Rejected Status Separately if applicable -->
+        <% if (refund.status === 'rejected') { %>
+          <div class="flex items-start relative mb-6">
+            <div class="flex-shrink-0 relative z-10">
+              <div class="w-12 h-12 rounded-full bg-red-500/10 border-2 border-red-500/30 flex items-center justify-center">
+                <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
+              </div>
+            </div>
+            <div class="ml-6">
+              <div class="flex items-center gap-2 mb-1">
+                <h4 class="text-sm font-bold text-red-400">Request Rejected</h4>
+                <span class="px-2 py-1 text-xs font-bold rounded-full bg-red-500/20 text-red-300">
+                  Final Status
+                </span>
+              </div>
+              <p class="text-sm text-gray-400 mb-2">
+                Your refund request was not approved. Please contact support for more details.
+              </p>
+              <% if (refund.reason) { %>
+              <div class="bg-[#1a1a1a] border border-red-500/20 rounded-lg p-3">
+                <p class="text-sm text-red-400 mb-1">Reason:</p>
+                <p class="text-gray-300"><%= refund.reason %></p>
+              </div>
+              <% } %>
+            </div>
+          </div>
+        <% } else { %>
+          <!-- Normal Timeline for other statuses -->
+          <% refundSteps.forEach((step, index) => { 
+            // Skip rejected if we're not in rejected status
+            if (step.value === 'rejected') return;
+            
+            const isCompleted = index < currentStepIndex;
+            const isCurrent = index === currentStepIndex;
+            const isFuture = index > currentStepIndex;
+            const stepDate = stepDates[step.value];
+          %>
+            <div class="flex items-start relative mb-10 last:mb-0">
+              <div class="flex-shrink-0 relative z-10">
+                <% if (isCompleted) { %>
+                  <!-- Completed Step -->
+                  <div class="w-12 h-12 rounded-full bg-<%= step.color %>-500/10 border-2 border-<%= step.color %>-500/30 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-<%= step.color %>-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= step.icon %>"/>
+                    </svg>
+                  </div>
+                <% } else if (isCurrent) { %>
+                  <!-- Current Step -->
+                  <div class="w-12 h-12 rounded-full bg-<%= step.color %>-500/10 border-2 border-<%= step.color %>-500/30 flex items-center justify-center animate-pulse">
+                    <svg class="w-5 h-5 text-<%= step.color %>-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= step.icon %>"/>
+                    </svg>
+                  </div>
+                <% } else { %>
+                  <!-- Future Step -->
+                  <div class="w-12 h-12 rounded-full bg-gray-800 border-2 border-gray-700 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="<%= step.icon %>"/>
+                    </svg>
+                  </div>
+                <% } %>
+                
+                <!-- Connecting line down (except for last item) -->
+                <% if (index < refundSteps.length - 2) { %> <!-- -2 because we're skipping rejected -->
+                  <div class="absolute left-1/2 top-full -translate-x-1/2 w-0.5 h-12 
+                    <%= isCompleted ? 'bg-' + step.color + '-500/30' : 'bg-gray-700' %>">
+                  </div>
+                <% } %>
+              </div>
+              
+              <div class="ml-6">
+                <div class="flex flex-col sm:flex-row sm:items-center gap-2 mb-1">
+                  <h4 class="text-sm font-bold <%= isCurrent || isCompleted ? 'text-white' : 'text-gray-500' %>">
+                    <%= step.label %>
+                  </h4>
+                  <% if (isCurrent) { %>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full bg-<%= step.color %>-500/20 text-<%= step.color %>-300">
+                      Current
+                    </span>
+                  <% } else if (isCompleted) { %>
+                    <span class="px-2 py-1 text-xs font-bold rounded-full bg-green-500/20 text-green-300 flex items-center gap-1">
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                      </svg>
+                      Completed
+                    </span>
+                  <% } %>
+                </div>
+                
+                <p class="text-sm <%= isCurrent || isCompleted ? 'text-gray-400' : 'text-gray-600' %> mb-2">
+                  <%= step.description %>
+                </p>
+                
+                <% if (stepDate) { %>
+                  <div class="flex items-center gap-2 text-xs text-gray-500">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <%= new Date(stepDate).toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'short',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    }) %>
+                  </div>
+                <% } %>
+              </div>
+            </div>
+          <% }) %>
+        <% } %>
+      </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="mt-8 pt-8 border-t border-[#2a2a2a]">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Return Address -->
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            Return Pickup Address
+          </h4>
+          <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+            <% if (refund.returnAddress) { %>
+              <p class="font-bold text-white mb-1"><%= refund.returnAddress.fullName || 'N/A' %></p>
+              <p class="text-[#d4af37] text-sm mb-2"><%= refund.returnAddress.phone || '' %></p>
+              <p class="text-gray-300 text-sm"><%= refund.returnAddress.house || '' %></p>
+              <p class="text-gray-300 text-sm">
+                <%= refund.returnAddress.city || '' %>, 
+                <%= refund.returnAddress.state || '' %> 
+                <%= refund.returnAddress.pincode || '' %>
+              </p>
+              <% if (refund.returnAddress.landmark) { %>
+                <p class="text-gray-500 text-sm mt-1">Landmark: <%= refund.returnAddress.landmark %></p>
+              <% } %>
+            <% } else { %>
+              <p class="text-gray-500">Address not specified</p>
+            <% } %>
+          </div>
+        </div>
+        
+        <!-- Refund Details -->
+        <div>
+          <h4 class="text-sm font-bold text-white mb-3 flex items-center gap-2">
+            <svg class="w-4 h-4 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+            </svg>
+            Refund Details
+          </h4>
+          <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
+            <% if (refund.reason) { %>
+            <div class="mb-3">
+              <p class="text-xs text-gray-400 mb-1">Reason for Return</p>
+              <p class="text-white text-sm"><%= refund.reason %></p>
+            </div>
+            <% } %>
+            
+            <% if (refund.additionalDetails) { %>
+            <div>
+              <p class="text-xs text-gray-400 mb-1">Additional Notes</p>
+              <p class="text-gray-300 text-sm"><%= refund.additionalDetails %></p>
+            </div>
+            <% } %>
+            
+            <!-- Processing Time -->
+            <div class="mt-4 pt-4 border-t border-[#2a2a2a]">
+              <p class="text-xs text-gray-400 mb-1">Processing Time</p>
+              <p class="text-green-400 text-sm">
+                <% if (refund.status === 'refund_completed') { %>
+                  ✓ Refund completed successfully
+                <% } else if (refund.status === 'refund_initiated') { %>
+                  ⚡ Refund will reflect in 3-5 business days
+                <% } else { %>
+                  ⏳ Typically processed within 7-10 business days
+                <% } %>
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+<% } %>
+</div>
+
+    
+      
+
+      <!-- Right Column (1/3) -->
+      <div class="space-y-8">
+        
+        <!-- Order Summary Card -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+          <div class="p-6 border-b border-[#2a2a2a]">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+                <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              Order Summary
+            </h2>
+          </div>
+          
+          <div class="p-6">
+            <div class="space-y-4">
+              <!-- Order Info -->
+              <div class="space-y-3 pb-4 border-b border-[#2a2a2a]">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Order ID</span>
+                  <span class="font-bold text-white">
+                <%= order.orderNumber || (order._id ? `ORD-${order._id.toString().slice(-8).toUpperCase()}` : 'N/A') %>
+                  </span>
+                </div>
+                
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Order Date</span>
+                  <span class="font-medium text-white">
+                    <% if (order.createdAt) { %>
+                    <%= new Date(order.createdAt).toLocaleDateString('en-IN') %>
+                    <% } else { %>
+                    N/A
+                    <% } %>
+                  </span>
+                </div>
+                
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Payment Method</span>
+                  <span class="font-medium text-white">
+                    <%= order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentMethod || 'N/A' %>
+                  </span>
+                </div>
+                
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Payment Status</span>
+                  <span class="font-medium <%= (order.paymentStatus === 'Paid') ? 'text-green-400' : 'text-yellow-400' %>">
+                    <%= order.paymentStatus || 'Pending' %>
+                  </span>
+                </div>
+              </div>
+              
+              <!-- Price Breakdown -->
+              <div class="space-y-3 pt-4">
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Subtotal</span>
+                  <span class="text-white">₹<%= (order.subtotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+                </div>
+                
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Tax (10% GST)</span>
+                  <span class="text-white">₹<%= (order.tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+                </div>
+                
+                <% if (order.discount > 0) { %>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Discount</span>
+                  <span class="text-green-400">-₹<%= (order.discount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+                </div>
+                <% } %>
+                
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Shipping</span>
+                  <span class="<%= (order.shipping || 0) === 0 ? 'text-green-400' : 'text-white' %>">
+                    <% if ((order.shipping || 0) === 0) { %>
+                      FREE
+                    <% } else { %>
+                      ₹<%= (order.shipping || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+                    <% } %>
+                  </span>
+                </div>
+                
+                <div class="pt-4 border-t border-[#2a2a2a]">
+                  <div class="flex justify-between text-lg font-bold">
+                    <span class="text-white">Total Amount</span>
+                    <span class="text-[#d4af37]">₹<%= (order.finalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Delivery Address Card -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+          <div class="p-6 border-b border-[#2a2a2a]">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+                <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              Delivery Address
+            </h2>
+          </div>
+          
+          <div class="p-6">
+            <% if (order.address) { %>
+            <div class="space-y-3">
+              <div>
+                <p class="font-bold text-white"><%= order.address.fullName || 'N/A' %></p>
+                <p class="text-[#d4af37] font-medium mt-1"><%= order.address.phone || 'N/A' %></p>
+              </div>
+              
+              <div class="pt-3 border-t border-[#2a2a2a]">
+                <p class="text-gray-300"><%= order.address.house || 'N/A' %></p>
+                <p class="text-gray-300 mt-1">
+                  <%= order.address.city || '' %>, 
+                  <%= order.address.state || '' %> 
+                  <%= order.address.pincode || '' %>
+                </p>
+              </div>
+              
+              <% if (order.address.landmark) { %>
+              <div class="pt-3 border-t border-[#2a2a2a]">
+                <p class="text-sm text-gray-400">Landmark</p>
+                <p class="text-gray-300"><%= order.address.landmark %></p>
+              </div>
+              <% } %>
+            </div>
+            <% } else { %>
+            <div class="text-center py-4">
+              <div class="w-12 h-12 mx-auto mb-3 rounded-full bg-gray-800 flex items-center justify-center">
+                <svg class="w-6 h-6 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 11111.314 0z"/>
+                </svg>
+              </div>
+              <p class="text-gray-400">Address not available</p>
+            </div>
+            <% } %>
+          </div>
+        </div>
+        <!-- Delivery Address Card -->
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+  <div class="p-6 border-b border-[#2a2a2a]">
+    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      Delivery Address
+    </h2>
+  </div>
+  
+  <div class="p-6">
+    <% 
+      // Ensure address exists
+      const address = order.address || {};
+      
+      // Debug info (temporary)
+      console.log('EJS Template - Address object:', address);
+      console.log('EJS Template - Has fullName?', address.fullName);
+      console.log('EJS Template - Has house?', address.house);
+    %>
+    
+    <% if (address && address.fullName && address.fullName !== "Not Available") { %>
+    <div class="space-y-3">
+      <!-- Recipient Info -->
+      <div class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-full bg-[#d4af37]/10 flex items-center justify-center flex-shrink-0">
+          <svg class="w-4 h-4 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+          </svg>
+        </div>
+        <div>
+          <p class="font-bold text-white"><%= address.fullName %></p>
+          <p class="text-[#d4af37] font-medium mt-1">
+            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+            </svg>
+            <%= address.phone || 'Phone not provided' %>
+          </p>
+        </div>
+      </div>
+      
+      <!-- Address Details -->
+      <div class="pt-3 border-t border-[#2a2a2a]">
+        <div class="flex items-start gap-3">
+          <div class="w-8 h-8 rounded-full bg-[#d4af37]/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+          </div>
+          <div class="space-y-1">
+            <p class="text-gray-300"><%= address.house %></p>
+            <% if (address.landmark) { %>
+            <p class="text-gray-400 text-sm">Landmark: <%= address.landmark %></p>
+            <% } %>
+            <p class="text-gray-300">
+              <%= address.city || '' %><%= address.city && address.state ? ', ' : '' %>
+              <%= address.state || '' %> 
+              <%= address.pincode || '' %>
+            </p>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Order Note -->
+      <div class="pt-3 border-t border-[#2a2a2a]">
+        <p class="text-sm text-gray-400 mb-1">Delivery Instructions:</p>
+        <p class="text-gray-300 text-sm">Standard delivery within 5-7 business days</p>
+      </div>
+    </div>
+    <% } else { %>
+    <!-- Fallback when no address -->
+    <div class="text-center py-8">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-8 h-8 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+        </svg>
+      </div>
+      <h3 class="text-lg font-bold text-white mb-2">Address Information</h3>
+      <p class="text-gray-400 mb-6">We couldn't retrieve the delivery address for this order.</p>
+      
+      <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 text-left">
+        <div class="flex items-center gap-3 mb-3">
+          <div class="w-8 h-8 rounded-lg bg-red-500/10 flex items-center justify-center">
+            <svg class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.694-.833-2.464 0L4.732 16.5c-.77.833.192 2.5 1.732 2.5z"/>
+            </svg>
+          </div>
+          <span class="text-white font-medium">Address Not Found</span>
+        </div>
+        <p class="text-gray-400 text-sm">Possible reasons:</p>
+        <ul class="text-gray-500 text-sm mt-2 space-y-1 ml-5 list-disc">
+          <li>Address data wasn't saved with the order</li>
+          <li>Database connection issue during order placement</li>
+          <li>Address was deleted after order was placed</li>
+        </ul>
+      </div>
+      
+      <div class="mt-6 flex justify-center gap-3">
+        <a href="/support" 
+           class="px-4 py-2 border border-[#2a2a2a] text-gray-300 hover:border-[#d4af37]/30 hover:text-[#d4af37] rounded-lg transition-all text-sm">
+          Contact Support
+        </a>
+        <a href="/user/addresses" 
+           class="px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-semibold rounded-lg hover:shadow-lg hover:shadow-[#d4af37]/20 transition-all text-sm">
+          Manage Addresses
+        </a>
+      </div>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+        <!-- Action Buttons -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] p-6">
+          <div class="space-y-4">
+           <% if (order.orderStatus === 'Placed' || order.orderStatus === 'Confirmed') { %>
+<button 
+  onclick="openCancelModal('<%= order._id %>')" 
+  class="w-full bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+>
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+  </svg>
+  Cancel Order
+</button>
+<% } %>
+            
+ <!-- Check if refund can be requested -->
+<% 
+  // Determine if refund button should be shown
+  const canRequestRefund = order.orderStatus === 'Delivered' && !refund;
+  const hasPendingRefund = refund && ['pending', 'approved', 'pickup_scheduled', 'picked_up', 'refund_initiated'].includes(refund.status);
+  const hasCompletedRefund = refund && ['refund_completed', 'rejected'].includes(refund.status);
+%>
+
+<% if (canRequestRefund) { %>
+  <!-- Show refund request button -->
+  <button 
+    onclick="window.location.href='/orders/<%= order._id %>/refund'" 
+    class="w-full border border-[#2a2a2a] text-gray-300 hover:border-[#d4af37]/30 hover:text-[#d4af37] hover:bg-[#1a1a1a] font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+    </svg>
+    Request Return/Refund
+  </button>
+<% } else if (hasPendingRefund) { %>
+  <!-- Show refund status button -->
+  <button 
+    onclick="window.location.href='/orders/<%= order._id %>'" 
+    class="w-full border border-blue-500/30 text-blue-400 hover:border-blue-500/50 hover:bg-blue-500/10 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+    </svg>
+    View Refund Status
+  </button>
+<% } else if (hasCompletedRefund) { %>
+  <!-- Show completed refund button -->
+  <% if (refund.status === 'refund_completed') { %>
+    <button 
+      onclick="window.location.href='/orders/<%= order._id %>'" 
+      class="w-full border border-green-500/30 text-green-400 hover:border-green-500/50 hover:bg-green-500/10 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+      </svg>
+      Refund Completed
+    </button>
+  <% } else if (refund.status === 'rejected') { %>
+    <button 
+      onclick="window.location.href='/orders/<%= order._id %>'" 
+      class="w-full border border-red-500/30 text-red-400 hover:border-red-500/50 hover:bg-red-500/10 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+    >
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+      </svg>
+      Refund Rejected
+    </button>
+  <% } %>
+<% } %>
+            
+            <a 
+              href="/orders" 
+              class="block w-full border border-[#2a2a2a] hover:border-[#d4af37]/30 hover:bg-[#1a1a1a] text-gray-300 hover:text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+              </svg>
+              Back to Orders
+            </a>
+            
+            <a 
+              href="/shop" 
+              class="block w-full bg-gradient-to-r from-[#d4af37] to-[#b8941f] hover:from-[#e4bf47] hover:to-[#c8a42f] text-black font-bold py-3 px-4 rounded-lg hover:shadow-lg hover:shadow-[#d4af37]/20 transition-all flex items-center justify-center gap-3"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+              </svg>
+              Continue Shopping
+            </a>
+          </div>
+        </div>
+
+        <!-- Customer Support -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] p-6">
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            Need Help?
+          </h3>
+          <p class="text-gray-400 text-sm mb-4">Contact our customer support for any queries about your order</p>
+          <div class="space-y-3">
+            <a href="/support" class="block text-center border border-[#2a2a2a] hover:border-[#d4af37]/30 text-gray-300 hover:text-[#d4af37] py-2 rounded-lg transition-all">
+              Contact Support
+            </a>
+            <a href="/faq" class="block text-center border border-[#2a2a2a] hover:border-[#d4af37]/30 text-gray-300 hover:text-[#d4af37] py-2 rounded-lg transition-all">
+              View FAQ
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+      <!-- Order Timeline -->
+    
+      </div>
+  <!-- Cancel Order Modal -->
+<div id="cancelModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl w-full max-w-md max-h-[90vh] flex flex-col">
+
+    <!-- Modal Header -->
+    <div class="p-6 border-b border-[#2a2a2a]">
+      <div class="flex items-center justify-between">
+        <h3 class="text-xl font-bold text-white">Cancel Order</h3>
+        <button onclick="closeCancelModal()" class="text-gray-400 hover:text-white">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <p class="text-gray-400 mt-2">Please select a reason for cancellation</p>
+    </div>
+    
+    <!-- Modal Body -->
+   <div class="p-6 overflow-y-auto flex-1 custom-scrollbar">
+
+      <!-- Reason Selection -->
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-gray-300 mb-3">Select Reason</label>
+        <div class="space-y-2" id="reasonOptions">
+          <% const cancellationReasons = [
+            { value: 'changed_mind', label: 'Changed my mind' },
+            { value: 'found_better_price', label: 'Found better price elsewhere' },
+            { value: 'shipping_delay', label: 'Shipping takes too long' },
+            { value: 'ordered_by_mistake', label: 'Ordered by mistake' },
+            { value: 'financial_issues', label: 'Financial issues' },
+            { value: 'product_not_needed', label: 'Product no longer needed' },
+            { value: 'other', label: 'Other reason' }
+          ]; %>
+          
+          <% cancellationReasons.forEach((reason, index) => { %>
+            <label class="flex items-center p-3 border border-[#2a2a2a] rounded-lg hover:border-[#d4af37]/30 cursor-pointer transition-all">
+              <input 
+                type="radio" 
+                name="cancellationReason" 
+                value="<%= reason.value %>" 
+                class="w-4 h-4 text-[#d4af37] bg-gray-800 border-gray-700 focus:ring-[#d4af37] focus:ring-2"
+                <%= index === 0 ? 'checked' : '' %>
+                onchange="toggleCustomReason()"
+              >
+              <span class="ml-3 text-white"><%= reason.label %></span>
+            </label>
+          <% }); %>
+        </div>
+      </div>
+      
+      <!-- Custom Reason Input -->
+      <div id="customReasonContainer" class="hidden mb-6">
+        <label class="block text-sm font-medium text-gray-300 mb-2">Please specify your reason</label>
+        <textarea 
+          id="customReason" 
+          rows="3" 
+          class="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg p-3 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] outline-none transition-all"
+          placeholder="Tell us why you're cancelling..."
+        ></textarea>
+      </div>
+      
+      <!-- Refund Information -->
+      <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 mb-6">
+        <div class="flex items-start gap-3">
+          <div class="w-6 h-6 rounded-full bg-yellow-500/10 flex items-center justify-center flex-shrink-0">
+            <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+          </div>
+          <div>
+            <p class="text-sm text-yellow-300 font-medium">Important Information</p>
+            <p class="text-sm text-gray-400 mt-1">
+              <% if (order.paymentMethod === 'COD') { %>
+                For Cash on Delivery orders, cancellation will be processed immediately.
+              <% } else { %>
+                For online payments, refund will be initiated within 3-5 business days.
+              <% } %>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Modal Footer -->
+    <div class="p-6 border-t border-[#2a2a2a] flex gap-3">
+      <button 
+        onclick="closeCancelModal()" 
+        class="flex-1 border border-[#2a2a2a] text-gray-300 hover:border-gray-500 hover:text-white font-medium py-3 px-4 rounded-lg transition-all"
+      >
+        Go Back
+      </button>
+      <button 
+        onclick="submitCancellation()" 
+        class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+      >
+        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        Confirm Cancellation
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Hidden input for order ID -->
+<input type="hidden" id="currentOrderId" value="<%= order._id %>">
+</main>
+
+<!-- Custom Styles -->
+<style>
+  @keyframes fade-in {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .animate-fade-in {
+    animation: fade-in 0.3s ease-out;
+  }
+  .custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(212, 175, 55, 0.4);
+  border-radius: 10px;
+}
+
+.custom-scrollbar {
+  scrollbar-width: thin;
+  sc
+
+  /* Timeline connector animation */
+  .timeline-step.active::before {
+    content: '';
+    position: absolute;
+    left: -28px;
+    top: 24px;
+    width: 2px;
+    height: 100%;
+    background: linear-gradient(to bottom, #d4af37, transparent);
+    animation: timeline-grow 1s ease-out forwards;
+  }
+
+  @keyframes timeline-grow {
+    from {
+      height: 0;
+    }
+    to {
+      height: calc(100% - 24px);
+    }
+  }
+</style>
+
+<!-- JavaScript -->
+<script>
+
+
+</script>

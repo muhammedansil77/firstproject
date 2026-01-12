@@ -1,101 +1,113 @@
-// middlewares/user/authMiddleware.js
 
-const User = require("../../models/userSchema");
+import User from "../../models/userSchema.js";
 
-// Attach user info to req/res.locals when logged-in
-module.exports.attachUser = async (req, res, next) => {
+
+export const attachUser = async (req, res, next) => {
   try {
     res.locals.isLoggedIn = false;
     res.locals.userName = null;
+    req.user = null;
 
-    if (req.session && req.session.userId) {
-      const user = await User.findById(req.session.userId).select("fullName email");
-      if (user) {
-        req.user = user;
-        res.locals.isLoggedIn = true;
-        res.locals.userName = user.fullName || user.email || null;
-        req.session.fullName = req.session.fullName || user.fullName;
-      }
+    if (!req.session?.userId) return next();
+
+  
+    const user = await User.findById(req.session.userId)
+      .select("fullName email isBlocked")
+      .lean();
+
+    if (!user) {
+      req.session.destroy(() => {});
+      return next();
     }
+
+    req.user = user;
+    res.locals.isLoggedIn = true;
+    res.locals.userName = user.fullName || user.email || null;
+
+    return next();
   } catch (err) {
     console.error("attachUser error:", err);
+    req.user = null;
+    next();
   }
-  next();
 };
 
-module.exports.protectRoute = (req, res, next) => {
-  if (req.session && req.session.isLoggedIn && req.session.userId) {
+
+export const protectRoute = (req, res, next) => {
+
+  // 🚫 DO NOT protect admin routes
+  if (req.originalUrl.startsWith('/admin')) {
     return next();
   }
-  // AJAX clients:
-  if (req.xhr || (req.headers.accept || '').includes('application/json')) {
-    return res.status(401).json({ ok: false, message: 'Authentication required' });
+
+  if (req.session?.isLoggedIn && req.session?.userId) {
+    return next();
+  }
+
+   if (req.xhr || req.headers.accept?.includes('application/json')) {
+    return res.status(401).json({
+      ok: false,
+      code: 'AUTH_REQUIRED',
+      message: 'Please login to continue'
+    });
   }
   return res.redirect("/user/login");
 };
 
-// Updated noCache middleware - MORE AGGRESSIVE
-module.exports.noCache = (req, res, next) => {
-  // Set headers to prevent ALL caching
-  res.header('Cache-Control', 'no-store, no-cache, must-revalidate, private, proxy-revalidate, max-age=0');
-  res.header('Pragma', 'no-cache');
-  res.header('Expires', '0');
-  res.header('X-Accel-Expires', '0'); // For nginx
-  res.header('Surrogate-Control', 'no-store');
+
+
+export const noCache = (req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.set('Pragma', 'no-cache');
+  res.set('Expires', '0');
   next();
 };
 
-// NEW: Special middleware for login/logout pages
-module.exports.preventCacheForAuth = (req, res, next) => {
-  // For auth pages only (login, signup, etc.)
-  const isAuthPage = req.path.includes('/login') || 
-                     req.path.includes('/signup') || 
-                     req.path.includes('/verify-otp') ||
-                     req.path.includes('/forgot-password') ||
-                     req.path.includes('/reset-password');
-  
-  if (isAuthPage) {
-    // Extra aggressive for auth pages
-    res.header('Cache-Control', 'no-store, no-cache, must-revalidate, private, proxy-revalidate, max-age=0');
-    res.header('Pragma', 'no-cache');
-    res.header('Expires', '0');
-    res.header('X-Accel-Expires', '0');
-    res.header('Surrogate-Control', 'no-store');
-    
-    // If user is already logged in, redirect away from auth pages
-    if (req.session && req.session.isLoggedIn && req.session.userId) {
-      return res.redirect('/user/home');
-    }
+export const preventCacheForAuth = (req, res, next) => {
+  const isAdminRoute = req.originalUrl.startsWith('/admin');
+
+  const isUserAuthPage =
+    req.path.startsWith('/user/login') ||
+    req.path.startsWith('/user/signup') ||
+    req.path.startsWith('/user/verify-otp') ||
+    req.path.startsWith('/user/forgot-password') ||
+    req.path.startsWith('/user/reset-password');
+
+  const isAdminAuthPage =
+    req.path.startsWith('/admin/login');
+
+  // Cache headers
+  if (isUserAuthPage || isAdminAuthPage) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
   }
-  
+
+  // 🚫 User logged in → block ONLY user auth pages
+  if (isUserAuthPage && req.session?.isLoggedIn && req.session?.userId) {
+    return res.redirect('/user/home');
+  }
+
+  // 🚫 Admin logged in → block ONLY admin auth pages
+  if (isAdminAuthPage && req.session?.adminLoggedIn && req.session?.adminId) {
+    return res.redirect('/admin/dashboard');
+  }
+
   next();
 };
 
-// NEW: Middleware to prevent going back to cached auth pages
-module.exports.preventBackToAuth = (req, res, next) => {
-  // Check if this is a request for an auth page
-  const isAuthPage = req.path.includes('/login') || 
-                     req.path.includes('/signup') || 
-                     req.path.includes('/verify-otp') ||
-                     req.path.includes('/forgot-password') ||
-                     req.path.includes('/reset-password');
-  
-  if (isAuthPage) {
-    // Set headers to prevent any caching
-    res.header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-    res.header('Pragma', 'no-cache');
-    res.header('Expires', '0');
-    
-    // If user is logged in and trying to access auth pages, redirect to home
-    if (req.session && req.session.isLoggedIn && req.session.userId) {
-      return res.redirect('/user/home');
-    }
+
+export const preventBackToAuth = (req, res, next) => {
+  if (req.session?.isLoggedIn) {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   }
-  
-  // For protected pages, ensure they're not cached
-  if (req.session && req.session.isLoggedIn) {
-    res.header('Cache-Control', 'no-store, no-cache, must-revalidate, private');
-  }
-  
   next();
+};
+
+export default {
+  attachUser,
+  protectRoute,
+  noCache,
+  preventCacheForAuth,
+  preventBackToAuth
 };

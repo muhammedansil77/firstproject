@@ -1,0 +1,298 @@
+
+<!-- views/user/pages/cart.ejs -->
+<main class="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] text-white antialiased">
+  <div class="w-full px-4 py-8 md:px-10 md:py-12">
+
+    <!-- Breadcrumb -->
+    <nav class="text-sm text-gray-400 mb-8 flex items-center gap-2">
+      <a href="/" class="hover:text-[#d4af37] transition-colors duration-300">Home</a>
+      
+      <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+        <a href="/user/shop" class="hover:text-[#d4af37] transition-colors duration-300">product</a>
+        <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+      </svg>
+
+      <span class="text-[#d4af37] font-medium">Shopping Cart</span>
+    </nav>
+
+    <h1 class="text-3xl font-bold mb-8 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
+      Your Shopping Cart
+    </h1>
+
+    <% if (cartEmpty) { %>
+      <!-- Empty Cart -->
+      <div class="max-w-2xl mx-auto text-center py-16">
+        <div class="w-40 h-40 mx-auto mb-8 rounded-full bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border-2 border-[#2a2a2a] flex items-center justify-center">
+          <svg class="w-24 h-24 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"/>
+          </svg>
+        </div>
+        <h2 class="text-2xl font-bold text-gray-300 mb-4">Your cart is empty</h2>
+        <p class="text-gray-500 mb-8">
+          Looks like you haven't added any products to your cart yet.
+        </p>
+        <a href="/user/shop" 
+           class="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-semibold hover:shadow-xl hover:shadow-[#d4af37]/30 transition-all duration-300">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+          </svg>
+          Start Shopping
+        </a>
+      </div>
+    <% } else { %>
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <!-- Cart Items -->
+        <div class="lg:col-span-2 space-y-4">
+       <% items.forEach((item, index) => { 
+  const isLowStock = item.stock < 5;
+  const isOutOfStock = item.stock === 0;
+  const isProductBlocked = item.isProductBlocked;
+  const isAvailable = !isOutOfStock && !isProductBlocked;
+  const maxQty = isAvailable ? Math.min(item.stock, 99) : 0;
+%>
+  <div class="cart-item bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-xl border border-[#2a2a2a] p-4"
+       data-variant-id="<%= item.variantId %>"
+       data-product-id="<%= item.productId %>"
+       data-available="<%= isAvailable %>">
+    
+    <div class="flex flex-col md:flex-row gap-4">
+      
+      <!-- Product Image -->
+      <div class="relative w-full md:w-32 h-32 rounded-lg overflow-hidden bg-black flex-shrink-0">
+        <img src="<%= item.image %>" 
+             alt="<%= item.name %>"
+             class="w-full h-full object-cover <%= isProductBlocked ? 'grayscale' : '' %>"
+             onerror="this.src='/uploads/placeholder.png'">
+        
+        <% if (isProductBlocked) { %>
+          <div class="absolute inset-0 bg-gray-900/80 backdrop-blur-sm flex items-center justify-center">
+            <span class="text-white text-sm font-bold px-3 py-1 bg-gray-700/80 rounded-full">UNAVAILABLE</span>
+          </div>
+        <% } else if (isOutOfStock) { %>
+          <div class="absolute inset-0 bg-red-900/70 backdrop-blur-sm flex items-center justify-center">
+            <span class="text-white text-sm font-bold px-3 py-1 bg-red-600/80 rounded-full">SOLD OUT</span>
+          </div>
+        <% } %>
+        
+        <a href="<%= isAvailable ? '/user/shop/' + (item.slug || item.productId) : 'javascript:void(0)' %>" 
+           class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 hover:opacity-100 transition-opacity flex items-end p-3 <%= !isAvailable ? 'cursor-not-allowed' : '' %>">
+          <span class="text-white text-sm font-medium">
+            <%= isAvailable ? 'View Product' : 'Product Unavailable' %>
+          </span>
+        </a>
+      </div>
+
+      <!-- Product Details -->
+      <div class="flex-1">
+        <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
+          
+          <!-- Left: Product Info -->
+          <div class="flex-1">
+            <h3 class="font-bold text-lg <%= isProductBlocked ? 'text-gray-500' : 'text-gray-100' %> mb-2">
+              <% if (isAvailable) { %>
+                <a href="/user/shop/<%= item.slug || item.productId %>" 
+                   class="hover:text-[#d4af37] transition-colors">
+                  <%= item.name %>
+                </a>
+              <% } else { %>
+                <span class="<%= isProductBlocked ? 'line-through' : '' %>">
+                  <%= item.name %>
+                </span>
+              <% } %>
+            </h3>
+            
+            <!-- Status Badge -->
+            <div class="mb-3">
+              <% if (isProductBlocked) { %>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-gray-800/50 text-gray-400 text-xs font-semibold border border-gray-700">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Product Currently Unavailable
+                </div>
+              <% } else if (isOutOfStock) { %>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-red-600/20 text-red-400 text-xs font-semibold border border-red-600/30">
+                  <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728L5.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728"/>
+                  </svg>
+                  Out of Stock
+                </div>
+              <% } else { %>
+                <!-- Color -->
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400 text-sm">Color:</span>
+                  <div class="flex items-center gap-2">
+                    <span class="w-4 h-4 rounded-full border border-white/20" 
+                          style="background-color: <%= item.colorCode %>"></span>
+                    <span class="text-gray-300 text-sm"><%= item.color %></span>
+                  </div>
+                </div>
+              <% } %>
+            </div>
+
+            <!-- Price (only show if available) -->
+            <% if (isAvailable) { %>
+              <div class="mb-4">
+                <% if (item.offer) { %>
+                  <p class="text-sm text-gray-400 line-through">
+                    ₹<%= item.basePrice.toLocaleString('en-IN') %>
+                  </p>
+                  <p class="text-2xl font-bold text-[#d4af37]">
+                    ₹<%= item.finalPrice.toLocaleString('en-IN') %>
+                  </p>
+                  <p class="text-xs text-green-400 font-semibold">
+                    <%= item.offer.discountValue %>
+                    <%= item.offer.discountType === 'percentage' ? '% OFF' : '₹ OFF' %>
+                  </p>
+                <% } else { %>
+                  <p class="text-2xl font-bold text-[#d4af37]">
+                    ₹<%= item.basePrice.toLocaleString('en-IN') %>
+                  </p>
+                <% } %>
+              </div>
+
+              <!-- Stock Status -->
+              <div class="mb-4">
+                <% if (isLowStock) { %>
+                  <span class="px-3 py-1.5 rounded-full bg-yellow-600/20 text-yellow-400 text-xs font-semibold border border-yellow-600/30 animate-pulse">
+                    Only <%= item.stock %> left
+                  </span>
+                <% } else { %>
+                  <span class="px-3 py-1.5 rounded-full bg-green-600/20 text-green-400 text-xs font-semibold border border-green-600/30">
+                    In Stock
+                  </span>
+                <% } %>
+              </div>
+            <% } else { %>
+              <!-- Unavailable Message -->
+              <div class="mb-4">
+                <p class="text-gray-500 text-sm mb-2">
+                  <% if (isProductBlocked) { %>
+                    This product has been temporarily removed by the seller.
+                  <% } else { %>
+                    This product is currently out of stock.
+                  <% } %>
+                </p>
+                <p class="text-gray-600 text-xs">
+                  It will be automatically removed from your cart.
+                </p>
+              </div>
+            <% } %>
+          </div>
+
+          <!-- Right: Quantity Controls & Subtotal -->
+          <div class="flex flex-col items-end gap-4">
+            
+            <!-- Quantity Controls (only if available) -->
+            <% if (isAvailable) { %>
+              <div class="flex items-center gap-2">
+                <button class="qty-decrease w-8 h-8 rounded-full bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] hover:border-[#d4af37]/50 transition-colors flex items-center justify-center"
+                        data-min="1">
+                  <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4"/>
+                  </svg>
+                </button>
+                
+                <input type="number" 
+                       value="<%= item.quantity %>"
+                       min="1" 
+                       max="<%= maxQty %>"
+                       class="qty-input w-16 text-center bg-[#0a0a0a] border border-[#333] rounded-lg py-2 text-white text-lg font-bold">
+                
+                <button class="qty-increase w-8 h-8 rounded-full bg-[#1a1a1a] border border-[#333] hover:bg-[#252525] hover:border-[#d4af37]/50 transition-colors flex items-center justify-center disabled:opacity-50"
+                        <%= item.quantity >= maxQty ? 'disabled' : '' %>>
+                  <svg class="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                  </svg>
+                </button>
+              </div>
+
+              <!-- Subtotal -->
+              <div class="text-right">
+                <div class="text-gray-400 text-sm mb-1">Subtotal:</div>
+                <div class="item-subtotal text-2xl font-bold text-[#d4af37]"
+                     data-unit-price="<%= item.finalPrice %>">
+                  ₹<%= item.subtotal.toLocaleString('en-IN') %>
+                </div>
+              </div>
+            <% } else { %>
+              <!-- Unavailable Indicator -->
+              <div class="text-right">
+                <div class="text-gray-400 text-sm mb-1">Status:</div>
+                <div class="px-3 py-1.5 rounded-full <%= isProductBlocked ? 'bg-gray-800 text-gray-400' : 'bg-red-800 text-red-400' %> text-sm font-semibold">
+                  <%= isProductBlocked ? 'Unavailable' : 'Out of Stock' %>
+                </div>
+              </div>
+            <% } %>
+
+            <!-- Remove Button -->
+            <button class="remove-item text-red-400 hover:text-red-300 text-sm font-medium flex items-center gap-2 transition-colors px-3 py-1.5 rounded-lg hover:bg-red-500/10">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+              </svg>
+              Remove
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+<% }) %>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="lg:col-span-1">
+          <div class="sticky top-6">
+            <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] p-6 shadow-xl">
+              <h2 class="text-xl font-bold mb-6 text-gray-100">Order Summary</h2>
+              
+              <div class="space-y-4 mb-6">
+                <div class="flex justify-between text-gray-400">
+                  <span>Subtotal</span>
+                  <span id="cart-subtotal">₹<%= total.toLocaleString('en-IN') %></span>
+                </div>
+                <div class="flex justify-between text-gray-400">
+                  <span>Shipping</span>
+                  <span id="shipping-fee">₹0</span>
+                </div>
+                <div class="flex justify-between text-gray-400">
+                  <span>Tax</span>
+                  <span>Calculated at checkout</span>
+                </div>
+              </div>
+              
+              <div class="border-t border-[#2a2a2a] pt-4 mb-6">
+                <div class="flex justify-between text-lg font-bold">
+                  <span class="text-gray-100">Total</span>
+                  <span id="cart-total" class="text-2xl text-[#d4af37]">
+                    ₹<%= total.toLocaleString('en-IN') %>
+                  </span>
+                </div>
+                <p class="text-gray-500 text-sm mt-2">Prices include GST</p>
+              </div>
+
+              <!-- Checkout Button -->
+              <a href="/checkout" 
+                 class="block w-full px-6 py-4 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-bold text-lg hover:shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-center">
+                Proceed to Checkout
+              </a>
+
+              <!-- Continue Shopping -->
+              <a href="/user/shop" 
+                 class="block w-full mt-4 px-6 py-3 rounded-xl border border-[#d4af37] text-[#d4af37] font-medium hover:bg-[#d4af37]/10 transition-all duration-300 text-center">
+                Continue Shopping
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+    <% } %>
+  </div>
+</main>

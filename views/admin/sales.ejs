@@ -1,0 +1,549 @@
+<div class="container-fluid px-0">
+    <div class="container-xxl">
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-5 pt-4">
+            <div class="mb-4 mb-md-0">
+                <nav aria-label="breadcrumb" class="d-inline-block">
+                    <ol class="breadcrumb mb-2">
+                        <li class="breadcrumb-item"><a href="/admin/dashboard" class="text-decoration-none">Dashboard</a></li>
+                        <li class="breadcrumb-item"><a href="/admin/reports" class="text-decoration-none">Reports</a></li>
+                        <li class="breadcrumb-item active" aria-current="page">Sales Report</li>
+                    </ol>
+                </nav>
+                <h1 class="h2 mb-2">Sales Analytics & Reports</h1>
+                <p class="text-muted mb-0">Detailed insights into your sales performance</p>
+            </div>
+            <div class="d-flex gap-3">
+                <button class="btn btn-outline-secondary" onclick="refreshDashboard()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-download me-2"></i>Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?exportType=csv<%= getFilterParams() %>"><i class="bi bi-filetype-csv me-2"></i>Export as CSV</a></li>
+                        <li><a class="dropdown-item" href="?exportType=pdf<%= getFilterParams() %>"><i class="bi bi-filetype-pdf me-2"></i>Export as PDF</a></li>
+                        <li><a class="dropdown-item" href="?exportType=excel<%= getFilterParams() %>"><i class="bi bi-filetype-xlsx me-2"></i>Export as Excel</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+      
+
+
+        <!-- Quick Stats Cards -->
+       
+
+        <!-- Filters Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0">Filter Report</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="/admin/reports/sales" id="reportFilters">
+                    <div class="row g-3">
+                        <div class="col-lg-3">
+                            <label class="form-label fw-semibold">Time Period</label>
+                            <select class="form-select" name="period" id="periodSelect" onchange="updateDateRange()">
+                                <option value="today" <%= filters.period === 'today' ? 'selected' : '' %>>Today</option>
+                                <option value="yesterday" <%= filters.period === 'yesterday' ? 'selected' : '' %>>Yesterday</option>
+                                <option value="week" <%= filters.period === 'week' ? 'selected' : '' %>>Last 7 Days</option>
+                                <option value="month" <%= filters.period === 'month' ? 'selected' : '' %>>Last 30 Days</option>
+                                <option value="quarter" <%= filters.period === 'quarter' ? 'selected' : '' %>>Last 90 Days</option>
+                                <option value="year" <%= filters.period === 'year' ? 'selected' : '' %>>Last 365 Days</option>
+                                <option value="custom" <%= filters.period === 'custom' ? 'selected' : '' %>>Custom Range</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-3" id="customDateRange" style="<%= filters.period === 'custom' ? 'display: block;' : 'display: none;' %>">
+                            <label class="form-label fw-semibold">Start Date</label>
+                            <input type="date" class="form-control" name="startDate" 
+                                   value="<%= filters.startDate %>" max="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+
+                        <div class="col-lg-3" id="customDateRangeEnd" style="<%= filters.period === 'custom' ? 'display: block;' : 'display: none;' %>">
+                            <label class="form-label fw-semibold">End Date</label>
+                            <input type="date" class="form-control" name="endDate" 
+                                   value="<%= filters.endDate %>" max="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+
+                        <div class="col-lg-2">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <select class="form-select" name="paymentMethod">
+                                <option value="all" <%= filters.paymentMethod === 'all' ? 'selected' : '' %>>All Methods</option>
+                                <option value="COD" <%= filters.paymentMethod === 'COD' ? 'selected' : '' %>>Cash on Delivery</option>
+                                <option value="Razorpay" <%= filters.paymentMethod === 'Razorpay' ? 'selected' : '' %>>Razorpay</option>
+                                <option value="Wallet" <%= filters.paymentMethod === 'Wallet' ? 'selected' : '' %>>Wallet</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <label class="form-label fw-semibold">Order Status</label>
+                            <select class="form-select" name="orderStatus">
+                                <option value="all" <%= filters.orderStatus === 'all' ? 'selected' : '' %>>All Status</option>
+                                <option value="Delivered" <%= filters.orderStatus === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                <option value="Shipped" <%= filters.orderStatus === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                <option value="Confirmed" <%= filters.orderStatus === 'Confirmed' ? 'selected' : '' %>>Confirmed</option>
+                                <option value="Placed" <%= filters.orderStatus === 'Placed' ? 'selected' : '' %>>Placed</option>
+                                <option value="Cancelled" <%= filters.orderStatus === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-filter me-2"></i>Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0">Summary Report</h5>
+                <p class="text-muted mb-0 small">
+                    Period: <%= new Date(dateRange.startObj).toLocaleDateString() %> to <%= new Date(dateRange.endObj).toLocaleDateString() %>
+                </p>
+            </div>
+          <div class="row g-4">
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h3 class="fw-bold text-primary mb-2">₹<%= stats.totalRevenue.toLocaleString() %></h3>
+                <p class="mb-0 fw-semibold text-muted">Total Revenue</p>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <small class="text-muted"><i class="bi bi-currency-rupee me-1"></i>Revenue</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h3 class="fw-bold text-success mb-2"><%= stats.totalOrders.toLocaleString() %></h3>
+                <p class="mb-0 fw-semibold text-muted">Total Orders</p>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <small class="text-muted"><i class="bi bi-cart me-1"></i>Orders</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h3 class="fw-bold text-info mb-2"><%= stats.totalItemsSold.toLocaleString() %></h3>
+                <p class="mb-0 fw-semibold text-muted">Items Sold</p>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <small class="text-muted"><i class="bi bi-box me-1"></i>Items</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body text-center py-4">
+                <h3 class="fw-bold text-warning mb-2">₹<%= stats.averageOrderValue %></h3>
+                <p class="mb-0 fw-semibold text-muted">Avg. Order Value</p>
+            </div>
+            <div class="card-footer bg-transparent border-top-0">
+                <small class="text-muted"><i class="bi bi-graph-up me-1"></i>Average</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+                <div class="row mt-4 g-4">
+                    <div class="col-md-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <p class="text-muted mb-1">Discount Given</p>
+                                <h5 class="mb-0 fw-bold">₹<%= stats.totalDiscount.toLocaleString() %></h5>
+                            </div>
+                            <i class="bi bi-percent text-danger fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <p class="text-muted mb-1">Tax Collected</p>
+                                <h5 class="mb-0 fw-bold">₹<%= stats.totalTax.toLocaleString() %></h5>
+                            </div>
+                            <i class="bi bi-receipt text-info fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <p class="text-muted mb-1">Shipping Charges</p>
+                                <h5 class="mb-0 fw-bold">₹<%= stats.totalShipping.toLocaleString() %></h5>
+                            </div>
+                            <i class="bi bi-truck text-success fs-4"></i>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                            <div>
+                                <p class="text-muted mb-1">Conversion Rate</p>
+                                <h5 class="mb-0 fw-bold"><%= stats.conversionRate %>%</h5>
+                            </div>
+                            <i class="bi bi-graph-up-arrow text-primary fs-4"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+        <div class="row g-4 mb-4">
+           
+
+            <!-- Payment Methods Distribution -->
+         
+        </div>
+
+        <!-- Top Products & Categories -->
+        <div class="row g-4 mb-4">
+            <!-- Top Products -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0">Top Selling Products</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                                     <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Quantity</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% charts.topProducts.forEach((product, index) => { 
+                                        const share = (product.revenue / stats.totalRevenue * 100).toFixed(1);
+                                    %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-primary me-2"><%= index + 1 %></span>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-0"><%= product.product.name %></h6>
+                                                    <small class="text-muted">SKU: <%= product.product._id.toString().slice(-6) %></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end fw-semibold"><%= product.quantity %></td>
+                                        <td class="text-end fw-semibold">₹<%= product.revenue.toLocaleString() %></td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <span class="me-2"><%= share %>%</span>
+                                                <div class="progress flex-grow-1" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-success" style="width: <%= share %>%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+           
+
+        <!-- Detailed Orders Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Order Details</h5>
+                    <span class="badge bg-primary"><%= orders.length %> Orders</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                             <form method="GET" class="d-flex gap-2 mb-3">
+  <input
+    type="text"
+    name="search"
+    class="form-control"
+    placeholder="Search order, customer, status..."
+    value="<%= search %>"
+  />
+  <button class="btn btn-outline-primary">
+    <i class="bi bi-search"></i>
+  </button>
+
+  <!-- Keep existing filters -->
+  <input type="hidden" name="period" value="<%= filters.period %>">
+  <input type="hidden" name="paymentMethod" value="<%= filters.paymentMethod %>">
+  <input type="hidden" name="orderStatus" value="<%= filters.orderStatus %>">
+</form>
+            
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Order ID</th>
+                                <th>Date & Time</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th class="text-end">Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th class="pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders.length === 0) { %>
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <i class="bi bi-receipt display-4 text-muted opacity-25"></i>
+                                        <h4 class="text-muted mt-3 mb-2">No orders found</h4>
+                                        <p class="text-muted mb-0">Try changing your filter criteria</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% } else { %>
+                                <% orders.forEach(order => { %>
+                                <tr>
+                                    <td class="ps-4">
+                                        <a href="/admin/orders/<%= order._id %>" class="text-decoration-none fw-semibold">
+                                            <%= order.orderNumber %>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted d-block">
+                                            <%= new Date(order.createdAt).toLocaleDateString() %>
+                                        </small>
+                                        <small class="text-muted">
+                                            <%= new Date(order.createdAt).toLocaleTimeString() %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <% if (order.user) { %>
+                                        <div>
+                                            <h6 class="mb-1"><%= order.user.name %></h6>
+                                            <small class="text-muted d-block"><%= order.user.email %></small>
+                                            <% if (order.user.phone) { %>
+                                            <small class="text-muted"><%= order.user.phone %></small>
+                                            <% } %>
+                                        </div>
+                                        <% } else { %>
+                                        <span class="text-muted">Guest User</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-light text-dark border me-2">
+                                                <%= order.items.length %>
+                                            </span>
+                                            <span class="small">
+                                                <%= order.items[0]?.product?.name || 'Product' %>
+                                                <% if (order.items.length > 1) { %>
+                                                +<%= order.items.length - 1 %> more
+                                                <% } %>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <h6 class="mb-0 fw-bold">₹<%= order.finalAmount.toLocaleString() %></h6>
+                                        <% if (order.couponDiscount > 0) { %>
+                                        <small class="text-success">Saved ₹<%= order.couponDiscount %></small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% const paymentBadge = {
+                                            'COD': 'secondary',
+                                            'Razorpay': 'success',
+                                            'Wallet': 'info'
+                                        }[order.paymentMethod] || 'secondary'; %>
+                                        <span class="badge bg-<%= paymentBadge %>">
+                                            <%= order.paymentMethod %>
+                                        </span>
+                                        <small class="d-block text-muted">
+                                            <%= order.paymentStatus %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <% const statusColors = {
+                                            'Placed': 'primary',
+                                            'Confirmed': 'info',
+                                            'Shipped': 'warning',
+                                            'OutForDelivery': 'info',
+                                            'Delivered': 'success',
+                                            'Cancelled': 'danger'
+                                        } %>
+                                        <span class="badge bg-<%= statusColors[order.orderStatus] || 'secondary' %>">
+                                            <%= order.orderStatus %>
+                                        </span>
+                                    </td>
+                                    <td class="pe-4">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/admin/orders/<%= order._id %>" 
+                                               class="btn btn-outline-primary" 
+                                               data-bs-toggle="tooltip" 
+                                               title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="/admin/invoice/<%= order._id %>" 
+                                               class="btn btn-outline-success" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Download Invoice">
+                                                <i class="bi bi-receipt"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                    <nav class="mt-3">
+  <ul class="pagination justify-content-center">
+
+    <!-- Previous -->
+    <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
+      <a class="page-link"
+         href="?page=<%= pagination.currentPage - 1 %>&search=<%= search %><%= getFilterParams() %>">
+        Previous
+      </a>
+    </li>
+
+    <!-- Page Numbers -->
+    <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+      <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
+        <a class="page-link"
+           href="?page=<%= i %>&search=<%= search %><%= getFilterParams() %>">
+          <%= i %>
+        </a>
+      </li>
+    <% } %>
+
+    <!-- Next -->
+    <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
+      <a class="page-link"
+         href="?page=<%= pagination.currentPage + 1 %>&search=<%= search %><%= getFilterParams() %>">
+        Next
+      </a>
+    </li>
+
+  </ul>
+</nav>
+
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Include Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+
+</script>
+
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+    --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+}
+
+.card {
+    border-radius: 12px;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+}
+
+.table thead th {
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 0.5px;
+    color: #64748b;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s;
+}
+
+.table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.table td {
+    vertical-align: middle;
+    padding: 1rem;
+    border-color: #f1f5f9;
+}
+
+.badge {
+    font-weight: 500;
+    padding: 0.35em 0.65em;
+    font-size: 0.75em;
+}
+
+.empty-state {
+    color: #94a3b8;
+}
+
+.empty-state-icon {
+    color: #cbd5e1;
+}
+
+.progress {
+    height: 6px;
+    border-radius: 3px;
+    background-color: #e2e8f0;
+}
+
+.progress-bar {
+    border-radius: 3px;
+}
+
+.btn-group-sm .btn.active {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: #667eea;
+}
+
+.canvas-container {
+    position: relative;
+    height: 250px;
+}
+
+.bg-gradient-primary {
+    background: var(--primary-gradient) !important;
+}
+
+.bg-gradient-success {
+    background: var(--success-gradient) !important;
+}
+
+.bg-gradient-warning {
+    background: var(--warning-gradient) !important;
+}
+
+.bg-gradient-info {
+    background: var(--info-gradient) !important;
+}
+
+.bg-opacity-10 {
+    opacity: 0.1;
+}
+</style>

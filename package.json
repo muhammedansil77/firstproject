@@ -11,10 +11,15 @@
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "bootstrap-icons": "^1.13.1",
+    "cloudinary": "^2.8.0",
+    "connect-flash": "^0.1.1",
+    "connect-mongo": "^6.0.0",
     "cookie": "^1.1.1",
     "cookie-parser": "^1.4.7",
     "dotenv": "^17.2.3",
     "ejs": "^3.1.10",
+    "exceljs": "^4.4.0",
     "express": "^5.1.0",
     "express-ejs-layouts": "^2.5.1",
     "express-session": "^1.18.2",
@@ -25,8 +30,11 @@
     "parser": "^0.1.4",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
+    "pdfkit": "^0.17.2",
+    "razorpay": "^2.9.6",
     "sequelize": "^6.37.7",
     "sharp": "^0.34.5",
+    "sweetalert2": "^11.26.3",
     "uuid": "^13.0.0"
   }
 }

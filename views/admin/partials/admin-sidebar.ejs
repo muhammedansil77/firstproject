@@ -1,299 +1,434 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Premium Admin Sidebar</title>
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+<%
+// ---- SAFE HELPER SO `current` CAN BE UNDEFINED ----
+const safeCurrent = (typeof current === 'undefined' || current === null)
+  ? ''
+  : current;
+%>
 
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      background: #0f0f0f;
-      display: flex;
-      min-height: 100vh;
-    }
-
-    .admin-sidebar {
-      width: 280px;
-      min-width: 280px;
-      background: linear-gradient(180deg, #1a1510 0%, #0f0c08 100%);
-      border-right: 1px solid rgba(184, 153, 89, 0.15);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      overflow: hidden;
-      position: relative;
-    }
-
-    .admin-sidebar::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(184, 153, 89, 0.3), transparent);
-    }
-
-    .sidebar-header {
-      padding: 24px 20px;
-      border-bottom: 1px solid rgba(184, 153, 89, 0.1);
-      background: rgba(184, 153, 89, 0.02);
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-    }
-
-    .logo-icon {
-      width: 36px;
-      height: 36px;
-      background: linear-gradient(135deg, #b89959 0%, #8b7334 100%);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 18px;
-      color: #fff;
-      box-shadow: 0 4px 12px rgba(184, 153, 89, 0.2);
-    }
-
-    .logo-text {
-      font-size: 20px;
-      font-weight: 700;
-      color: #fff;
-      letter-spacing: -0.5px;
-    }
-
-    .sidebar-nav {
-      padding: 16px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .sidebar-nav::-webkit-scrollbar {
-      width: 6px;
-    }
-
-    .sidebar-nav::-webkit-scrollbar-track {
-      background: transparent;
-    }
-
-    .sidebar-nav::-webkit-scrollbar-thumb {
-      background: rgba(184, 153, 89, 0.2);
-      border-radius: 3px;
-    }
-
-    .nav-section {
-      margin-top: 24px;
-    }
-
-    .nav-section:first-child {
-      margin-top: 0;
-    }
-
-    .nav-section-title {
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(184, 153, 89, 0.5);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      padding: 0 14px 8px;
-    }
-
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      color: rgba(255, 255, 255, 0.7);
-      text-decoration: none;
-      transition: all 0.2s ease;
-      position: relative;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .nav-link::before {
-      content: '';
-      position: absolute;
-      left: 0;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 3px;
-      height: 0;
-      background: linear-gradient(180deg, #b89959 0%, #8b7334 100%);
-      border-radius: 0 3px 3px 0;
-      transition: height 0.2s ease;
-    }
-
-    .nav-link:hover {
-      background: rgba(184, 153, 89, 0.08);
-      color: rgba(255, 255, 255, 0.95);
-      transform: translateX(2px);
-    }
-
-    .nav-link:hover::before {
-      height: 60%;
-    }
-
-    .nav-link.active {
-      background: linear-gradient(90deg, rgba(184, 153, 89, 0.15) 0%, rgba(184, 153, 89, 0.05) 100%);
-      color: #fff;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
-    }
-
-    .nav-link.active::before {
-      height: 70%;
-    }
-
-    .nav-icon {
-      width: 20px;
-      height: 20px;
-      opacity: 0.8;
-      transition: opacity 0.2s ease;
-    }
-
-    .nav-link:hover .nav-icon,
-    .nav-link.active .nav-icon {
-      opacity: 1;
-    }
-
-    .sidebar-footer {
-      margin-top: auto;
-      padding: 12px;
-      border-top: 1px solid rgba(184, 153, 89, 0.1);
-      background: rgba(0, 0, 0, 0.2);
-    }
-
-    .logout-link {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      border-radius: 10px;
-      color: rgba(255, 99, 99, 0.9);
-      text-decoration: none;
-      transition: all 0.2s ease;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .logout-link:hover {
-      background: rgba(255, 99, 99, 0.1);
-      color: rgba(255, 99, 99, 1);
-    }
-
-  </style>
-</head>
-<body>
-  <aside class="admin-sidebar">
-    <div class="sidebar-header">
-      <div class="logo">
-        <div class="logo-icon">L</div>
-        <span class="logo-text">LuxTime</span>
+<aside class="admin-sidebar" id="adminSidebar">
+  <!-- Logo Area -->
+  <div class="sidebar-header">
+    <a href="/admin" class="logo">
+      <div class="logo-icon">L</div>
+      <div>
+        <div class="logo-text">LuxTime</div>
+        <div class="logo-subtext">ADMIN</div>
       </div>
-    </div>
+    </a>
+  </div>
 
-    <nav class="sidebar-nav">
-      <div class="nav-section">
-        <div class="nav-section-title">Main</div>
-        <a href="/admin" class="nav-link active">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-          </svg>
-          <span>Dashboard</span>
-        </a>
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <!-- Main Section -->
+    <div class="nav-section">
+      <div class="nav-section-title">Overview</div>
+      
+  <a href="/admin/reports/dash" class="nav-link <%= safeCurrent === 'dashboard' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-tachometer-alt"></i>
+        </div>
+        <span>Dashboard</span>
+      </a>
 
-        <a href="/admin/analytics" class="nav-link">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="20" x2="12" y2="10"/>
-            <line x1="18" y1="20" x2="18" y2="4"/>
-            <line x1="6" y1="20" x2="6" y2="16"/>
-          </svg>
-          <span>Analytics</span>
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">Commerce</div>
-        <a href="/admin/orders" class="nav-link">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/>
-            <line x1="3" y1="6" x2="21" y2="6"/>
-            <path d="M16 10a4 4 0 0 1-8 0"/>
-          </svg>
-          <span>Orders</span>
-        </a>
-
-        <a href="/admin/product" class="nav-link">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
-            <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
-            <line x1="12" y1="22.08" x2="12" y2="12"/>
-          </svg>
-          <span>Products</span>
-        </a>
-
-        <a href="/admin/category" class="nav-link">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <rect x="3" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="3" width="7" height="7" rx="1"/>
-            <rect x="14" y="14" width="7" height="7" rx="1"/>
-            <rect x="3" y="14" width="7" height="7" rx="1"/>
-          </svg>
-          <span>Categories</span>
-        </a>
-
-        <a href="/admin/users" class="nav-link">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
-            <circle cx="9" cy="7" r="4"/>
-            <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
-            <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-          </svg>
-          <span>Customers</span>
-        </a>
-      </div>
-
-      <div class="nav-section">
-        <div class="nav-section-title">System</div>
-        <a href="/admin/settings" class="nav-link">
-          <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M12 1v6m0 6v6m9-9h-6m-6 0H3"/>
-            <path d="M19.07 4.93l-4.24 4.24m-5.66 0L4.93 4.93m0 14.14l4.24-4.24m5.66 0l4.24 4.24"/>
-          </svg>
-          <span>Settings</span>
-        </a>
-      </div>
-    </nav>
-
-    <div class="sidebar-footer">
-      <a href="/admin/logout" class="logout-link">
-        <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
-          <polyline points="16 17 21 12 16 7"/>
-          <line x1="21" y1="12" x2="9" y2="12"/>
-        </svg>
-        <span>Logout</span>
+      <a href="/admin/reports/sales" class="nav-link <%= safeCurrent === 'analytics' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-chart-line"></i>
+        </div>
+        <span>Analytics</span>
+       
       </a>
     </div>
-  </aside>
-</body>
-</html>
+
+    <!-- Commerce Section -->
+    <div class="nav-section">
+      <div class="nav-section-title">Commerce</div>
+      
+    <a href="/admin/orders" class="nav-link <%= safeCurrent === 'orders' ? 'active' : '' %>">
+
+        <div class="nav-icon">
+          <i class="fas fa-shopping-bag"></i>
+        </div>
+        <span>Orders</span>
+       
+      </a>
+
+      <a href="/admin/product" class="nav-link <%= safeCurrent === 'products' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-box"></i>
+        </div>
+        <span>Products</span>
+    
+      </a>
+
+      <a href="/admin/category" class="nav-link <%= safeCurrent === 'category' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-tags"></i>
+        </div>
+        <span>Categories</span>
+      </a>
+
+      <a href="/admin/users" class="nav-link <%= safeCurrent === 'users' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <span>Customers</span>
+       
+      </a>
+      <a href="/admin/offers" class="nav-link <%= safeCurrent === 'users' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <span>Offer</span>
+       
+      </a>
+      <a href="/admin/coupons" class="nav-link <%= safeCurrent === 'users' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <span>Coupons</span>
+ 
+      </a>
+         <a href="/admin/returns" class="nav-link <%= safeCurrent === 'users' ? 'active' : '' %>">
+        <div class="nav-icon">
+          <i class="fas fa-users"></i>
+        </div>
+        <span>Return</span>
+     
+      </a>
+    </div>
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-footer">
+    <!-- User Profile -->
+    <div class="user-profile">
+      <div class="user-avatar">AJ</div>
+      <div class="user-info">
+        <div class="user-name">Admin User</div>
+        <div class="user-role">Super Admin</div>
+      </div>
+      <i class="fas fa-chevron-down" style="color: #9ca3af; font-size: 12px;"></i>
+    </div>
+
+    <!-- Logout -->
+   <a href="javascript:void(0)" onclick="confirmAdminLogout()" class="logout-link">
+
+      <div class="nav-icon">
+        <i class="fas fa-sign-out-alt"></i>
+      </div>
+      <span>Logout</span>
+    </a>
+  </div>
+</aside>
+
+<style>
+  .admin-sidebar {
+    width: 260px;
+    min-width: 260px;
+    background: #ffffff;
+    border-right: 1px solid #e5e7eb;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    position: sticky; /* stays in place while scrolling */
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+  }
+
+  .sidebar-header {
+    padding: 24px;
+    border-bottom: 1px solid #f3f4f6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    text-decoration: none;
+  }
+
+  .logo-icon {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 700;
+    font-size: 18px;
+  }
+
+  .logo-text {
+    font-size: 20px;
+    font-weight: 700;
+    color: #111827;
+  }
+
+  .logo-subtext {
+    font-size: 11px;
+    color: #9ca3af;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+  }
+
+  .sidebar-nav {
+    padding: 24px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .nav-section {
+    margin-bottom: 24px;
+  }
+
+  .nav-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .nav-section-title {
+    font-size: 11px;
+    font-weight: 600;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 12px 8px;
+    margin-bottom: 4px;
+  }
+
+  .nav-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    color: #6b7280;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    position: relative;
+    border: 1px solid transparent;
+  }
+
+  .nav-link:hover {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #e5e7eb;
+  }
+
+  .nav-link.active {
+    background: #eff6ff;
+    color: #2563eb;
+    border-color: #3b82f6;
+  }
+
+  .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: -1px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 60%;
+    background: #3b82f6;
+    border-radius: 0 2px 2px 0;
+  }
+
+  .nav-icon {
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #6b7280;
+  }
+
+  .nav-link:hover .nav-icon,
+  .nav-link.active .nav-icon {
+    color: #2563eb;
+  }
+
+  .badge {
+    margin-left: auto;
+    padding: 2px 8px;
+    background: #3b82f6;
+    color: white;
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 10px;
+    min-width: 20px;
+    text-align: center;
+  }
+
+  .badge.new {
+    background: #10b981;
+  }
+
+  .sidebar-footer {
+    margin-top: auto;
+    padding: 16px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 12px;
+  }
+
+  .user-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .user-info {
+    flex: 1;
+  }
+
+  .user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 2px;
+  }
+
+  .user-role {
+    font-size: 12px;
+    color: #9ca3af;
+  }
+
+  .logout-link {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    color: #ef4444;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-weight: 500;
+    background: rgba(239, 68, 68, 0.05);
+    border: 1px solid rgba(239, 68, 68, 0.1);
+  }
+
+  .logout-link:hover {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+  }
+
+  @media (max-width: 992px) {
+    .admin-sidebar {
+      position: fixed;
+      left: -260px;
+      top: 0;
+      transform: translateX(0);
+    }
+    .admin-sidebar.show {
+      transform: translateX(260px);
+    }
+  }
+</style>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+  const currentPath = window.location.pathname;
+  const navLinks = document.querySelectorAll('.nav-link');
+  
+  navLinks.forEach(link => {
+    const href = link.getAttribute('href');
+    
+    // Exact match for dashboard
+    if (currentPath === '/admin' || currentPath === '/admin/') {
+      if (href === '/admin/dashboard') {
+        link.classList.add('active');
+      }
+    }
+    
+    // Match for other pages
+    if (href !== '/admin/dashboard' && currentPath.startsWith(href)) {
+      link.classList.add('active');
+    }
+    
+    // Special handling for analytics/reports
+    if (href === '/admin/reports/sales' && currentPath.includes('/admin/reports/')) {
+      link.classList.add('active');
+    }
+  });
+});
+  // Mobile sidebar toggle (needs a button with id="sidebarToggle" in header)
+  document.addEventListener('DOMContentLoaded', function() {
+    const sidebarToggle = document.getElementById('sidebarToggle');
+    const adminSidebar = document.getElementById('adminSidebar');
+
+    if (sidebarToggle && adminSidebar) {
+      sidebarToggle.addEventListener('click', () => {
+        adminSidebar.classList.toggle('show');
+      });
+    }
+
+    // Close sidebar when clicking outside on mobile
+    document.addEventListener('click', (e) => {
+      if (window.innerWidth <= 992) {
+        if (adminSidebar && !adminSidebar.contains(e.target) &&
+            sidebarToggle && !sidebarToggle.contains(e.target)) {
+          adminSidebar.classList.remove('show');
+        }
+      }
+    });
+  });
+
+function confirmAdminLogout() {
+  Swal.fire({
+    title: 'Confirm Logout',
+    html: `
+      <p class="mb-2">Are you sure you want to log out?</p>
+      <small class="text-muted">Admin session will be ended.</small>
+    `,
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonText: 'Yes, Logout',
+    cancelButtonText: 'Cancel',
+    confirmButtonColor: '#ef4444', // red for admin
+    cancelButtonColor: '#6b7280',
+    reverseButtons: true
+  }).then((result) => {
+    if (result.isConfirmed) {
+      Swal.fire({
+        title: 'Logging out...',
+        allowOutsideClick: false,
+        didOpen: () => {
+          Swal.showLoading();
+        }
+      });
+
+      setTimeout(() => {
+        window.location.href = '/admin/logout';
+      }, 700);
+    }
+  });
+}
+
+
+</script>

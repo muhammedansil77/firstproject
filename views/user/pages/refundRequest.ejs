@@ -1,0 +1,627 @@
+<main class="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] text-white antialiased">
+  
+  <!-- Breadcrumbs -->
+  <div class="w-full bg-gradient-to-r from-[#0b0b0b] to-[#151515] border-y border-[#2a2a2a]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <nav class="py-4" aria-label="Breadcrumb">
+        <ol class="flex items-center space-x-2 text-sm">
+          <li>
+            <a href="/" class="text-gray-400 hover:text-[#d4af37] transition-colors flex items-center gap-1">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              Home
+            </a>
+          </li>
+          <li class="flex items-center">
+            <svg class="w-4 h-4 mx-1 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </li>
+          <li>
+            <a href="/orders" class="text-gray-400 hover:text-[#d4af37] transition-colors">
+              My Orders
+            </a>
+          </li>
+          <li class="flex items-center">
+            <svg class="w-4 h-4 mx-1 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </li>
+          <li>
+            <a href="/orders/<%= order._id %>" class="text-gray-400 hover:text-[#d4af37] transition-colors">
+              Order Details
+            </a>
+          </li>
+          <li class="flex items-center">
+            <svg class="w-4 h-4 mx-1 text-gray-600" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+          </li>
+          <li>
+            <span class="text-[#d4af37] font-medium" aria-current="page">
+              Request Refund
+            </span>
+          </li>
+        </ol>
+      </nav>
+    </div>
+  </div>
+   <div id="orderData" 
+     data-order-id="<%= order._id %>" 
+     data-subtotal="<%= order.subtotal || 0 %>"
+     data-discount="<%= order.discount || 0 %>"
+     data-tax="<%= order.tax || 0 %>"
+     data-shipping="<%= order.shipping || 0 %>"
+     data-final-amount="<%= order.finalAmount || 0 %>"
+     data-coupon-code="<%= order.couponCode || '' %>"
+     class="hidden"></div>
+<!-- Add this right after the breadcrumbs -->
+<form id="refundForm" onsubmit="event.preventDefault(); submitRefundRequest();">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+        <div>
+          <h1 class="text-3xl font-bold text-white">Request Refund</h1>
+          <p class="text-gray-400 mt-2">Order #<%= order.orderNumber || `ORD-${order._id.toString().slice(-8).toUpperCase()}` %></p>
+          <p class="text-gray-400">Placed on <%= new Date(order.createdAt).toLocaleDateString('en-IN', { 
+            weekday: 'long', 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+          }) %></p>
+        </div>
+        
+        <div class="flex items-center gap-4">
+          <span class="text-gray-400">Order Status:</span>
+          <span class="px-4 py-2 rounded-full text-sm font-bold bg-green-500/10 text-green-300 border border-green-500/30">
+            Delivered
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <!-- Left Column (2/3) -->
+      <div class="lg:col-span-2 space-y-8">
+        <!-- Order Items to Return -->
+     <!-- Order Items Card -->
+<!-- Order Items Card -->
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+  <div class="p-6 border-b border-[#2a2a2a]">
+    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+      </div>
+      Select Items to Return (Click on items)
+    </h2>
+    <p class="text-gray-400 text-sm mt-2">Click on items you want to return</p>
+  </div>
+  
+  <div class="p-6">
+    <% if (order.items && order.items.length > 0) { %>
+    <div class="space-y-4">
+      <% order.items.forEach((item, index) => { 
+        const itemPrice = item.price || 0;
+        const itemTotal = item.total || 0;
+        const quantity = item.quantity || 1;
+        const productName = item.product ? item.product.name : 'Product';
+        const productId = item.product ? item.product._id : '';
+        const variantId = item.variant ? item.variant._id : '';
+        
+        // GET IMAGE URL
+      
+let imageUrl = '/images/placeholder.jpg';
+
+if (item.variant?.images?.length) {
+  const img = item.variant.images[0];
+
+  if (img.startsWith('http')) {
+    // ✅ Cloudinary or external URL
+    imageUrl = img;
+  } else if (img.startsWith('/')) {
+    // ✅ already absolute local path
+    imageUrl = img;
+  } else {
+    // ✅ local relative path
+    imageUrl = '/' + img;
+  }
+}
+else if (item.product?.images?.length) {
+  const img = item.product.images[0];
+
+  if (img.startsWith('http')) {
+    imageUrl = img;
+  } else if (img.startsWith('/')) {
+    imageUrl = img;
+  } else {
+    imageUrl = '/' + img;
+  }
+}
+%>
+
+      <!-- Clickable item container -->
+      <div 
+        class="flex flex-col sm:flex-row gap-4 p-4 bg-[#0b0b0b]/50 border border-[#2a2a2a] rounded-xl hover:border-[#d4af37]/30 transition-all cursor-pointer selectable-item"
+        data-index="<%= index %>"
+        data-price="<%= itemPrice %>"
+        data-quantity="<%= quantity %>"
+        data-total="<%= itemTotal %>"
+       data-product="<%= productId %>"
+
+        data-variant="<%= variantId %>"
+        onclick="toggleItemSelection(this, <%= index %>)"
+      >
+        <!-- Selected indicator -->
+        <div class="absolute top-3 right-3 w-6 h-6 rounded-full bg-[#d4af37] flex items-center justify-center hidden selected-indicator">
+          <svg class="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/>
+          </svg>
+        </div>
+        
+        <!-- Product Image Column -->
+        <div class="w-full sm:w-32 h-32 flex-shrink-0">
+          <% if (imageUrl) { %>
+            <img 
+              src="<%= imageUrl %>" 
+              alt="<%= productName %>"
+              class="w-full h-full object-cover rounded-lg"
+              onerror="this.onerror=null; this.src='/images/placeholder.jpg'; this.classList.add('bg-gray-800');"
+            >
+          <% } else { %>
+            <!-- Placeholder when no image -->
+            <div class="w-full h-full bg-[#1a1a1a] rounded-lg flex items-center justify-center">
+              <div class="text-center">
+                <svg class="w-10 h-10 text-gray-600 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+                <p class="text-xs text-gray-500">No Image</p>
+              </div>
+            </div>
+          <% } %>
+        </div>
+        
+        <!-- Product Details Column -->
+        <div class="flex-grow">
+          <div class="flex flex-col md:flex-row md:items-start md:justify-between">
+            <div class="flex-1">
+              <div class="flex items-start gap-3">
+                <!-- Product Name with Image Icon -->
+                <div>
+                  <h3 class="font-bold text-white text-lg">
+                    <%= productName %>
+                  </h3>
+                  
+                  <!-- Variant Details -->
+                  <% if (item.variant) { %>
+                  <div class="mt-3 flex flex-wrap gap-2">
+                    <% if (item.variant.color && item.variant.color !== 'null') { %>
+                    <div class="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                      <div class="w-3 h-3 rounded-full <%= 
+                        item.variant.color.toLowerCase().includes('black') ? 'bg-gray-800' :
+                        item.variant.color.toLowerCase().includes('white') ? 'bg-gray-300' :
+                        item.variant.color.toLowerCase().includes('red') ? 'bg-red-500' :
+                        item.variant.color.toLowerCase().includes('blue') ? 'bg-blue-500' :
+                        item.variant.color.toLowerCase().includes('green') ? 'bg-green-500' :
+                        item.variant.color.toLowerCase().includes('gold') ? 'bg-[#d4af37]' :
+                        'bg-gray-500'
+                      %>"></div>
+                      <span class="text-sm text-gray-300"><%= item.variant.color %></span>
+                    </div>
+                    <% } %>
+                    
+                    <% if (item.variant.size && item.variant.size !== 'null') { %>
+                    <div class="px-3 py-1.5 rounded-lg bg-[#1a1a1a] border border-[#2a2a2a]">
+                      <span class="text-sm text-gray-300">Size: <%= item.variant.size %></span>
+                    </div>
+                    <% } %>
+                  </div>
+                  <% } %>
+                </div>
+              </div>
+              
+              <!-- Price and Quantity -->
+              <div class="mt-4 flex items-center gap-4 text-sm">
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">Price:</span>
+                  <span class="text-[#d4af37] font-bold">
+                    ₹<%= itemPrice.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+                  </span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-gray-400">Quantity:</span>
+                  <span class="text-white font-medium"><%= quantity %></span>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Item Total -->
+            <div class="mt-4 md:mt-0 md:ml-4">
+              <div class="text-right">
+                <p class="text-sm text-gray-400">Item Total</p>
+                <p class="text-xl font-bold text-[#d4af37]">
+                  ₹<%= itemTotal.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <% }) %>
+    </div>
+    <% } else { %>
+    <div class="text-center py-12">
+      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-8 h-8 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+        </svg>
+      </div>
+      <p class="text-gray-400">No items found in this order</p>
+    </div>
+    <% } %>
+  </div>
+</div>
+
+        <!-- Refund Reason -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+          <div class="p-6 border-b border-[#2a2a2a]">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+                <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+              </div>
+              Refund Reason
+            </h2>
+            <p class="text-gray-400 text-sm mt-2">Tell us why you're requesting a refund</p>
+          </div>
+          
+          <div class="p-6">
+            <div class="space-y-4">
+              <!-- Primary Reason -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-3">
+                  Primary Reason for Refund
+                </label>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <% const refundReasons = [
+                    { value: 'defective_product', label: 'Defective Product', icon: 'M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                    { value: 'wrong_item', label: 'Wrong Item Received', icon: 'M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                    { value: 'size_issue', label: 'Size Issue', icon: 'M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z' },
+                    { value: 'quality_issue', label: 'Quality Issue', icon: 'M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4' },
+                    { value: 'damaged', label: 'Damaged Product', icon: 'M14.828 14.828a4 4 0 01-5.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z' },
+                    { value: 'not_as_described', label: 'Not as Described', icon: 'M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z' },
+                    { value: 'late_delivery', label: 'Late Delivery', icon: 'M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z' },
+                    { value: 'other', label: 'Other Reason', icon: 'M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z' }
+                  ]; %>
+                  
+                  <% refundReasons.forEach((reason, index) => { %>
+                    <label class="flex items-center p-4 border border-[#2a2a2a] rounded-xl hover:border-[#d4af37]/30 cursor-pointer transition-all address-card">
+                      <input 
+                        type="radio" 
+                        name="reasonCode" 
+                        value="<%= reason.value %>" 
+                        class="w-5 h-5 text-[#d4af37] bg-[#1a1a1a] border-[#2a2a2a] focus:ring-[#d4af37] focus:ring-2"
+                        <%= index === 0 ? 'checked' : '' %>
+                        onchange="toggleCustomReason()"
+                      >
+                      <div class="ml-4">
+                        <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center mb-2">
+                          <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="<%= reason.icon %>"/>
+                          </svg>
+                        </div>
+                        <span class="text-white font-medium"><%= reason.label %></span>
+                      </div>
+                    </label>
+                  <% }); %>
+                </div>
+              </div>
+              
+              <!-- Custom Reason -->
+              <div id="customReasonContainer" class="hidden">
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Please describe your reason in detail
+                </label>
+                <textarea 
+                  name="customReason" 
+                  id="customReason"
+                  rows="4" 
+                  class="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-xl p-4 focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/20 outline-none transition-all resize-none"
+                  placeholder="Please provide detailed information about why you're requesting a refund..."
+                ></textarea>
+                <p class="text-gray-400 text-sm mt-2">
+                  Detailed descriptions help us process your refund faster
+                </p>
+              </div>
+              
+              <!-- Additional Details -->
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Additional Details (Optional)
+                </label>
+                <textarea 
+                  name="additionalDetails" 
+                  rows="3" 
+                  class="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-xl p-4 focus:border-[#d4af37] focus:ring-2 focus:ring-[#d4af37]/20 outline-none transition-all resize-none"
+                  placeholder="Any additional information that might help us understand your situation..."
+                ></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Return Address -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+          <div class="p-6 border-b border-[#2a2a2a]">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+                <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
+                </svg>
+              </div>
+              Select Return Address
+            </h2>
+            <p class="text-gray-400 text-sm mt-2">Choose where you want us to pick up the return</p>
+          </div>
+          
+          <div class="p-6">
+            <% if (addresses && addresses.length > 0) { %>
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <% addresses.forEach((address, index) => { %>
+                  <label class="block">
+                    <input 
+                      type="radio" 
+                      name="returnAddress" 
+                      value="<%= address._id %>" 
+                      class="hidden peer"
+                      <%= index === 0 ? 'checked' : '' %>
+                      onchange="selectAddress('<%= address._id %>')"
+                      required
+                    >
+                    <div class="border-2 border-[#2a2a2a] rounded-xl p-5 cursor-pointer hover:border-[#d4af37]/30 peer-checked:border-[#d4af37] peer-checked:bg-[#d4af37]/5 transition-all address-card">
+                      <div class="flex items-start justify-between mb-3">
+                        <div>
+                          <h4 class="font-bold text-white"><%= address.fullName %></h4>
+                          <p class="text-[#d4af37] font-medium mt-1">
+                            <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/>
+                            </svg>
+                            <%= address.phone %>
+                          </p>
+                        </div>
+                        <% if (address.isDefault) { %>
+                          <span class="px-3 py-1 bg-[#d4af37]/10 text-[#d4af37] text-xs font-bold rounded-full">
+                            Default
+                          </span>
+                        <% } %>
+                      </div>
+                      
+                      <div class="space-y-1">
+                        <p class="text-gray-300"><%= address.house %></p>
+                        <% if (address.landmark) { %>
+                          <p class="text-gray-400 text-sm">Landmark: <%= address.landmark %></p>
+                        <% } %>
+                        <p class="text-gray-300">
+                          <%= address.city %>, <%= address.state %> <%= address.pincode %>
+                        </p>
+                      </div>
+                      
+                      <div class="mt-4 pt-4 border-t border-[#2a2a2a]">
+                        <span class="text-sm text-gray-400">
+                          <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4"/>
+                          </svg>
+                          <%= address.addressType === 'home' ? 'Home' : address.addressType === 'work' ? 'Work' : 'Other' %>
+                        </span>
+                      </div>
+                    </div>
+                  </label>
+                <% }); %>
+              </div>
+            <% } else { %>
+              <div class="text-center py-8">
+                <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#d4af37]/10 flex items-center justify-center">
+                  <svg class="w-8 h-8 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
+                  </svg>
+                </div>
+                <h3 class="text-lg font-bold text-white mb-2">No Address Found</h3>
+                <p class="text-gray-400 mb-6">You need to add an address for return pickup</p>
+                <a 
+                  href="/user/addresses" 
+                  class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-semibold rounded-lg hover:shadow-lg hover:shadow-[#d4af37]/20 transition-all"
+                >
+                  <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                  </svg>
+                  Manage Addresses
+                </a>
+              </div>
+            <% } %>
+          </div>
+        </div>
+      </div>
+      
+
+      <!-- Right Column (1/3) -->
+      <div class="space-y-8">
+        <!-- Refund Summary -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+          <div class="p-6 border-b border-[#2a2a2a]">
+            <h2 class="text-xl font-bold text-white flex items-center gap-3">
+              <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+                <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+                </svg>
+              </div>
+              Refund Summary
+            </h2>
+          </div>
+          
+          <div class="p-6">
+            <div class="space-y-4">
+              <!-- Selected Items -->
+              <div class="space-y-2 pb-4 border-b border-[#2a2a2a]">
+                <% if (order.discount && order.discount > 0) { %>
+<div class="flex justify-between text-sm">
+  <span class="text-gray-400">
+    Coupon Discount
+    <% if (order.couponCode) { %>
+      (<%= order.couponCode %>)
+    <% } %>
+  </span>
+  <span class="text-red-400 font-medium">
+    -₹<%= order.discount.toFixed(2) %>
+  </span>
+</div>
+<% } %>
+
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Selected Items</span>
+                  <span class="text-white font-bold" id="selectedItemsCount">0</span>
+                </div>
+                <div class="flex justify-between">
+                  <span class="text-gray-400">Item Value</span>
+                  <span class="text-white" id="itemsValue">₹0.00</span>
+                </div>
+              </div>
+              
+              <!-- Refund Amount -->
+              <div class="pt-4">
+                <div class="flex justify-between text-lg font-bold">
+                  <span class="text-white">Estimated Refund</span>
+                  <span class="text-[#d4af37]" id="estimatedRefund">₹0.00</span>
+                </div>
+                <p class="text-gray-400 text-sm mt-2">
+                  <svg class="w-4 h-4 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                  </svg>
+                  Final amount may vary based on item condition
+                </p>
+              </div>
+              
+              <!-- Refund Method -->
+              <div class="pt-4 border-t border-[#2a2a2a]">
+                <label class="block text-sm font-medium text-gray-300 mb-2">
+                  Refund Method
+                </label>
+                <select 
+                  name="refundMethod" 
+                  class="w-full bg-[#1a1a1a] border border-[#2a2a2a] text-white rounded-lg p-3 focus:border-[#d4af37] focus:ring-1 focus:ring-[#d4af37] outline-none transition-all"
+                >
+                  <option value="original_method">Original Payment Method</option>
+                  <option value="bank_transfer">Bank Transfer</option>
+                  <option value="upi">UPI</option>
+                  <option value="wallet_credit">Wallet Credit</option>
+                </select>
+              </div>
+              
+              <!-- Refund Timeline -->
+              <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4 mt-4">
+                <div class="flex items-start gap-3">
+                  <div class="w-8 h-8 rounded-full bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <p class="text-sm text-green-300 font-medium">Refund Timeline</p>
+                    <p class="text-sm text-gray-400 mt-1">
+                      Refunds are typically processed within 7-10 business days after we receive the returned items.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] p-6">
+          <div class="space-y-4">
+            <button 
+              type="button"
+              onclick="submitRefundRequest()"
+              id="submitRefundBtn"
+              class="w-full bg-gradient-to-r from-[#d4af37] to-[#b8941f] hover:from-[#e4bf47] hover:to-[#c8a42f] text-black font-bold py-3 px-4 rounded-lg hover:shadow-lg hover:shadow-[#d4af37]/20 transition-all flex items-center justify-center gap-3"
+              disabled
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              Submit Refund Request
+            </button>
+            
+            <a 
+              href="/orders/<%= order._id %>" 
+              class="block w-full border border-[#2a2a2a] hover:border-[#d4af37]/30 hover:bg-[#1a1a1a] text-gray-300 hover:text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+              </svg>
+              Back to Order
+            </a>
+            
+            <a 
+              href="/orders" 
+              class="block w-full border border-[#2a2a2a] hover:border-[#d4af37]/30 hover:bg-[#1a1a1a] text-gray-300 hover:text-white font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+              </svg>
+              View All Orders
+            </a>
+          </div>
+        </div>
+
+        <!-- Refund Policy -->
+        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] p-6">
+          <h3 class="font-bold text-white mb-4 flex items-center gap-2">
+            <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            Refund Policy
+          </h3>
+          <div class="space-y-3 text-sm text-gray-400">
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Items must be unused and in original condition</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Original tags and packaging must be intact</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Refund initiated within 7-10 business days after inspection</span>
+            </div>
+            <div class="flex items-start gap-2">
+              <svg class="w-4 h-4 text-green-400 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+              </svg>
+              <span>Free pickup service for eligible returns</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+<!-- Add this right before the JavaScript -->
+</form>
+<!-- JavaScript -->
+<script>
+
+</script>

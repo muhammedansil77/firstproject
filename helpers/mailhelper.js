@@ -1,5 +1,4 @@
-// helpers/mailHelper.js
-const nodemailer = require("nodemailer");
+import nodemailer from "nodemailer";
 
 // Create transporter (use your email service)
 const transporter = nodemailer.createTransport({
@@ -50,4 +49,4 @@ const sendOtpEmail = async (email, otp) => {
     }
 };
 
-module.exports = { sendOtpEmail };
+export { sendOtpEmail };

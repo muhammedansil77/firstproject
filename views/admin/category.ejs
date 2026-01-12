@@ -2,10 +2,17 @@
 <div class="categories-container">
   <div class="categories-header">
     <div class="header-content">
+      <span class="page-kicker">Inventory</span>
       <h1 class="page-title">Categories</h1>
       <p class="page-subtitle">Manage your luxury watch collections</p>
     </div>
-    <button type="button" id="openAddModal" class="btn-add-category" data-bs-toggle="modal" data-bs-target="#addCategoryModal">
+    <button
+      type="button"
+      id="openAddModal"
+      class="btn-add-category"
+      data-bs-toggle="modal"
+      data-bs-target="#addCategoryModal"
+    >
       <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
         <line x1="12" y1="5" x2="12" y2="19"/>
         <line x1="5" y1="12" x2="19" y2="12"/>
@@ -15,6 +22,61 @@
   </div>
 
   <div class="categories-card">
+    <div class="table-toolbar">
+      <div class="toolbar-left">
+        <div class="pill-indicator"></div>
+        <span class="toolbar-text">All categories</span>
+        <span id="categoryCount" class="category-count">(0)</span>
+      </div>
+
+      <div class="toolbar-right">
+        <form id="categorySearchForm" class="toolbar-search" autocomplete="off">
+          <div class="search-input-wrapper">
+            <svg viewBox="0 0 24 24" class="toolbar-icon" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+            </svg>
+            <input
+              type="text"
+              id="searchInput"
+              name="search"
+              class="search-input"
+              placeholder="Search categories..."
+            />
+          </div>
+          
+          <!-- Status Filter -->
+          <select id="statusFilter" class="filter-select">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+          </select>
+          
+          <!-- Sort Filter -->
+          <select id="sortFilter" class="filter-select">
+            <option value="latest">Latest</option>
+            <option value="oldest">Oldest</option>
+            <option value="a-z">Name A-Z</option>
+            <option value="z-a">Name Z-A</option>
+          </select>
+          
+          <button type="submit" class="btn-toolbar btn-search">
+            <svg viewBox="0 0 24 24" class="btn-icon-sm" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="11" cy="11" r="7"></circle>
+              <line x1="16.5" y1="16.5" x2="21" y2="21"></line>
+            </svg>
+            Search
+          </button>
+          <button type="button" id="clearSearchBtn" class="btn-toolbar btn-clear">
+            <svg viewBox="0 0 24 24" class="btn-icon-sm" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Clear
+          </button>
+        </form>
+      </div>
+    </div>
+
     <div class="table-wrapper">
       <table class="categories-table">
         <thead>
@@ -37,6 +99,23 @@
         </tbody>
       </table>
     </div>
+    
+    <!-- Pagination Container -->
+    <div class="pagination-wrapper" id="categoryPagination">
+      <!-- Pagination will be rendered here by JavaScript -->
+    </div>
+    
+    <!-- Page Size Selector -->
+    <div class="page-size-selector">
+      <span>Show:</span>
+      <select id="pageSizeSelect" class="page-size-select">
+        <option value="5">5</option>
+        <option value="10" selected>10</option>
+        <option value="20">20</option>
+        <option value="50">50</option>
+      </select>
+      <span>entries per page</span>
+    </div>
   </div>
 </div>
 
@@ -45,7 +124,10 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content premium-modal">
       <div class="modal-header">
-        <h5 class="modal-title">Add New Category</h5>
+        <div>
+          <h5 class="modal-title">Add New Category</h5>
+          <p class="modal-subtitle">Create a collection for your premium watches</p>
+        </div>
         <button type="button" class="btn-close-custom" data-bs-dismiss="modal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -62,7 +144,12 @@
 
           <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea id="descInput" rows="4" class="form-textarea" placeholder="Enter category description (optional)"></textarea>
+            <textarea
+              id="descInput"
+              rows="4"
+              class="form-textarea"
+              placeholder="Enter category description (optional)"
+            ></textarea>
           </div>
 
           <div class="form-group">
@@ -91,8 +178,18 @@
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn-primary">Create Category</button>
+            <button type="button" class="btn-secondary" data-bs-dismiss="modal">
+              <svg viewBox="0 0 24 24" class="btn-icon-sm" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              <span>Cancel</span>
+            </button>
+            <button type="submit" class="btn-primary">
+              <svg viewBox="0 0 24 24" class="btn-icon-sm" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span>Create Category</span>
+            </button>
           </div>
         </form>
       </div>
@@ -105,7 +202,10 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content premium-modal">
       <div class="modal-header">
-        <h5 class="modal-title">Edit Category</h5>
+        <div>
+          <h5 class="modal-title">Edit Category</h5>
+          <p class="modal-subtitle">Update details of your collection</p>
+        </div>
         <button type="button" class="btn-close-custom" data-bs-dismiss="modal">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <line x1="18" y1="6" x2="6" y2="18"/>
@@ -124,7 +224,12 @@
 
           <div class="form-group">
             <label class="form-label">Description</label>
-            <textarea id="editDescInput" rows="4" class="form-textarea" placeholder="Enter category description (optional)"></textarea>
+            <textarea
+              id="editDescInput"
+              rows="4"
+              class="form-textarea"
+              placeholder="Enter category description (optional)"
+            ></textarea>
           </div>
 
           <div class="form-group">
@@ -157,8 +262,18 @@
           </div>
 
           <div class="modal-actions">
-            <button type="button" class="btn-secondary" data-bs-dismiss="modal">Cancel</button>
-            <button type="submit" class="btn-primary">Save Changes</button>
+            <button type="button" class="btn-secondary" data-bs-dismiss="modal">
+              <svg viewBox="0 0 24 24" class="btn-icon-sm" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+              <span>Cancel</span>
+            </button>
+            <button type="submit" class="btn-primary">
+              <svg viewBox="0 0 24 24" class="btn-icon-sm" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M5 13l4 4L19 7"></path>
+              </svg>
+              <span>Save Changes</span>
+            </button>
           </div>
         </form>
       </div>
@@ -168,16 +283,181 @@
 
 <script>
   window.CATEGORY_FALLBACK_IMAGE = '/mnt/data/6ace21aa-f1ff-46f1-8811-7cbdf51575c8.png';
-  
+
   function removeImagePreview() {
     document.getElementById('imageInput').value = '';
     document.getElementById('imagePreviewWrapper').style.display = 'none';
   }
-  
+
   function removeEditImagePreview() {
     document.getElementById('editImageInput').value = '';
     document.getElementById('editImagePreviewWrapper').style.display = 'none';
   }
 </script>
+
+<!-- Add this CSS for the filters and pagination -->
+<style>
+  /* Filter Styles */
+  .toolbar-search {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .filter-select {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: white;
+    color: #334155;
+    font-size: 14px;
+    cursor: pointer;
+    min-width: 120px;
+    transition: all 0.2s;
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .btn-toolbar {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 500;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+  }
+
+  .btn-search {
+    background: #3b82f6;
+    color: white;
+  }
+
+  .btn-search:hover {
+    background: #2563eb;
+  }
+
+  .btn-clear {
+    background: #f1f5f9;
+    color: #64748b;
+    border: 1px solid #e2e8f0;
+  }
+
+  .btn-clear:hover {
+    background: #e2e8f0;
+    color: #475569;
+  }
+
+  .btn-icon-sm {
+    width: 16px;
+    height: 16px;
+  }
+
+  .category-count {
+    color: #64748b;
+    font-size: 14px;
+    margin-left: 8px;
+  }
+
+  /* Pagination Styles */
+  .pagination-wrapper {
+    margin-top: 24px;
+    padding: 16px;
+    border-top: 1px solid #e2e8f0;
+  }
+
+  .pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .page-btn {
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    background: white;
+    color: #64748b;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+
+  .page-btn:hover:not(.disabled) {
+    background: #f8fafc;
+    border-color: #cbd5e1;
+  }
+
+  .page-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
+  }
+
+  .page-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .page-numbers {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+  }
+
+  .page-ellipsis {
+    padding: 8px;
+    color: #94a3b8;
+  }
+
+  /* Page Size Selector */
+  .page-size-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-top: 16px;
+    padding: 0 16px 16px;
+    font-size: 14px;
+    color: #64748b;
+  }
+
+  .page-size-select {
+    padding: 6px 10px;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    background: white;
+    color: #334155;
+    font-size: 14px;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .toolbar-search {
+      flex-direction: column;
+      align-items: stretch;
+    }
+    
+    .filter-select, .search-input-wrapper {
+      width: 100%;
+    }
+    
+    .btn-toolbar {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+</style>
 
 <% contentFor('pageJS') %>

@@ -1,230 +1,429 @@
-(function () {
-  // Read server-provided bootstrap object
-  const BOOT = (typeof window !== 'undefined' && window.PRODUCT_PAGE) ? window.PRODUCT_PAGE : {};
-  const PRODUCT_ID = BOOT.productId || null;
-  const AVAILABILITY_URL = BOOT.availabilityUrl || null;
-  const IS_UNAVAILABLE = !!BOOT.isUnavailable;
+// product1.js
+'use strict';
 
-  let selectedVariantId = null;
+console.log("✅ product1.js loaded");
 
-  // if server said product is unavailable, redirect
-  if (IS_UNAVAILABLE) {
-    setTimeout(() => { window.location.href = (BOOT.redirectTo || '/user/shop'); }, 200);
+/* =========================================================
+   GLOBAL DATA (SAFE)
+========================================================= */
+window.PRODUCT_DATA = window.PRODUCT_DATA || {};
+
+/* =========================================================
+   STATE
+========================================================= */
+let selectedVariantId = window.PRODUCT_DATA.selectedVariantId || null;
+
+/* =========================================================
+   HELPERS
+========================================================= */
+function showError(msg) {
+  console.error("Cart Error:", msg);
+  const errorEl = document.getElementById('error-msg');
+  if (!errorEl) {
+    alert(msg);
     return;
   }
+  errorEl.textContent = msg;
+  errorEl.classList.remove('hidden');
+  setTimeout(() => errorEl.classList.add('hidden'), 4000);
+}
 
-  // Thumbnail swap
+/* =========================================================
+   STOCK UPDATE FUNCTION
+========================================================= */
+function updateStockDisplay(stock, stockBadge) {
+  if (!stockBadge) return;
+  
+  const stockNum = parseInt(stock) || 0;
+  
+  // Remove all existing classes
+  stockBadge.className = 'px-3 py-1.5 rounded-full text-xs font-semibold border';
+  
+  // Add appropriate classes based on stock
+  if (stockNum <= 0) {
+    stockBadge.classList.add('bg-gray-700/50', 'text-gray-300', 'border-gray-600');
+    stockBadge.textContent = 'Out of Stock';
+  } else if (stockNum < 50) {
+    stockBadge.classList.add('bg-yellow-600/20', 'text-yellow-400', 'border-yellow-600/30', 'animate-pulse');
+    stockBadge.textContent = `Only ${stockNum} left`;
+  } else {
+    stockBadge.classList.add('bg-green-600/20', 'text-green-400', 'border-green-600/30');
+    stockBadge.textContent = `In Stock (${stockNum})`;
+  }
+}
+
+/* =========================================================
+   MAIN LOGIC – WAIT FOR DOM
+========================================================= */
+document.addEventListener('DOMContentLoaded', () => {
+
+  /* ---------------- ELEMENTS ---------------- */
+  const variantBtns = document.querySelectorAll('.variant-btn');
+  const mainImage = document.getElementById('main-product-image');
+  const displayPrice = document.getElementById('display-price');
+  const addBtn = document.getElementById('add-to-cart');
+  const buyBtn = document.getElementById('buy-now');
+  const stockBadge = document.getElementById('variant-stock-badge');
+
+  console.log("🧪 DOM ready");
+  console.log("🧪 PRODUCT_DATA:", window.PRODUCT_DATA);
+  console.log("🧪 Add button:", addBtn);
+  console.log("🧪 Stock badge:", stockBadge);
+
+  /* ---------------- INITIAL VARIANT & STOCK ---------------- */
+  const initiallySelectedBtn = document.querySelector('.variant-btn.selected');
+
+  if (initiallySelectedBtn) {
+    selectedVariantId = initiallySelectedBtn.dataset.variantId;
+    // Update initial stock display
+    const initialStock = initiallySelectedBtn.dataset.variantStock;
+    if (stockBadge && initialStock !== undefined) {
+      updateStockDisplay(initialStock, stockBadge);
+    }
+  } else if (variantBtns.length > 0) {
+    variantBtns[0].classList.add('selected');
+    selectedVariantId = variantBtns[0].dataset.variantId;
+    // Update initial stock display for first variant
+    const initialStock = variantBtns[0].dataset.variantStock;
+    if (stockBadge && initialStock !== undefined) {
+      updateStockDisplay(initialStock, stockBadge);
+    }
+  }
+
+  /* ---------------- THUMBNAILS ---------------- */
   document.querySelectorAll('.thumb').forEach(btn => {
-    btn.addEventListener('click', function () {
-      const img = this.querySelector('img');
-      if (!img) return;
-      const src = img.getAttribute('src');
-      const main = document.getElementById('main-product-image');
-      if (main && src) main.setAttribute('src', src);
-      if (main) {
-        main.classList.add('scale-95');
-        setTimeout(() => main.classList.remove('scale-95'), 300);
+    btn.addEventListener('click', () => {
+      const img = btn.querySelector('img');
+      if (img && mainImage) {
+        mainImage.src = img.src;
+        mainImage.classList.add('scale-95');
+        setTimeout(() => mainImage.classList.remove('scale-95'), 300);
       }
     });
   });
 
-  // Variant selection
-  const variantBtns = document.querySelectorAll('.variant-btn');
-  const mainImage = document.getElementById('main-product-image');
-  const displayPrice = document.getElementById('display-price');
+  /* ---------------- VARIANT CLICK ---------------- */
+  variantBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
 
-  // Find the initially selected variant (server-side selection)
-  let initialSelected = document.querySelector('.variant-btn.selected');
-  
-  if (initialSelected) {
-    selectedVariantId = initialSelected.getAttribute('data-variant-id');
-  } else if (variantBtns.length > 0) {
-    // If no variant is pre-selected, select the first one
-    variantBtns[0].classList.add('selected');
-    selectedVariantId = variantBtns[0].getAttribute('data-variant-id');
-  }
+      selectedVariantId = btn.dataset.variantId;
 
-variantBtns.forEach(btn => {
-  btn.addEventListener('click', function() {
-    // ... existing code (remove selected, add selected, etc.)
+      // UI state
+      variantBtns.forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
 
-    // Get ALL images for this variant from data attribute
-    const variantImagesJson = this.getAttribute('data-variant-images');
-    let variantImages = [];
+      // Price
+      if (displayPrice && btn.dataset.variantPrice) {
+        const price = Number(btn.dataset.variantPrice);
+        displayPrice.textContent =
+          '₹' + (isNaN(price) ? '—' : price.toLocaleString('en-IN'));
+      }
 
-    try {
-      variantImages = JSON.parse(variantImagesJson || '[]');
-    } catch (e) {
-      console.warn('Failed to parse variant images');
-    }
+      // Stock - Update stock badge
+      if (stockBadge && btn.dataset.variantStock !== undefined) {
+        const stock = btn.dataset.variantStock;
+        updateStockDisplay(stock, stockBadge);
+      }
 
-    // Fallback: use product default images if variant has none
-    if (!variantImages.length) {
-      const defaultImgs = Array.from(document.querySelectorAll('#thumbnailsGrid .thumb-img'))
-        .map(img => img.src);
-      variantImages = defaultImgs.length ? defaultImgs : [];
-    }
-
-    // === UPDATE THUMBNAILS GRID ===
-    const thumbnailsGrid = document.getElementById('thumbnailsGrid');
-
-    if (thumbnailsGrid && variantImages.length > 0) {
-      // Clear existing thumbnails
-      thumbnailsGrid.innerHTML = '';
-
-      // Limit to 12 thumbnails
-      variantImages.slice(0, 12).forEach((imgSrc, idx) => {
-        if (!imgSrc) return;
-
-        const thumbBtn = document.createElement('button');
-        thumbBtn.type = 'button';
-        thumbBtn.className = 'thumb group relative w-full h-24 rounded-xl overflow-hidden border-2 border-[#2a2a2a] hover:border-[#d4af37] bg-[#0b0b0b] transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-[#d4af37]/20 thumb-btn';
-        thumbBtn.setAttribute('data-thumb-index', idx);
-        thumbBtn.setAttribute('aria-label', `Thumbnail ${idx + 1}`);
-
-        thumbBtn.innerHTML = `
-          <img src="${imgSrc}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 thumb-img" />
-          <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-        `;
-
-        // Click to change main image
-        thumbBtn.addEventListener('click', function () {
-          if (mainImage) {
-            mainImage.setAttribute('src', imgSrc);
-            mainImage.classList.add('scale-95');
-            setTimeout(() => mainImage.classList.remove('scale-95'), 300);
+      // Images
+      try {
+        const images = JSON.parse(btn.dataset.variantImages || '[]');
+        if (images.length && mainImage) {
+          mainImage.src = images[0];
+          
+          // Update thumbnails if needed
+          const thumbnailGrid = document.getElementById('thumbnailsGrid');
+          if (thumbnailGrid) {
+            const allThumbBtns = thumbnailGrid.querySelectorAll('.thumb-btn');
+            allThumbBtns.forEach((thumbBtn, index) => {
+              const thumbImg = thumbBtn.querySelector('.thumb-img');
+              if (thumbImg && images[index]) {
+                thumbImg.src = images[index];
+              }
+            });
           }
-        });
+        }
+      } catch (e) {
+        console.warn("Variant image parse failed:", e);
+      }
 
-        thumbnailsGrid.appendChild(thumbBtn);
-      });
-    }
-
-    // Also update main image to first of new variant
-    if (mainImage && variantImages[0]) {
-      mainImage.setAttribute('src', variantImages[0]);
-      mainImage.classList.add('scale-95');
-      setTimeout(() => mainImage.classList.remove('scale-95'), 300);
-    }
-
-    // Update price (existing)
-    if (displayPrice && variantPrice) {
-      const priceNum = Number(variantPrice);
-      displayPrice.textContent = '₹' + (isNaN(priceNum) ? '—' : priceNum.toLocaleString());
-    }
-
-    // Update URL
-    const url = new URL(window.location);
-    url.searchParams.set('variant', selectedVariantId);
-    window.history.replaceState({}, '', url);
+      // Update URL
+      const url = new URL(window.location.href);
+      url.searchParams.set('variant', selectedVariantId);
+      window.history.replaceState({}, '', url);
+    });
   });
-});
 
-  const addBtn = document.getElementById('add-to-cart');
-  const buyBtn = document.getElementById('buy-now');
-  const errorEl = document.getElementById('error-msg');
+  /* ---------------- ADD TO CART ---------------- */
+  async function actionAddToCart(redirect = false) {
+    console.log("🟢 Add to Cart clicked");
 
-  function showError(msg) {
-    if (!errorEl) {
-      alert(msg);
+    const productId = window.PRODUCT_DATA.productId;
+
+    if (!productId) {
+      showError("Product data not loaded. Refresh page.");
       return;
     }
-    errorEl.textContent = msg;
-    errorEl.classList.remove('hidden');
-    errorEl.classList.add('block');
-    
-    // Auto-hide after 5 seconds
-    setTimeout(() => hideError(), 5000);
-  }
 
-  function hideError() {
-    if (!errorEl) return;
-    errorEl.classList.add('hidden');
-    errorEl.textContent = '';
-  }
-
-  async function checkAvailability() {
-    if (!PRODUCT_ID || !AVAILABILITY_URL) return { ok: false, reason: 'invalid' };
-    try {
-      const res = await fetch(AVAILABILITY_URL, { credentials: 'same-origin' });
-      if (res.status === 404 || res.status === 410) return { ok: false, reason: 'unavailable' };
-      if (!res.ok) {
-        const j = await res.json().catch(()=>({}));
-        return { ok: false, reason: j && j.reason ? j.reason : 'error' };
-      }
-      return await res.json();
-    } catch (e) {
-      console.error('Availability check error:', e);
-      return { ok: false, reason: 'network' };
-    }
-  }
-
-  async function actionAddToCart() {
-    hideError();
-    
     if (!selectedVariantId) {
-      return showError('Please select a color variant');
+      showError("Please select a variant");
+      return;
     }
-    
-    const avail = await checkAvailability();
-    if (!avail.ok) {
-      if (avail.reason === 'unavailable') return window.location.href = (BOOT.redirectTo || '/user/shop');
-      return showError('Product unavailable or could not be checked');
+
+    // Check stock before adding to cart
+    const selectedBtn = document.querySelector('.variant-btn.selected');
+    if (selectedBtn) {
+      const stock = parseInt(selectedBtn.dataset.variantStock) || 0;
+      if (stock <= 0) {
+        showError("This variant is out of stock");
+        return;
+      }
     }
-    if ((avail.stock || 0) <= 0) return showError('Product is sold out');
 
     try {
-      const payload = { 
-        productId: PRODUCT_ID, 
-        variantId: selectedVariantId,
-        qty: 1 
-      };
+      const res = await axios.post(
+        '/user/cart/add',
+        {
+          productId,
+          variantId: selectedVariantId,
+          quantity: 1
+        },
+        { withCredentials: true }
+      );
+
+      console.log("✅ Cart response:", res.data);
+
+      if (!res.data.ok) {
+        showError(res.data.message || "Unable to add to cart");
+        return;
+      }
+
+      window.location.href = redirect ? '/user/checkout' : '/user/cart';
+
+    } catch (err) {
+      console.error("Axios error:", err);
+      if (err.response?.status === 401) {
+        window.location.href =
+          '/user/login?returnTo=' + encodeURIComponent(location.pathname);
+      } else {
+        showError(err.response?.data?.message || "Server error");
+      }
+    }
+  }
+
+  /* ---------------- BUY NOW ---------------- */
+  async function actionBuyNow() {
+    console.log("🟢 Buy Now clicked");
+    await actionAddToCart(true);
+  }
+
+  /* ---------------- EVENTS ---------------- */
+  if (addBtn) {
+    addBtn.addEventListener('click', e => {
+      e.preventDefault();
+      actionAddToCart(false);
+    });
+  }
+
+  if (buyBtn) {
+    buyBtn.addEventListener('click', e => {
+      e.preventDefault();
+      actionBuyNow();
+    });
+  }
+
+  /* ---------------- URL PARAMETER CHECK ---------------- */
+  // Check if there's a variant in URL on page load
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlVariant = urlParams.get('variant');
+  
+  if (urlVariant && variantBtns.length > 0) {
+    // Find button with matching variant ID
+    const matchingBtn = Array.from(variantBtns).find(
+      btn => btn.dataset.variantId === urlVariant
+    );
+    
+    if (matchingBtn && !matchingBtn.classList.contains('selected')) {
+      // Simulate click on the matching variant
+      matchingBtn.click();
+    }
+  }
+
+  /* ---------------- ZOOM FUNCTIONALITY ---------------- */
+  const mainImageWrapper = document.getElementById('main-image-wrapper');
+  if (mainImageWrapper && mainImage) {
+    mainImageWrapper.addEventListener('mouseenter', () => {
+      mainImage.style.transform = 'scale(1.1)';
+      mainImage.style.transition = 'transform 0.5s ease';
+    });
+
+    mainImageWrapper.addEventListener('mouseleave', () => {
+      mainImage.style.transform = 'scale(1)';
+    });
+
+    // Click to view larger
+    mainImageWrapper.addEventListener('click', () => {
+      const modal = document.createElement('div');
+      modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4';
+      modal.innerHTML = `
+        <div class="relative max-w-4xl max-h-full">
+          <img src="${mainImage.src}" alt="Enlarged view" class="max-w-full max-h-screen object-contain rounded-lg">
+          <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+      `;
       
-      console.log('Adding to cart:', payload);
+      document.body.appendChild(modal);
       
-      const r = await fetch('/cart/add', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'same-origin',
-        body: JSON.stringify(payload)
+      modal.querySelector('button').addEventListener('click', () => {
+        document.body.removeChild(modal);
       });
       
-      if (r.status === 401) return window.location.href = '/auth/login?next=' + encodeURIComponent(location.pathname);
-      if (!r.ok) {
-        const j = await r.json().catch(()=>({}));
-        return showError(j && j.message ? j.message : 'Could not add to cart');
-      }
-      
-      // Success - redirect to cart
-      window.location.href = '/cart';
-    } catch (e) {
-      console.error('Add to cart error:', e);
-      showError('Network error. Please try again.');
-    }
+      modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+          document.body.removeChild(modal);
+        }
+      });
+    });
   }
 
-  async function actionBuyNow() {
-    hideError();
-    
-    if (!selectedVariantId) {
-      return showError('Please select a color variant');
-    }
-    
-    const avail = await checkAvailability();
-    if (!avail.ok) {
-      if (avail.reason === 'unavailable') return window.location.href = (BOOT.redirectTo || '/user/shop');
-      return showError('Product unavailable or could not be checked');
-    }
-    if ((avail.stock || 0) <= 0) return showError('Product is sold out');
-
-    let url = '/checkout?product=' + encodeURIComponent(PRODUCT_ID) + '&qty=1';
-    if (selectedVariantId) url += '&variant=' + encodeURIComponent(selectedVariantId);
-    
-    console.log('Buy now redirect:', url);
-    window.location.href = url;
+  /* ---------------- REVIEW BUTTON ---------------- */
+  const writeReviewBtn = document.getElementById('write-review-btn');
+  if (writeReviewBtn) {
+    writeReviewBtn.addEventListener('click', () => {
+      // Check if user is logged in
+      axios.get('/user/auth/check', { withCredentials: true })
+        .then(response => {
+          if (response.data.loggedIn) {
+            // Show review modal or redirect to review page
+            const reviewModal = document.createElement('div');
+            reviewModal.className = 'fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4';
+            reviewModal.innerHTML = `
+              <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl p-8 max-w-md w-full">
+                <h3 class="text-xl font-bold text-white mb-6">Write a Review</h3>
+                <div class="mb-6">
+                  <div class="flex items-center gap-1 mb-4">
+                    ${[1, 2, 3, 4, 5].map(i => `
+                      <button type="button" class="star-rating text-2xl text-gray-600 hover:text-yellow-400" data-rating="${i}">★</button>
+                    `).join('')}
+                  </div>
+                  <textarea 
+                    id="review-text" 
+                    class="w-full h-32 bg-[#0f0f0f] border border-[#2a2a2a] rounded-xl p-4 text-white resize-none focus:border-[#d4af37] focus:outline-none"
+                    placeholder="Share your experience with this product..."
+                  ></textarea>
+                </div>
+                <div class="flex gap-3">
+                  <button id="submit-review" class="flex-1 px-6 py-3 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-semibold hover:shadow-xl hover:shadow-[#d4af37]/30">
+                    Submit
+                  </button>
+                  <button id="cancel-review" class="px-6 py-3 rounded-xl border border-gray-600 text-gray-300 hover:bg-gray-800">
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            `;
+            
+            document.body.appendChild(reviewModal);
+            
+            // Star rating
+            let selectedRating = 0;
+            reviewModal.querySelectorAll('.star-rating').forEach((star, index) => {
+              star.addEventListener('click', () => {
+                selectedRating = index + 1;
+                reviewModal.querySelectorAll('.star-rating').forEach((s, i) => {
+                  s.className = `star-rating text-2xl ${i < selectedRating ? 'text-yellow-400' : 'text-gray-600'}`;
+                });
+              });
+            });
+            
+            // Cancel button
+            reviewModal.querySelector('#cancel-review').addEventListener('click', () => {
+              document.body.removeChild(reviewModal);
+            });
+            
+            // Submit button
+            reviewModal.querySelector('#submit-review').addEventListener('click', () => {
+              const reviewText = reviewModal.querySelector('#review-text').value.trim();
+              if (selectedRating === 0) {
+                alert('Please select a rating');
+                return;
+              }
+              
+              if (!reviewText) {
+                alert('Please enter your review');
+                return;
+              }
+              
+              // Submit review via AJAX
+              const productId = window.PRODUCT_DATA.productId;
+              axios.post('/user/review/add', {
+                productId,
+                rating: selectedRating,
+                comment: reviewText,
+                variantId: selectedVariantId
+              }, { withCredentials: true })
+                .then(response => {
+                  if (response.data.ok) {
+                    alert('Review submitted successfully!');
+                    document.body.removeChild(reviewModal);
+                    location.reload(); // Reload to show new review
+                  } else {
+                    alert(response.data.message || 'Failed to submit review');
+                  }
+                })
+                .catch(error => {
+                  console.error('Review submission error:', error);
+                  alert('Failed to submit review. Please try again.');
+                });
+            });
+            
+            // Close on outside click
+            reviewModal.addEventListener('click', (e) => {
+              if (e.target === reviewModal) {
+                document.body.removeChild(reviewModal);
+              }
+            });
+          } else {
+            // Redirect to login
+            window.location.href = `/user/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+          }
+        })
+        .catch(error => {
+          console.error('Auth check error:', error);
+          window.location.href = `/user/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+        });
+    });
   }
 
-  if (addBtn) addBtn.addEventListener('click', e => { e.preventDefault(); actionAddToCart(); });
-  if (buyBtn) buyBtn.addEventListener('click', e => { e.preventDefault(); actionBuyNow(); });
+});
 
-})();
+/* =========================================================
+   ENHANCED ERROR HANDLING
+========================================================= */
+window.addEventListener('error', function(e) {
+  console.error('Global error:', e.error);
+});
+
+/* =========================================================
+   CART ICON UPDATE (IF NEEDED)
+========================================================= */
+function updateCartCount(count) {
+  const cartCountEl = document.querySelector('.cart-count');
+  if (cartCountEl) {
+    cartCountEl.textContent = count;
+    cartCountEl.classList.remove('hidden');
+  }
+}
+
+// Optional: Listen for cart updates
+if (typeof window.addEventListener === 'function') {
+  document.addEventListener('cartUpdated', function(e) {
+    if (e.detail && e.detail.count !== undefined) {
+      updateCartCount(e.detail.count);
+    }
+  });
+}

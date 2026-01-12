@@ -1,0 +1,366 @@
+<div class="container-fluid py-4">
+  <!-- Back Button -->
+  <div class="mb-4">
+    <a href="/admin/orders" class="btn btn-outline-secondary">
+      <i class="fas fa-arrow-left me-2"></i> Back to Orders
+    </a>
+  </div>
+
+  <!-- Order Details -->
+  <div class="row">
+    <!-- Left Column - Order & Customer Info -->
+    <div class="col-lg-8">
+      <!-- Order Header -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h2 class="h4 fw-bold text-dark mb-1">Order #<%= order.orderNumber %></h2>
+              <p class="text-muted mb-0">Placed on <%= order.orderDate %></p>
+            </div>
+            <div class="text-end">
+              <span class="badge <%= 
+                order.orderStatus === 'Placed' ? 'bg-info' :
+                order.orderStatus === 'Confirmed' ? 'bg-warning' :
+                order.orderStatus === 'Shipped' ? 'bg-primary' :
+                order.orderStatus === 'OutForDelivery' ? 'bg-warning text-dark' :
+                order.orderStatus === 'Delivered' ? 'bg-success' :
+                'bg-danger'
+              %> px-3 py-2 fs-6">
+                <%= order.orderStatus %>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shipping Address & Customer Info Combined -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-user me-2"></i>Shipping Address & Customer Information</h5>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <!-- Customer Info -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-muted small">Customer Name</label>
+              <p class="fw-bold fs-5"><%= order.user?.fullName || 'N/A' %></p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-muted small">Customer Email</label>
+              <p class="fw-bold"><%= order.user?.email || 'N/A' %></p>
+            </div>
+            
+            <!-- Address Info -->
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-muted small">Shipping Name</label>
+              <p class="fw-bold"><%= order.address?.fullName || 'N/A' %></p>
+            </div>
+            <div class="col-md-6 mb-3">
+              <label class="form-label text-muted small">Contact Phone</label>
+              <p class="fw-bold"><%= order.address?.phone || 'N/A' %></p>
+            </div>
+          </div>
+          
+          <!-- Address Details -->
+          <div class="mb-3">
+            <label class="form-label text-muted small">House/Street Address</label>
+            <p class="fw-bold"><%= order.address?.house || 'N/A' %></p>
+          </div>
+          
+          <div class="row">
+            <div class="col-md-4 mb-3">
+              <label class="form-label text-muted small">City</label>
+              <p class="fw-bold"><%= order.address?.city || 'N/A' %></p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label text-muted small">State</label>
+              <p class="fw-bold"><%= order.address?.state || 'N/A' %></p>
+            </div>
+            <div class="col-md-4 mb-3">
+              <label class="form-label text-muted small">Pincode</label>
+              <p class="fw-bold"><%= order.address?.pincode || 'N/A' %></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Order Items -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-shopping-cart me-2"></i>Order Items</h5>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-4">PRODUCT</th>
+                  <th>VARIANT</th>
+                  <th class="text-center">QUANTITY</th>
+                  <th class="text-end pe-4">PRICE</th>
+                  <th class="text-end pe-4">TOTAL</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (order.items && order.items.length > 0) { %>
+                  <% order.items.forEach(item => { %>
+                    <tr>
+                      <td class="ps-4">
+                        <div class="fw-bold"><%= item.product?.name || 'Product' %></div>
+                        <% if (item.product?.images && item.product.images.length > 0) { %>
+                          <small class="text-muted">
+                            <i class="fas fa-image me-1"></i>Image available
+                          </small>
+                        <% } %>
+                      </td>
+                      <td>
+                        <% if (item.variant?.size) { %>
+                          <span class="badge bg-light text-dark me-1">Size: <%= item.variant.size %></span>
+                        <% } %>
+                        <% if (item.variant?.color) { %>
+                          <span class="badge bg-light text-dark">Color: <%= item.variant.color %></span>
+                        <% } %>
+                      </td>
+                      <td class="text-center"><%= item.quantity %></td>
+                      <td class="text-end"><%= item.formattedPrice %></td>
+                      <td class="text-end pe-4 fw-bold"><%= item.formattedTotal %></td>
+                    </tr>
+                  <% }); %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No items found</td>
+                  </tr>
+                <% } %>
+              </tbody>
+              <tfoot class="table-light">
+                <tr>
+                  <td colspan="4" class="text-end ps-4 fw-bold">Total Amount:</td>
+                  <td class="text-end pe-4 fw-bold fs-5"><%= order.formattedAmount %></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column - Status Update & Order Summary -->
+    <div class="col-lg-4">
+      <!-- Update Status Card -->
+      <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-light">
+          <h5 class="mb-0 fw-bold"><i class="fas fa-exchange-alt me-2"></i>Update Order Status</h5>
+        </div>
+        <div class="card-body">
+          <form id="updateStatusForm">
+            <input type="hidden" id="orderId" value="<%= order._id %>">
+            
+            <!-- Current Status -->
+            <div class="mb-3">
+              <label class="form-label text-muted small">Current Status</label>
+              <p class="fw-bold">
+                <span class="badge <%= 
+                  order.orderStatus === 'Placed' ? 'bg-info' :
+                  order.orderStatus === 'Confirmed' ? 'bg-warning' :
+                  order.orderStatus === 'Shipped' ? 'bg-primary' :
+                  order.orderStatus === 'OutForDelivery' ? 'bg-warning text-dark' :
+                  order.orderStatus === 'Delivered' ? 'bg-success' :
+                  'bg-danger'
+                %> px-3 py-2">
+                  <%= order.orderStatus %>
+                </span>
+              </p>
+            </div>
+
+            <!-- New Status -->
+            <div class="mb-3">
+              <label class="form-label fw-bold">Select New Status</label>
+             <% const isDelivered = order.orderStatus === 'Delivered'|| order.orderStatus ==='Cancelled'; %>
+
+<select id="newStatus" class="form-select" <%= isDelivered ? 'disabled' : '' %>>
+  <option value="">Choose status...</option>
+  <option value="Placed">Placed</option>
+  <option value="Confirmed">Confirmed</option>
+  <option value="Shipped">Shipped</option>
+  <option value="OutForDelivery">Out for Delivery</option>
+  <option value="Delivered">Delivered</option>
+  <option value="Cancelled">Cancelled</option>
+</select>
+            </div>
+
+            <!-- Notes -->
+            <div class="mb-4">
+              <label class="form-label fw-bold">Status Notes</label>
+              <textarea id="statusNotes" class="form-control" rows="3" 
+                        placeholder="Add any notes about this status change..."></textarea>
+            </div>
+
+            <!-- Update Button -->
+          <button 
+  type="submit"
+  class="btn btn-primary w-100"
+  <%= isDelivered ? 'disabled' : '' %>
+>
+  <i class="fas fa-save me-2"></i>
+  <%= isDelivered ? 'Order Delivered (Locked)' : 'Update Status' %>
+</button>
+
+          </form>
+        </div>
+      </div>
+
+      <!-- Order Summary -->
+     <!-- Order Summary card -->
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-light">
+    <h5 class="mb-0 fw-bold"><i class="fas fa-file-invoice me-2"></i>Order Summary</h5>
+  </div>
+  <div class="card-body">
+    <table class="table table-borderless mb-0">
+      <tr>
+        <td class="text-muted">Order ID</td>
+        <td class="text-end fw-bold"><%= order.orderNumber %></td>
+      </tr>
+      <tr>
+        <td class="text-muted">Order Date</td>
+        <td class="text-end"><%= order.orderDate %></td>
+      </tr>
+      <tr>
+        <td class="text-muted">Payment Method</td>
+        <td class="text-end fw-bold"><%= order.paymentMethod %></td>
+      </tr>
+      <tr>
+        <td class="text-muted">Payment Status</td>
+        <td class="text-end">
+          <span class="badge <%= order.paymentStatus === 'Paid' ? 'bg-success' : 'bg-warning' %>">
+            <%= order.paymentStatus || 'Pending' %>
+          </span>
+        </td>
+      </tr>
+      
+      <!-- ADD CANCELLATION REASON HERE -->
+  <!-- In your order summary table -->
+<% if (order.orderStatus === 'Cancelled') { %>
+<tr>
+  <td class="text-muted">Cancellation Reason</td>
+  <td class="text-end">
+    <% 
+      // Check if cancellation data exists
+      const hasCancellationData = order.cancellationReason && 
+                                 order.cancellationReason !== 'No reason provided' &&
+                                 order.cancellationReason !== '';
+    %>
+    
+    <% if (hasCancellationData) { %>
+      <div class="text-end">
+        <span class="badge bg-danger text-white mb-1">
+          <i class="fas fa-ban me-1"></i>Cancelled
+        </span>
+        <p class="mb-0 text-dark fw-semibold"><%= order.cancellationReason %></p>
+        <% if (order.cancellationReasonCode && order.cancellationReasonCode !== 'not_specified') { %>
+          <small class="text-muted">Code: <%= order.cancellationReasonCode %></small>
+        <% } %>
+      </div>
+    <% } else { %>
+      <span class="text-muted fst-italic">No reason provided</span>
+    <% } %>
+  </td>
+</tr>
+
+<% if (order.cancelledAt) { %>
+<tr>
+  <td class="text-muted">Cancelled At</td>
+  <td class="text-end">
+    <%= new Date(order.cancelledAt).toLocaleString('en-IN') %>
+  </td>
+</tr>
+<% } %>
+<% } %>
+      <!-- END CANCELLATION SECTION -->
+
+      <tr>
+        <td class="text-muted">Subtotal</td>
+        <td class="text-end">
+          <% if (order.subtotal) { %>
+            ₹<%= order.subtotal.toLocaleString('en-IN') %>
+          <% } else { %>
+            -
+          <% } %>
+        </td>
+      </tr>
+      <% if (order.tax && order.tax > 0) { %>
+        <tr>
+          <td class="text-muted">Tax</td>
+          <td class="text-end">₹<%= order.tax.toLocaleString('en-IN') %></td>
+        </tr>
+      <% } %>
+      <% if (order.discount && order.discount > 0) { %>
+        <tr>
+          <td class="text-muted">Discount</td>
+          <td class="text-end text-success">-₹<%= order.discount.toLocaleString('en-IN') %></td>
+        </tr>
+      <% } %>
+      <% if (order.shipping && order.shipping > 0) { %>
+        <tr>
+          <td class="text-muted">Shipping</td>
+          <td class="text-end">₹<%= order.shipping.toLocaleString('en-IN') %></td>
+        </tr>
+      <% } %>
+      <tr class="border-top">
+        <td class="fw-bold">Total Amount</td>
+        <td class="text-end fw-bold fs-5"><%= order.formattedAmount %></td>
+      </tr>
+    </table>
+  </div>
+</div>
+
+      <!-- Print & Back Buttons -->
+      <div class="mt-3">
+        <button onclick="window.print()" class="btn btn-outline-secondary w-100 mb-2">
+          <i class="fas fa-print me-2"></i>Print Invoice
+        </button>
+        <a href="/admin/orders" class="btn btn-outline-primary w-100">
+          <i class="fas fa-list me-2"></i>Back to Orders List
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+// Handle status update form submission
+
+</script>
+
+<!-- Print Styles -->
+<style>
+@media print {
+  .container-fluid {
+    padding: 0 !important;
+  }
+  .card {
+    border: 1px solid #ddd !important;
+    box-shadow: none !important;
+  }
+  .btn, .form-control, .form-select, textarea {
+    display: none !important;
+  }
+  .badge {
+    border: 1px solid #000 !important;
+    color: #000 !important;
+    background: none !important;
+  }
+  a {
+    text-decoration: none !important;
+    color: #000 !important;
+  }
+  .table {
+    border-collapse: collapse;
+  }
+  .table th, .table td {
+    border: 1px solid #ddd !important;
+  }
+}
+</style>

@@ -1,7 +1,13 @@
-<!-- views/admin/product.ejs -->
+views/admin/product.ejs
 <!-- Required libs (load these in your layout): axios, toastr, cropperjs, bootstrap CSS/JS, Bootstrap Icons -->
 
-<div class="container-fluid px-4 py-4" style="max-width: 100%; background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); min-height: 100vh;">
+<div class="admin-content-page px-4 py-4"
+     style="width:100%; max-width:100%; margin:0; background: #f8f9fa; min-height:100vh;">
+
+  <div class="container" style="max-width:1200px;">
+    <!-- ✅ EVERYTHING ELSE FROM YOUR FILE STAYS HERE -->
+
+
   <!-- Header Section -->
   <div class="bg-white shadow-sm rounded-3 p-4 mb-4">
     <div class="d-flex justify-content-between align-items-center">
@@ -38,6 +44,17 @@
           <% }) %>
         </select>
       </div>
+      <div class="col-lg-2 col-md-4">
+      <select id="productStatusFilter" class="form-select" style="border-radius: 10px; border: 1px solid #e0e0e0;">
+        <option value="all">All Status</option>
+        <option value="active">Active</option>
+        <option value="blocked">Blocked</option>
+           <option value="name_asc">A-Z (Name)</option>
+    <option value="name_desc">Z-A (Name)</option>
+    <option value="newest">Newest First</option>
+    <option value="oldest">Oldest First</option>
+      </select>
+    </div>
 
       <div class="col-lg-2 col-md-4">
         <select id="productLimitSelect" class="form-select" style="border-radius: 10px; border: 1px solid #e0e0e0;">
@@ -63,6 +80,7 @@
           <th class="py-3 px-4" style="font-weight: 600; color: #495057;">Product Details</th>
           <th class="py-3 px-4" style="font-weight: 600; color: #495057;">Category</th>
           <th class="py-3 px-4 text-center" style="font-weight: 600; color: #495057;">Variants</th>
+          <th class="py-3 px-4 text-center">Status</th>
           <th class="py-3 px-4 text-center" style="width:180px; font-weight: 600; color: #495057;">Actions</th>
         </tr>
       </thead>
@@ -80,14 +98,23 @@
           <% products.forEach(product => { %>
             <tr data-id="<%= product._id %>" style="border-bottom: 1px solid #f0f0f0; transition: all 0.2s;">
               <td class="px-4">
-                <% 
-                  let thumb = '/uploads/placeholder.png';
-                  if (product.images && product.images.length) thumb = '/' + product.images[0];
-                  else if (product.variants && product.variants.length) {
-                    const v0 = product.variants[0];
-                    if (v0 && v0.images && v0.images.length) thumb = '/' + v0.images[0];
-                  }
-                %>
+               <%
+  let thumb = '/uploads/placeholder.png';
+
+  if (product.images && product.images.length) {
+    thumb = product.images[0].startsWith('http')
+      ? product.images[0]
+      : '/' + product.images[0];
+  } else if (product.variants && product.variants.length) {
+    const v0 = product.variants[0];
+    if (v0 && v0.images && v0.images.length) {
+      thumb = v0.images[0].startsWith('http')
+        ? v0.images[0]
+        : '/' + v0.images[0];
+    }
+  }
+%>
+
                 <div class="position-relative" style="width: 120px; height: 90px; overflow: hidden; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
                   <img src="<%= thumb %>" style="width: 100%; height: 100%; object-fit: cover;<%= (thumb.endsWith('placeholder.png') ? 'opacity:0.4;' : '') %>" />
                 </div>
@@ -111,9 +138,9 @@
                   <button class="btn btn-sm btn-outline-primary editBtn px-3" data-id="<%= product._id %>" style="border-radius: 8px;">
                     <i class="bi bi-pencil me-1"></i>Edit
                   </button>
-                  <button class="btn btn-sm btn-outline-danger deleteBtn px-3" data-id="<%= product._id %>" style="border-radius: 8px;">
+                  <!-- <button class="btn btn-sm btn-outline-danger deleteBtn px-3" data-id="<%= product._id %>" style="border-radius: 8px;">
                     <i class="bi bi-trash me-1"></i>Delete
-                  </button>
+                  </button> -->
                 </div>
               </td>
             </tr>
@@ -142,7 +169,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
 
-        <div class="modal-body" id="addProductModalBody" style="padding: 32px; background: #fafafa;">
+<div class="modal-body" id="addProductModalBody" style="padding: 32px; background: #ffffff;">
           <!-- Basic Information -->
           <div class="bg-white rounded-3 p-4 mb-4 shadow-sm">
             <h6 class="fw-bold mb-3" style="color: #1a1a1a; font-size: 16px;">
@@ -151,7 +178,7 @@
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label fw-semibold">Product Name *</label>
-                <input id="pName" name="name" class="form-control" required style="border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px;">
+                <input id="pName" name="name" class="form-control" type="text" required style="border-radius: 10px; border: 1px solid #e0e0e0; padding: 12px;">
               </div>
 
               <div class="col-md-6">
@@ -235,10 +262,11 @@
 
 <!-- Edit Product Modal -->
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
-  <div class="modal-dialog modal-xl modal-dialog-scrollable">
-    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15);">
+ <div class="modal-dialog modal-xl">
+
+    <div class="modal-content" style="border-radius: 16px; border: none; box-shadow: 0 10px 40px rgba(0,0,0,0.15); max-height: 90vh;">
       <form id="editProductForm" novalidate>
-        <div class="modal-header" style="background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%); color: white; border: none; padding: 24px 32px;">
+        <div class="modal-header" style="background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%); color: white; border: none; padding: 24px 32px; position: sticky; top: 0; z-index: 10;">
           <div>
             <h5 class="modal-title mb-1 fw-bold" style="font-size: 24px;">Edit Product</h5>
             <p class="mb-0 small" style="opacity: 0.9;">Update product information and variants</p>
@@ -246,7 +274,7 @@
           <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
         </div>
 
-        <div class="modal-body" style="padding: 32px; background: #fafafa;">
+<div class="modal-body" style="padding: 32px; background: #ffffff; overflow-y: auto;">
           <input type="hidden" id="editProductId" />
 
           <!-- Basic Information -->
@@ -276,7 +304,7 @@
               </div>
             </div>
           </div>
-
+     
           <!-- Product Images -->
           <div class="bg-white rounded-3 p-4 mb-4 shadow-sm">
             <h6 class="fw-bold mb-3" style="color: #1a1a1a; font-size: 16px;">
@@ -289,6 +317,27 @@
               <i class="bi bi-info-circle me-2"></i>If you replace main images, choose at least 3 files.
             </div>
           </div>
+          <!-- Inside editProductModal body, after the Basic Information section -->
+<!-- Image Cropper Area for Edit -->
+<div id="editCropArea" style="display:none; margin-bottom:20px; width:100%;">
+  <div class="bg-white rounded-3 p-4 shadow-sm">
+    <div id="editCropControls" style="display:none; gap:8px; align-items:center; margin-bottom:16px;">
+      <button type="button" id="editCropApply" class="btn btn-primary px-4" style="border-radius: 8px;">
+        <i class="bi bi-check-circle me-2"></i>Apply Crop
+      </button>
+      <button type="button" id="editCropNext" class="btn btn-secondary px-4" style="border-radius: 8px;">
+        <i class="bi bi-arrow-right me-2"></i>Next
+      </button>
+      <button type="button" id="editCropCancel" class="btn btn-outline-secondary px-4" style="border-radius: 8px;">
+        <i class="bi bi-x-circle me-2"></i>Cancel
+      </button>
+      <div style="flex:1;"></div>
+    </div>
+    <div style="overflow:auto; text-align:center;">
+      <img id="editCropImage" alt="Crop preview" style="max-width:100%; height:auto; display:block; margin:0 auto;" />
+    </div>
+  </div>
+</div>
 
           <!-- Variants Section -->
           <div class="bg-white rounded-3 p-4 shadow-sm">
@@ -308,7 +357,7 @@
           </div>
         </div>
 
-        <div class="modal-footer" style="background: white; border-top: 1px solid #e0e0e0; padding: 20px 32px;">
+        <div class="modal-footer" style="background: white; border-top: 1px solid #e0e0e0; padding: 20px 32px; position: sticky; bottom: 0; z-index: 10;">
           <button type="button" class="btn btn-light px-4" data-bs-dismiss="modal" style="border-radius: 8px;">Cancel</button>
           <button id="editProductSubmit" type="submit" class="btn btn-primary px-5" style="background: linear-gradient(135deg, #0d6efd 0%, #0dcaf0 100%); border: none; border-radius: 8px;">
             <i class="bi bi-check-circle me-2"></i>Save Changes
@@ -321,7 +370,10 @@
 
 <!-- Variant Template -->
 <template id="variantTpl">
-  <div class="card mb-3 variant-row shadow-sm" data-idx="" style="border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
+  <div class="card mb-3 variant-row shadow-sm"
+     data-idx=""
+     data-variant-id=""
+ style="border: 1px solid #e0e0e0; border-radius: 12px; overflow: hidden;">
     <div class="card-header d-flex justify-content-between align-items-center" style="background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border-bottom: 1px solid #e0e0e0; padding: 16px 20px;">
       <strong style="color: #1a1a1a; font-size: 15px;">
         <i class="bi bi-box me-2"></i>Variant
@@ -370,39 +422,6 @@
       </div>
     </div>
   </div>
+    </div>
 </template>
 
-<style>
-  /* Custom hover effects */
-  .table-hover tbody tr:hover {
-    background-color: #f8f9fa !important;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  }
-  
-  /* Button hover effects */
-  .btn {
-    transition: all 0.2s ease;
-  }
-  
-  .btn:hover {
-    transform: translateY(-1px);
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-  }
-  
-  /* Form controls focus */
-  .form-control:focus,
-  .form-select:focus {
-    border-color: #80bdff;
-    box-shadow: 0 0 0 0.2rem rgba(0,123,255,.15);
-  }
-  
-  /* Card animations */
-  .card {
-    transition: all 0.2s ease;
-  }
-  
-  .card:hover {
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1) !important;
-  }
-</style>

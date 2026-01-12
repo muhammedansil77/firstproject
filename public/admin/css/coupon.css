@@ -1,0 +1,173 @@
+    :root {
+        --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        --success-gradient: linear-gradient(135deg, #20c997 0%, #17a2b8 100%);
+        --warning-gradient: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    }
+
+    body {
+        background-color: #f8fafc;
+        font-family: 'Manrope', sans-serif;
+    }
+
+    .admin-main-content {
+        background-color: #f8fafc;
+    }
+
+    .bg-gradient-primary {
+        background: var(--primary-gradient) !important;
+    }
+
+    .bg-gradient-success {
+        background: var(--success-gradient) !important;
+    }
+
+    .bg-gradient-warning {
+        background: var(--warning-gradient) !important;
+    }
+
+    .bg-gradient-info {
+        background: var(--info-gradient) !important;
+    }
+
+    .card {
+        border-radius: 12px;
+        transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+    }
+
+    .table thead th {
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.8rem;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table tbody tr {
+        transition: background-color 0.15s;
+    }
+
+    .table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+
+    .table td {
+        vertical-align: middle;
+        padding: 1rem;
+        border-color: #f1f5f9;
+    }
+
+    .badge {
+        font-weight: 500;
+        padding: 0.35em 0.65em;
+        font-size: 0.75em;
+    }
+
+    .modal-content {
+        border-radius: 12px;
+    }
+
+    .modal-header {
+        border-radius: 12px 12px 0 0;
+    }
+
+    .modal-footer {
+        border-radius: 0 0 12px 12px;
+    }
+
+    .form-control, .form-select {
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.625rem 0.875rem;
+        transition: all 0.2s;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .progress {
+        height: 6px;
+        border-radius: 3px;
+        background-color: #e2e8f0;
+    }
+
+    .progress-bar {
+        border-radius: 3px;
+    }
+
+    .btn {
+        border-radius: 8px;
+        font-weight: 500;
+        padding: 0.5rem 1rem;
+        transition: all 0.2s;
+    }
+
+    .btn-primary {
+        background: var(--primary-gradient);
+        border: none;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-group-vertical .btn {
+        border-radius: 6px;
+        margin-bottom: 0.25rem;
+        text-align: left;
+    }
+
+    .input-group-text {
+        background-color: white;
+        border-color: #e2e8f0;
+    }
+
+    .empty-state {
+        color: #94a3b8;
+    }
+
+    .empty-state-icon {
+        color: #cbd5e1;
+    }
+
+    .pagination .page-link {
+        border-radius: 6px;
+        margin: 0 2px;
+        border: 1px solid #e2e8f0;
+        color: #64748b;
+    }
+
+    .pagination .page-link:hover {
+        background-color: #f1f5f9;
+        border-color: #cbd5e1;
+    }
+
+    .pagination .page-item.active .page-link {
+        background: var(--primary-gradient);
+        border-color: transparent;
+        color: white;
+    }
+
+    .alert {
+        border-radius: 8px;
+        border: none;
+    }
+
+    .form-switch .form-check-input {
+        height: 1.5em;
+        width: 3em;
+        border-radius: 3em;
+    }
+
+    .form-switch .form-check-input:checked {
+        background-color: #667eea;
+        border-color: #667eea;
+    }

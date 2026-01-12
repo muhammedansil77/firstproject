@@ -1,4 +1,4 @@
-// models/Product.js (patch)
+
 import mongoose from 'mongoose';
 
 const ProductSchema = new mongoose.Schema({
@@ -8,6 +8,11 @@ const ProductSchema = new mongoose.Schema({
   images: { type: [String], default: [] },
   variants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Variant' }], // <--- store variant ids
   isDeleted: { type: Boolean, default: false },
+    status: { 
+    type: String, 
+    enum: ['active', 'blocked'], 
+    default: 'active' 
+  },
   deletedAt: Date
 }, { timestamps: true });
 

@@ -1,0 +1,704 @@
+<div class="container-fluid px-0">
+    <div class="container-xxl">
+        <!-- Page Header -->
+        <div class="d-flex flex-column flex-md-row align-items-start align-items-md-center justify-content-between mb-5 pt-4">
+            <div class="mb-4 mb-md-0">
+                <nav aria-label="breadcrumb" class="d-inline-block">
+                   
+                </nav>
+                <h1 class="h2 mb-2">Dashboard & Reports</h1>
+                <p class="text-muted mb-0">Detailed insights into your sales performance</p>
+            </div>
+            <div class="d-flex gap-3">
+                <button class="btn btn-outline-secondary" onclick="refreshDashboard()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Refresh
+                </button>
+                <div class="dropdown">
+                    <button class="btn btn-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="bi bi-download me-2"></i>Export
+                    </button>
+                    <ul class="dropdown-menu">
+                        <li><a class="dropdown-item" href="?exportType=csv<%= getFilterParams() %>"><i class="bi bi-filetype-csv me-2"></i>Export as CSV</a></li>
+                        <li><a class="dropdown-item" href="?exportType=pdf<%= getFilterParams() %>"><i class="bi bi-filetype-pdf me-2"></i>Export as PDF</a></li>
+                        <li><a class="dropdown-item" href="?exportType=excel<%= getFilterParams() %>"><i class="bi bi-filetype-xlsx me-2"></i>Export as Excel</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <!-- Debug Section - Remove after fixing -->
+
+
+        <!-- Filters Card -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0">Filter Report</h5>
+            </div>
+            <div class="card-body">
+                <form method="GET" action="/admin/reports/dash" id="reportFilters">
+                    <div class="row g-3">
+                        <div class="col-lg-3">
+                            <label class="form-label fw-semibold">Time Period</label>
+                            <select class="form-select" name="period" id="periodSelect" onchange="updateDateRange()">
+                                <option value="today" <%= filters.period === 'today' ? 'selected' : '' %>>Today</option>
+                                <option value="yesterday" <%= filters.period === 'yesterday' ? 'selected' : '' %>>Yesterday</option>
+                                <option value="week" <%= filters.period === 'week' ? 'selected' : '' %>>Last 7 Days</option>
+                                <option value="month" <%= filters.period === 'month' ? 'selected' : '' %>>Last 30 Days</option>
+                                <option value="quarter" <%= filters.period === 'quarter' ? 'selected' : '' %>>Last 90 Days</option>
+                                <option value="year" <%= filters.period === 'year' ? 'selected' : '' %>>Last 365 Days</option>
+                                <option value="custom" <%= filters.period === 'custom' ? 'selected' : '' %>>Custom Range</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-3" id="customDateRange" style="<%= filters.period === 'custom' ? 'display: block;' : 'display: none;' %>">
+                            <label class="form-label fw-semibold">Start Date</label>
+                            <input type="date" class="form-control" name="startDate" 
+                                   value="<%= filters.startDate %>" max="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+
+                        <div class="col-lg-3" id="customDateRangeEnd" style="<%= filters.period === 'custom' ? 'display: block;' : 'display: none;' %>">
+                            <label class="form-label fw-semibold">End Date</label>
+                            <input type="date" class="form-control" name="endDate" 
+                                   value="<%= filters.endDate %>" max="<%= new Date().toISOString().split('T')[0] %>">
+                        </div>
+
+                        <div class="col-lg-2">
+                            <label class="form-label fw-semibold">Payment Method</label>
+                            <select class="form-select" name="paymentMethod">
+                                <option value="all" <%= filters.paymentMethod === 'all' ? 'selected' : '' %>>All Methods</option>
+                                <option value="COD" <%= filters.paymentMethod === 'COD' ? 'selected' : '' %>>Cash on Delivery</option>
+                                <option value="Razorpay" <%= filters.paymentMethod === 'Razorpay' ? 'selected' : '' %>>Razorpay</option>
+                                <option value="Wallet" <%= filters.paymentMethod === 'Wallet' ? 'selected' : '' %>>Wallet</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2">
+                            <label class="form-label fw-semibold">Order Status</label>
+                            <select class="form-select" name="orderStatus">
+                                <option value="all" <%= filters.orderStatus === 'all' ? 'selected' : '' %>>All Status</option>
+                                <option value="Delivered" <%= filters.orderStatus === 'Delivered' ? 'selected' : '' %>>Delivered</option>
+                                <option value="Shipped" <%= filters.orderStatus === 'Shipped' ? 'selected' : '' %>>Shipped</option>
+                                <option value="Confirmed" <%= filters.orderStatus === 'Confirmed' ? 'selected' : '' %>>Confirmed</option>
+                                <option value="Placed" <%= filters.orderStatus === 'Placed' ? 'selected' : '' %>>Placed</option>
+                                <option value="Cancelled" <%= filters.orderStatus === 'Cancelled' ? 'selected' : '' %>>Cancelled</option>
+                            </select>
+                        </div>
+
+                        <div class="col-lg-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-filter me-2"></i>Apply Filters
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Summary Statistics -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0">Summary Report</h5>
+                <p class="text-muted mb-0 small">
+                    Period: <%= new Date(dateRange.startObj).toLocaleDateString() %> to <%= new Date(dateRange.endObj).toLocaleDateString() %>
+                </p>
+            </div>
+            <div class="row g-4">
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-bold text-primary mb-2">₹<%= stats.totalRevenue.toLocaleString() %></h3>
+                            <p class="mb-0 fw-semibold text-muted">Total Revenue</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <small class="text-muted"><i class="bi bi-currency-rupee me-1"></i>Revenue</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-bold text-success mb-2"><%= stats.totalOrders.toLocaleString() %></h3>
+                            <p class="mb-0 fw-semibold text-muted">Total Orders</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <small class="text-muted"><i class="bi bi-cart me-1"></i>Orders</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-bold text-info mb-2"><%= stats.totalItemsSold.toLocaleString() %></h3>
+                            <p class="mb-0 fw-semibold text-muted">Items Sold</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <small class="text-muted"><i class="bi bi-box me-1"></i>Items</small>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card border-0 shadow-sm h-100">
+                        <div class="card-body text-center py-4">
+                            <h3 class="fw-bold text-warning mb-2">₹<%= stats.averageOrderValue %></h3>
+                            <p class="mb-0 fw-semibold text-muted">Avg. Order Value</p>
+                        </div>
+                        <div class="card-footer bg-transparent border-top-0">
+                            <small class="text-muted"><i class="bi bi-graph-up me-1"></i>Average</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4 g-4">
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                        <div>
+                            <p class="text-muted mb-1">Discount Given</p>
+                            <h5 class="mb-0 fw-bold">₹<%= stats.totalDiscount.toLocaleString() %></h5>
+                        </div>
+                        <i class="bi bi-percent text-danger fs-4"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                        <div>
+                            <p class="text-muted mb-1">Tax Collected</p>
+                            <h5 class="mb-0 fw-bold">₹<%= stats.totalTax.toLocaleString() %></h5>
+                        </div>
+                        <i class="bi bi-receipt text-info fs-4"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                        <div>
+                            <p class="text-muted mb-1">Shipping Charges</p>
+                            <h5 class="mb-0 fw-bold">₹<%= stats.totalShipping.toLocaleString() %></h5>
+                        </div>
+                        <i class="bi bi-truck text-success fs-4"></i>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="d-flex justify-content-between align-items-center p-3 border rounded">
+                        <div>
+                            <p class="text-muted mb-1">Conversion Rate</p>
+                            <h5 class="mb-0 fw-bold"><%= stats.conversionRate %>%</h5>
+                        </div>
+                        <i class="bi bi-graph-up-arrow text-primary fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Section -->
+       <!-- Charts Section -->
+<div class="row g-4 mb-4">
+    <!-- Revenue Trend Chart -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0">Revenue Trend</h5>
+            </div>
+            <div class="card-body">
+                <% if (charts.dailySales && charts.dailySales.length > 0) { %>
+                    <canvas id="revenueChart" height="250"></canvas>
+                <% } else { %>
+                    <div class="text-center py-5">
+                        <i class="bi bi-bar-chart display-4 text-muted opacity-25"></i>
+                        <p class="text-muted mt-3 mb-0">No revenue data available for selected period</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Methods Distribution -->
+    <div class="col-lg-4">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h5 class="card-title mb-0">Payment Methods</h5>
+            </div>
+            <div class="card-body">
+                <% if (charts.paymentMethods && charts.paymentMethods.length > 0) { %>
+                    <canvas id="paymentChart" height="250"></canvas>
+                <% } else { %>
+                    <div class="text-center py-5">
+                        <i class="bi bi-credit-card display-4 text-muted opacity-25"></i>
+                        <p class="text-muted mt-3 mb-0">No payment data available</p>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+        <!-- Best Selling Products & Categories -->
+        <div class="row g-4 mb-4">
+            <!-- Best Selling Products -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Top 10 Best Selling Products</h5>
+                            <span class="badge bg-primary">Revenue</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Product</th>
+                                        <th class="text-end">Quantity</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">Orders</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (charts.bestSellingProducts && charts.bestSellingProducts.length > 0) { %>
+                                        <% charts.bestSellingProducts.forEach((product, index) => { %>
+                                            <tr>
+                                                <td>
+                                                    <span class="badge <%= index < 3 ? 'bg-warning' : 'bg-secondary' %>">
+                                                        <%= index + 1 %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <h6 class="mb-0"><%= product.name || 'Unknown Product' %></h6>
+                                                        <% if (product.sku) { %>
+                                                            <small class="text-muted">SKU: <%= product.sku %></small>
+                                                        <% } %>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end fw-semibold">
+                                                    <%= product.totalQuantity.toLocaleString() %>
+                                                </td>
+                                                <td class="text-end fw-semibold text-success">
+                                                    ₹<%= product.totalRevenue.toLocaleString() %>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-info">
+                                                        <%= product.orderCount || 0 %>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">
+                                                No products sold in this period
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Best Selling Categories -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="card-title mb-0">Top 10 Best Selling Categories</h5>
+                            <span class="badge bg-primary">Revenue</span>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>#</th>
+                                        <th>Category</th>
+                                        <th class="text-end">Quantity</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">Products</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% if (charts.bestSellingCategories && charts.bestSellingCategories.length > 0) { %>
+                                        <% charts.bestSellingCategories.forEach((category, index) => { %>
+                                            <tr>
+                                                <td>
+                                                    <span class="badge <%= index < 3 ? 'bg-warning' : 'bg-secondary' %>">
+                                                        <%= index + 1 %>
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <div>
+                                                        <h6 class="mb-0"><%= category.categoryName || 'Unknown Category' %></h6>
+                                                        <% if (category.category) { %>
+                                                            <small class="text-muted">ID: <%= category.category %></small>
+                                                        <% } %>
+                                                    </div>
+                                                </td>
+                                                <td class="text-end fw-semibold">
+                                                    <%= category.totalQuantity.toLocaleString() %>
+                                                </td>
+                                                <td class="text-end fw-semibold text-success">
+                                                    ₹<%= category.totalRevenue.toLocaleString() %>
+                                                </td>
+                                                <td class="text-end">
+                                                    <span class="badge bg-info">
+                                                        <%= category.productCount || 0 %>
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                        <% }); %>
+                                    <% } else { %>
+                                        <tr>
+                                            <td colspan="5" class="text-center py-4 text-muted">
+                                                No categories sold in this period
+                                            </td>
+                                        </tr>
+                                    <% } %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Order Status Distribution & Hourly Sales -->
+        <div class="row g-4 mb-4">
+            <!-- Order Status Distribution -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0">Order Status Distribution</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hourly Sales Pattern -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0">Hourly Sales Pattern</h5>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="hourlyChart" height="250"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Top Products & Categories -->
+        <div class="row g-4 mb-4">
+            <!-- Top Products -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0">Top Selling Products (Current Orders)</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Product</th>
+                                        <th class="text-end">Quantity</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% charts.topProducts.forEach((product, index) => { 
+                                        const share = (product.revenue / stats.totalRevenue * 100).toFixed(1);
+                                    %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-primary me-2"><%= index + 1 %></span>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-0"><%= product.product.name %></h6>
+                                                    <small class="text-muted">SKU: <%= product.product._id.toString().slice(-6) %></small>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end fw-semibold"><%= product.quantity %></td>
+                                        <td class="text-end fw-semibold">₹<%= product.revenue.toLocaleString() %></td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <span class="me-2"><%= share %>%</span>
+                                                <div class="progress flex-grow-1" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-success" style="width: <%= share %>%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Category Performance -->
+            <div class="col-lg-6">
+                <div class="card border-0 shadow-sm h-100">
+                    <div class="card-header bg-white border-0 py-3">
+                        <h5 class="card-title mb-0">Category Performance</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th>Category</th>
+                                        <th class="text-end">Items</th>
+                                        <th class="text-end">Revenue</th>
+                                        <th class="text-end">Share</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <% charts.categories.forEach((category, index) => { 
+                                        const share = (category.revenue / stats.totalRevenue * 100).toFixed(1);
+                                    %>
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="badge bg-info me-2"><%= index + 1 %></span>
+                                                <div class="flex-grow-1">
+                                                    <h6 class="mb-0"><%= category.category %></h6>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="text-end fw-semibold"><%= category.quantity %></td>
+                                        <td class="text-end fw-semibold">₹<%= category.revenue.toLocaleString() %></td>
+                                        <td class="text-end">
+                                            <div class="d-flex align-items-center justify-content-end">
+                                                <span class="me-2"><%= share %>%</span>
+                                                <div class="progress flex-grow-1" style="width: 60px; height: 6px;">
+                                                    <div class="progress-bar bg-primary" style="width: <%= share %>%"></div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <% }) %>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Detailed Orders Table -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 py-3">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">Order Details</h5>
+                    <span class="badge bg-primary"><%= orders.length %> Orders</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <div class="p-3 border-bottom">
+                        <form method="GET" class="d-flex gap-2">
+                            <input
+                                type="text"
+                                name="search"
+                                class="form-control"
+                                placeholder="Search order, customer, status..."
+                                value="<%= search %>"
+                            />
+                            <button class="btn btn-outline-primary">
+                                <i class="bi bi-search"></i>
+                            </button>
+
+                            <!-- Keep existing filters -->
+                            <input type="hidden" name="period" value="<%= filters.period %>">
+                            <input type="hidden" name="paymentMethod" value="<%= filters.paymentMethod %>">
+                            <input type="hidden" name="orderStatus" value="<%= filters.orderStatus %>">
+                        </form>
+                    </div>
+                    
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="ps-4">Order ID</th>
+                                <th>Date & Time</th>
+                                <th>Customer</th>
+                                <th>Items</th>
+                                <th class="text-end">Amount</th>
+                                <th>Payment</th>
+                                <th>Status</th>
+                                <th class="pe-4">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <% if (orders.length === 0) { %>
+                            <tr>
+                                <td colspan="8" class="text-center py-5">
+                                    <div class="empty-state">
+                                        <i class="bi bi-receipt display-4 text-muted opacity-25"></i>
+                                        <h4 class="text-muted mt-3 mb-2">No orders found</h4>
+                                        <p class="text-muted mb-0">Try changing your filter criteria</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            <% } else { %>
+                                <% orders.forEach(order => { %>
+                                <tr>
+                                    <td class="ps-4">
+                                        <a href="/admin/orders/<%= order._id %>" class="text-decoration-none fw-semibold">
+                                            <%= order.orderNumber %>
+                                        </a>
+                                    </td>
+                                    <td>
+                                        <small class="text-muted d-block">
+                                            <%= new Date(order.createdAt).toLocaleDateString() %>
+                                        </small>
+                                        <small class="text-muted">
+                                            <%= new Date(order.createdAt).toLocaleTimeString() %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <% if (order.user) { %>
+                                        <div>
+                                            <h6 class="mb-1"><%= order.user.name %></h6>
+                                            <small class="text-muted d-block"><%= order.user.email %></small>
+                                            <% if (order.user.phone) { %>
+                                            <small class="text-muted"><%= order.user.phone %></small>
+                                            <% } %>
+                                        </div>
+                                        <% } else { %>
+                                        <span class="text-muted">Guest User</span>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <span class="badge bg-light text-dark border me-2">
+                                                <%= order.items.length %>
+                                            </span>
+                                            <span class="small">
+                                                <%= order.items[0]?.product?.name || 'Product' %>
+                                                <% if (order.items.length > 1) { %>
+                                                +<%= order.items.length - 1 %> more
+                                                <% } %>
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td class="text-end">
+                                        <h6 class="mb-0 fw-bold">₹<%= order.finalAmount.toLocaleString() %></h6>
+                                        <% if (order.couponDiscount > 0) { %>
+                                        <small class="text-success">Saved ₹<%= order.couponDiscount %></small>
+                                        <% } %>
+                                    </td>
+                                    <td>
+                                        <% const paymentBadge = {
+                                            'COD': 'secondary',
+                                            'Razorpay': 'success',
+                                            'Wallet': 'info'
+                                        }[order.paymentMethod] || 'secondary'; %>
+                                        <span class="badge bg-<%= paymentBadge %>">
+                                            <%= order.paymentMethod %>
+                                        </span>
+                                        <small class="d-block text-muted">
+                                            <%= order.paymentStatus %>
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <% const statusColors = {
+                                            'Placed': 'primary',
+                                            'Confirmed': 'info',
+                                            'Shipped': 'warning',
+                                            'OutForDelivery': 'info',
+                                            'Delivered': 'success',
+                                            'Cancelled': 'danger'
+                                        } %>
+                                        <span class="badge bg-<%= statusColors[order.orderStatus] || 'secondary' %>">
+                                            <%= order.orderStatus %>
+                                        </span>
+                                    </td>
+                                    <td class="pe-4">
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="/admin/orders/<%= order._id %>" 
+                                               class="btn btn-outline-primary" 
+                                               data-bs-toggle="tooltip" 
+                                               title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </a>
+                                            <a href="/admin/invoice/<%= order._id %>" 
+                                               class="btn btn-outline-success" 
+                                               data-bs-toggle="tooltip" 
+                                               title="Download Invoice">
+                                                <i class="bi bi-receipt"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                <% }); %>
+                            <% } %>
+                        </tbody>
+                    </table>
+                    
+                    <!-- Pagination -->
+                    <% if (pagination.totalPages > 1) { %>
+                    <div class="p-3 border-top">
+                        <nav aria-label="Page navigation">
+                            <ul class="pagination justify-content-center mb-0">
+                                <!-- Previous -->
+                                <li class="page-item <%= pagination.currentPage === 1 ? 'disabled' : '' %>">
+                                    <a class="page-link"
+                                       href="?page=<%= pagination.currentPage - 1 %>&search=<%= search %><%= getFilterParams() %>">
+                                        Previous
+                                    </a>
+                                </li>
+
+                                <!-- Page Numbers -->
+                                <% for (let i = 1; i <= pagination.totalPages; i++) { %>
+                                    <li class="page-item <%= pagination.currentPage === i ? 'active' : '' %>">
+                                        <a class="page-link"
+                                           href="?page=<%= i %>&search=<%= search %><%= getFilterParams() %>">
+                                            <%= i %>
+                                        </a>
+                                    </li>
+                                <% } %>
+
+                                <!-- Next -->
+                                <li class="page-item <%= pagination.currentPage === pagination.totalPages ? 'disabled' : '' %>">
+                                    <a class="page-link"
+                                       href="?page=<%= pagination.currentPage + 1 %>&search=<%= search %><%= getFilterParams() %>">
+                                        Next
+                                    </a>
+                                </li>
+                            </ul>
+                        </nav>
+                        <div class="text-center text-muted small mt-2">
+                            Showing <%= ((pagination.currentPage - 1) * 10) + 1 %>-<%= Math.min(pagination.currentPage * 10, pagination.totalOrders) %> of <%= pagination.totalOrders %> orders
+                        </div>
+                    </div>
+                    <% } %>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+  window.DASHBOARD_DATA = <%- JSON.stringify(charts) %>;
+</script>
+
+
+
+
+
+
+
+
+
+

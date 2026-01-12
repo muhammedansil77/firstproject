@@ -1,29 +1,19 @@
+import path from 'path';
+import mongoose from 'mongoose';
 
-const path = require('path');
-const mongoose = require('mongoose');
 
-function loadModel(modPath) {
-  try {
-    const maybe = require(path.join(process.cwd(), modPath));
-    return maybe && (maybe.default || maybe);
-  } catch (err) {
-    console.error('Failed to load model', modPath, err && err.message);
-    return null;
-  }
-}
+import productModel from '../models/Product.js';
+import categoryModel from '../models/Category.js';
+import { getBestOfferForProduct } from '../helpers/offerHelper.js';
 
-const productModel = loadModel('models/Product');
-const categoryModel = loadModel('models/Category');
 
 function escapeRegex(s) {
   return String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-
-exports.loadShop = async (req, res, next) => {
+const loadShop = async (req, res, next) => {
   try {
     if (!productModel) {
-      console.error('loadShop: productModel is NULL');
       return next(new Error('Product model not loaded'));
     }
 
@@ -43,8 +33,11 @@ exports.loadShop = async (req, res, next) => {
     const limit = Math.max(1, parseInt(req.query.limit || '12', 10));
     const skip = (currentPage - 1) * limit;
 
-
-    const match = { isDeleted: { $ne: true } };
+   
+    const match = { 
+      isDeleted: { $ne: true },
+      status: 'active' 
+    };
 
     if (search) {
       match.$or = [
@@ -53,32 +46,29 @@ exports.loadShop = async (req, res, next) => {
       ];
     }
 
-if (category && category !== 'all') {
-
-  if (mongoose.Types.ObjectId.isValid(category)) {
-    match.category = new mongoose.Types.ObjectId(category);
-  } else if (categoryModel) {
- 
-    const catDoc = await categoryModel.findOne(
-      { 
-        name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' },
-        active: true,
-        isDeleted: { $ne: true }
-      },
-      { _id: 1 }
-    ).lean();
-    
-    if (catDoc) {
-      match.category = catDoc._id;
-    } else {
-     
-      match.category = category;
+    if (category && category !== 'all') {
+      if (mongoose.Types.ObjectId.isValid(category)) {
+        match.category = new mongoose.Types.ObjectId(category);
+      } else if (categoryModel) {
+        const catDoc = await categoryModel.findOne(
+          { 
+            name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' },
+            active: true,
+            isDeleted: { $ne: true }
+          },
+          { _id: 1 }
+        ).lean();
+        
+        if (catDoc) {
+          match.category = catDoc._id;
+        } else {
+          match.category = category;
+        }
+      }
     }
-  }
-}
-
 
     const pipeline = [
+   
       { $match: match },
 
       {
@@ -128,7 +118,7 @@ if (category && category !== 'all') {
         }
       },
 
-
+     
       {
         $addFields: {
           _useVariantsForPrice: {
@@ -141,7 +131,7 @@ if (category && category !== 'all') {
         }
       },
 
-
+     
       {
         $addFields: {
           _priceCandidates: {
@@ -166,7 +156,6 @@ if (category && category !== 'all') {
         }
       },
 
-  
       {
         $addFields: {
           minPrice: {
@@ -226,7 +215,6 @@ if (category && category !== 'all') {
         }
       },
 
-   
       {
         $project: {
           name: 1,
@@ -239,11 +227,11 @@ if (category && category !== 'all') {
           category: 1,
           createdAt: 1,
           updatedAt: 1,
-          variantsFull: 1
+          variantsFull: 1,
+          status: 1  
         }
       }
     ];
-
 
     if (minPrice !== null || maxPrice !== null) {
       const pm = {};
@@ -252,22 +240,21 @@ if (category && category !== 'all') {
       pipeline.push({ $match: { minPrice: pm } });
     }
 
-const sortStage = {};
-if (sort === 'latest') {
-    sortStage.createdAt = -1; 
-} else if (sort === 'price-asc') {
-    sortStage.minPrice = 1; 
-} else if (sort === 'price-desc') {
-    sortStage.minPrice = -1; 
-} else if (sort === 'a-z') {
-    sortStage.name = 1; 
-} else if (sort === 'z-a') {
-    sortStage.name = -1; 
-} else {
-   
-    sortStage.createdAt = -1; 
-}
-pipeline.push({ $sort: sortStage });
+    const sortStage = {};
+    if (sort === 'latest') {
+      sortStage.createdAt = -1; 
+    } else if (sort === 'price-asc') {
+      sortStage.minPrice = 1; 
+    } else if (sort === 'price-desc') {
+      sortStage.minPrice = -1; 
+    } else if (sort === 'a-z') {
+      sortStage.name = 1; 
+    } else if (sort === 'z-a') {
+      sortStage.name = -1; 
+    } else {
+      sortStage.createdAt = -1; 
+    }
+    pipeline.push({ $sort: sortStage });
 
     pipeline.push({
       $facet: {
@@ -281,124 +268,156 @@ pipeline.push({ $sort: sortStage });
     const totalCount = aggOut?.[0]?.totalCount?.[0]?.count || 0;
     const totalPages = Math.max(1, Math.ceil(totalCount / limit));
 
+  
+    const blockedInResults = results.filter(p => p.status !== 'active');
+    if (blockedInResults.length > 0) {
+      console.warn('WARNING: Found blocked products in shop results:', 
+        blockedInResults.map(p => ({ id: p._id, name: p.name, status: p.status }))
+      );
+    }
 
-    const products = results.map((p, idx) => {
-      function norm(item) {
-        if (!item) return null;
-        const s = String(item).trim();
-        if (!s) return null;
-        if (/^https?:\/\//i.test(s)) return s;        
-        return '/' + s.replace(/^\/+/, '');           
-      }
+    const products = results
+      .filter(p => p.status === 'active') 
+      .map((p, idx) => {
+        function norm(item) {
+          if (!item) return null;
+          const s = String(item).trim();
+          if (!s) return null;
+          if (/^https?:\/\//i.test(s)) return s;        
+          return '/' + s.replace(/^\/+/, '');           
+        }
 
-      let imgs = Array.isArray(p.images) ? p.images.filter(Boolean).map(norm) : [];
+        let imgs = Array.isArray(p.images) ? p.images.filter(Boolean).map(norm) : [];
 
-    
-      if (imgs.length === 0 && Array.isArray(p.variantsFull) && p.variantsFull.length) {
-        const listed = p.variantsFull.find(v => v.isListed !== false) || p.variantsFull[0];
+        if (imgs.length === 0 && Array.isArray(p.variantsFull) && p.variantsFull.length) {
+          const listed = p.variantsFull.find(v => v.isListed !== false) || p.variantsFull[0];
 
-        if (listed) {
-          if (Array.isArray(listed.images) && listed.images.length) {
-            imgs = listed.images.filter(Boolean).map(norm);
-          } else if (listed.image) {
-         
-            if (Array.isArray(listed.image)) {
-              imgs = listed.image.filter(Boolean).map(norm);
+          if (listed) {
+            if (Array.isArray(listed.images) && listed.images.length) {
+              imgs = listed.images.filter(Boolean).map(norm);
+            } else if (listed.image) {
+              if (Array.isArray(listed.image)) {
+                imgs = listed.image.filter(Boolean).map(norm);
+              } else {
+                imgs = [norm(listed.image)];
+              }
             } else {
-              imgs = [norm(listed.image)];
-            }
-          } else {
-         
-            for (const v of p.variantsFull) {
-              if (Array.isArray(v.images) && v.images.length) {
-                imgs = v.images.filter(Boolean).map(norm);
-                break;
-              } else if (v.image) {
-                imgs = [norm(v.image)];
-                break;
+              for (const v of p.variantsFull) {
+                if (Array.isArray(v.images) && v.images.length) {
+                  imgs = v.images.filter(Boolean).map(norm);
+                  break;
+                } else if (v.image) {
+                  imgs = [norm(v.image)];
+                  break;
+                }
               }
             }
           }
         }
-      }
 
-      imgs = imgs.slice(0, 3);
-      while (imgs.length < 3) imgs.push(null);
+        imgs = imgs.slice(0, 3);
+        while (imgs.length < 3) imgs.push(null);
 
-   
-      if (!imgs[0]) {
-        console.log('SHOP DEBUG: product has NO image after normalize:', {
-          idx,
-          productId: p._id,
+       
+
+        return {
+          _id: p._id,
           name: p.name,
-          productImages: p.images,
-          variantsFull: p.variantsFull && p.variantsFull.map(v => ({
-            id: v._id,
-            images: v.images,
-            image: v.image,
-            isListed: v.isListed
-          }))
-        });
+          description: p.description,
+          images: imgs,
+          price: p.minPrice ?? null,
+          minPrice: p.minPrice ?? null,
+          variantsCount: p.variantsCount || 0,
+          availableColors: Array.isArray(p.availableColors) ? p.availableColors : [],
+          sampleVariantId: p.sampleVariantId || null,
+         category: mongoose.Types.ObjectId.isValid(p.category)
+  ? new mongoose.Types.ObjectId(p.category)
+  : null
+
+        };
+      });
+for (const product of products) {
+  const basePrice = product.minPrice || product.price;
+
+  if (!basePrice) {
+    product.offer = null;
+    continue;
+  }
+
+  const offer = await getBestOfferForProduct({
+    _id: product._id,
+    category: product.category,
+    price: basePrice     
+  });
+
+  if (!offer) {
+    product.offer = null;
+    continue;
+  }
+
+  let discountAmount = 0;
+
+  if (offer.discountType === 'percentage') {
+    discountAmount = (basePrice * offer.discountValue) / 100;
+  } else {
+    discountAmount = offer.discountValue;
+  }
+
+  if (offer.maxDiscountAmount) {
+    discountAmount = Math.min(discountAmount, offer.maxDiscountAmount);
+  }
+
+  product.offer = {
+    title: offer.title,
+    type: offer.type,              
+    discountType: offer.discountType,
+    discountValue: offer.discountValue,
+    discountAmount,
+    finalPrice: Math.max(basePrice - discountAmount, 0)
+  };
+} 
+   
+
+    let categories = [];
+    try {
+      if (categoryModel) {
+        categories = await categoryModel.find({
+          active: true,
+          isDeleted: { $ne: true }
+        }).sort({ name: 1 }).lean();
       }
-
-      return {
-        _id: p._id,
-        name: p.name,
-        description: p.description,
-        images: imgs,
-        price: p.minPrice ?? null,
-        minPrice: p.minPrice ?? null,
-        variantsCount: p.variantsCount || 0,
-        availableColors: Array.isArray(p.availableColors) ? p.availableColors : [],
-        sampleVariantId: p.sampleVariantId || null,
-        category: p.category || null
-      };
-    });
-
-    console.log('SHOP DEBUG: total products sent to EJS =', products.length);
-    if (products[0]) {
-      console.log('SHOP DEBUG: first product sample:', products[0]);
+    } catch (e) {
+      console.warn('Could not load categories:', e && e.message);
+      categories = [];
     }
 
-   
- let categories = [];
-try {
-  if (categoryModel) {
-    categories = await categoryModel.find({
-      active: true,
-      isDeleted: { $ne: true }
-    }).sort({ name: 1 }).lean();
-  }
-} catch (e) {
-  console.warn('Could not load categories:', e && e.message);
-  categories = [];
-}
-
-
-return res.render('user/pages/shop', {
-  layout: 'user/layouts/main',
-  pageTitle: 'Shop',              
-  query: req.query,
-  products,
-  brands: [],
-  categories,                     
-  breadcrumbs: [
-    { name: 'Home', link: '/home' },
-    { name: 'Shop', link: '/shop' }
-  ],
-  pagination: {
-    currentPage,
-    totalPages,
-    hasPrevPage: currentPage > 1,
-    hasNextPage: currentPage < totalPages
-  },
-  pageJs: 'shop-filters.js',      
-  pageCss: 'shop.css'             
-});
-
+    return res.render('user/pages/shop', {
+      layout: 'user/layouts/main',
+      pageTitle: 'Shop',              
+      query: req.query,
+      products,
+      brands: [],
+      categories,                     
+      breadcrumbs: [
+        { name: 'Home', link: '/home' },
+        { name: 'Shop', link: '/shop' }
+      ],
+      pagination: {
+        currentPage,
+        totalPages,
+        hasPrevPage: currentPage > 1,
+        hasNextPage: currentPage < totalPages
+      },
+      pageJs: 'shop-filters.js',      
+      pageCss: 'shop.css'             
+    });
 
   } catch (err) {
     console.error('loadShop error:', err);
     return next(err);
   }
 };
+export default {
+  
+  loadShop
+}

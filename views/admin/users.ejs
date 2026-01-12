@@ -1,105 +1,200 @@
 <!-- views/admin/users.ejs -->
-<div style="padding:32px; background:#1f1b12; min-height:100vh; color:#fff; font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial;">
+<div class="admin-content-page"
+     style="padding:32px; background:#ffffff; min-height:100vh; color:#1a1a1a; font-family: Manrope, system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; box-sizing:border-box;">
+
   <!-- Header -->
   <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:24px;">
-    <h1 style="margin:0; font-size:28px; line-height:1.1; font-weight:700; color:#ffffff; letter-spacing:-0.2px;">User Management</h1>
-    <!-- Add User removed per request -->
+    <h1 style="margin:0; font-size:28px; line-height:1.1; font-weight:700; color:#1a1a1a; letter-spacing:-0.2px;">
+      User Management
+    </h1>
+    <div style="font-size:14px; color:#666;">
+      Total Users:
+      <span style="font-weight:700; color:#1a1a1a;"><%= pagination.totalUsers %></span>
+    </div>
   </div>
 
-  <!-- Search & Filter (GET form so URL preserves state) -->
-  <form method="get" action="/admin/users" style="display:flex; gap:12px; margin-bottom:22px; align-items:center; flex-wrap:wrap;">
-    <div style="position:relative; flex:1 1 420px; max-width:600px;">
-      <input name="search" id="searchUsers" value="<%= (filters && filters.search) ? filters.search : '' %>" type="text" placeholder="Search users by name or email..." style="width:100%; padding:12px 16px 12px 44px; border-radius:12px; background:rgba(71,66,35,0.06); border:1px solid rgba(102,86,51,0.14); color:#f5eecd; outline:none; font-size:14px;" />
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#c6ba93" style="position:absolute; left:12px; top:50%; transform:translateY(-50%);"><path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <!-- Messages -->
+  <% if (success) { %>
+    <div style="padding:12px 16px; margin-bottom:20px; border-radius:8px; background:#d4edda; border:1px solid #c3e6cb; color:#155724;">
+      <%= success %>
     </div>
-
-    <select name="status" style="padding:12px 14px; border-radius:12px; background:transparent; border:1px solid rgba(102,86,51,0.14); color:#f5eecd; min-width:160px; font-size:14px;">
-      <option value="all" <%= (!filters || !filters.status || filters.status === 'all') ? 'selected' : '' %>>All Status</option>
-      <option value="verified" <%= filters && filters.status === 'verified' ? 'selected' : '' %>>Verified</option>
-      <option value="unverified" <%= filters && filters.status === 'unverified' ? 'selected' : '' %>>Unverified</option>
-      <option value="blocked" <%= filters && filters.status === 'blocked' ? 'selected' : '' %>>Blocked</option>
-      <option value="active" <%= filters && filters.status === 'active' ? 'selected' : '' %>>Active</option>
-    </select>
-
-    <!-- Date range filters -->
-    <div style="display:flex; gap:8px; align-items:center; flex:0 0 auto;">
-      <label style="font-size:12px; color:#d6c28a;">From</label>
-      <input name="from" type="date" value="<%= filters && filters.from ? filters.from : '' %>" style="padding:8px 10px; border-radius:8px; background:#211c11; border:1px solid rgba(102,86,51,0.12); color:#fff;">
-      <label style="font-size:12px; color:#d6c28a;">To</label>
-      <input name="to" type="date" value="<%= filters && filters.to ? filters.to : '' %>" style="padding:8px 10px; border-radius:8px; background:#211c11; border:1px solid rgba(102,86,51,0.12); color:#fff;">
+  <% } %>
+  <% if (error) { %>
+    <div style="padding:12px 16px; margin-bottom:20px; border-radius:8px; background:#f8d7da; border:1px solid #f5c6cb; color:#721c24;">
+      <%= error %>
     </div>
+  <% } %>
 
-    <div style="display:flex; gap:8px;">
-      <button type="submit" style="padding:10px 16px; border-radius:10px; background:linear-gradient(90deg,#c6ba93,#d6c28a); color:#231f0f; font-weight:700;">Search</button>
-      <a href="/admin/users" style="padding:10px 16px; border-radius:10px; background:transparent; border:1px solid rgba(102,86,51,0.12); color:#fff; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">Reset</a>
-    </div>
-  </form>
+  <!-- Search & Filter Form -->
+  <!-- Search & Filter Form -->
+<form method="get" action="/admin/users" id="searchForm"
+      style="display:flex; gap:12px; margin-bottom:22px; align-items:center; flex-wrap:wrap;">
+  <!-- Existing search input -->
+  <div style="position:relative; flex:1 1 420px; max-width:600px;">
+    <input name="search" id="searchInput"
+           value="<%= (filters && filters.search) ? filters.search : '' %>"
+           type="text"
+           placeholder="Search users by name, email or phone..."
+           style="width:100%; padding:12px 44px 12px 44px; border-radius:12px; background:#f8f9fa; border:1px solid #dee2e6; color:#1a1a1a; outline:none; font-size:14px;" />
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#6c757d"
+         style="position:absolute; left:12px; top:50%; transform:translateY(-50%);">
+      <path d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
+    </svg>
+    <% if (filters && filters.search) { %>
+      <button type="button" id="clearSearch"
+              style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; color:#6c757d; cursor:pointer; padding:4px; border-radius:50%;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+          <path d="M18 6L6 18M6 6l12 12"
+                stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </button>
+    <% } %>
+  </div>
+
+  <!-- Status Filter -->
+  <select name="status"
+          style="padding:12px 14px; border-radius:12px; background:#ffffff; border:1px solid #dee2e6; color:#1a1a1a; min-width:160px; font-size:14px;">
+    <option value="all" <%= (!filters || !filters.status || filters.status === 'all') ? 'selected' : '' %>>All Status</option>
+    <option value="verified" <%= filters && filters.status === 'verified' ? 'selected' : '' %>>Verified</option>
+    <option value="unverified" <%= filters && filters.status === 'unverified' ? 'selected' : '' %>>Unverified</option>
+    <option value="blocked" <%= filters && filters.status === 'blocked' ? 'selected' : '' %>>Blocked</option>
+    <option value="active" <%= filters && filters.status === 'active' ? 'selected' : '' %>>Active</option>
+  </select>
+
+  <!-- NEW: Sort Filter -->
+  <select name="sort"
+          style="padding:12px 14px; border-radius:12px; background:#ffffff; border:1px solid #dee2e6; color:#1a1a1a; min-width:160px; font-size:14px;">
+    <option value="latest" <%= (!filters || !filters.sort || filters.sort === 'latest') ? 'selected' : '' %>>Latest First</option>
+    <option value="oldest" <%= filters && filters.sort === 'oldest' ? 'selected' : '' %>>Oldest First</option>
+    <option value="a-z" <%= filters && filters.sort === 'a-z' ? 'selected' : '' %>>Name A-Z</option>
+    <option value="z-a" <%= filters && filters.sort === 'z-a' ? 'selected' : '' %>>Name Z-A</option>
+  </select>
+
+  <!-- Date range filters -->
+  <div style="display:flex; gap:8px; align-items:center; flex:0 0 auto;">
+    <label style="font-size:12px; color:#666;">From</label>
+    <input name="from" type="date"
+           value="<%= filters && filters.from ? filters.from : '' %>"
+           style="padding:8px 10px; border-radius:8px; background:#ffffff; border:1px solid #dee2e6; color:#1a1a1a;">
+    <label style="font-size:12px; color:#666;">To</label>
+    <input name="to" type="date"
+           value="<%= filters && filters.to ? filters.to : '' %>"
+           style="padding:8px 10px; border-radius:8px; background:#ffffff; border:1px solid #dee2e6; color:#1a1a1a;">
+  </div>
+
+  <div style="display:flex; gap:8px;">
+    <button type="submit"
+            style="padding:10px 16px; border-radius:10px; background:#007bff; color:#ffffff; font-weight:700; border:none; cursor:pointer;">
+      Search
+    </button>
+    <a href="/admin/users"
+       style="padding:10px 16px; border-radius:10px; background:#ffffff; border:1px solid #dee2e6; color:#1a1a1a; text-decoration:none; display:inline-flex; align-items:center; justify-content:center;">
+      Reset All
+    </a>
+  </div>
+</form>
 
   <!-- Users Table Card -->
-  <div style="background:#211c11; border:1px solid rgba(102,86,51,0.12); border-radius:12px; box-shadow:0 10px 30px rgba(0,0,0,0.5); overflow:hidden;">
+  <div style="background:#ffffff; border:1px solid #dee2e6; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden;">
     <div style="overflow:auto;">
       <table style="width:100%; border-collapse:collapse; min-width:800px;">
-        <!-- header -->
-        <thead style="background:linear-gradient(90deg, rgba(71,66,35,0.95), rgba(71,66,35,0.8));">
+        <thead style="background:#f8f9fa;">
           <tr>
-            <th style="padding:14px 18px; text-align:left; font-size:12px; text-transform:uppercase; color:#fff; font-weight:700; letter-spacing:0.8px;">Name</th>
-            <th style="padding:14px 18px; text-align:left; font-size:12px; text-transform:uppercase; color:#fff; font-weight:700; letter-spacing:0.8px;">Email</th>
-            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#fff; font-weight:700; letter-spacing:0.8px;">Verified</th>
-            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#fff; font-weight:700; letter-spacing:0.8px;">Blocked</th>
-            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#fff; font-weight:700; letter-spacing:0.8px;">Joined</th>
-            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#fff; font-weight:700; letter-spacing:0.8px;">Actions</th>
+            <th style="padding:14px 18px; text-align:left; font-size:12px; text-transform:uppercase; color:#495057; font-weight:700; letter-spacing:0.8px; border-bottom:2px solid #dee2e6;">Name</th>
+            <th style="padding:14px 18px; text-align:left; font-size:12px; text-transform:uppercase; color:#495057; font-weight:700; letter-spacing:0.8px; border-bottom:2px solid #dee2e6;">Email</th>
+            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#495057; font-weight:700; letter-spacing:0.8px; border-bottom:2px solid #dee2e6;">Phone</th>
+            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#495057; font-weight:700; letter-spacing:0.8px; border-bottom:2px solid #dee2e6;">Verified</th>
+            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#495057; font-weight:700; letter-spacing:0.8px; border-bottom:2px solid #dee2e6;">Status</th>
+            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#495057; font-weight:700; letter-spacing:0.8px; border-bottom:2px solid #dee2e6;">Joined</th>
+            <th style="padding:14px 18px; text-align:center; font-size:12px; text-transform:uppercase; color:#495057; font-weight:700; letter-spacing:0.8px; border-bottom:2px solid #dee2e6;">Actions</th>
           </tr>
         </thead>
 
-        <!-- body -->
         <tbody>
           <% if (users && users.length > 0) { %>
             <% users.forEach((user) => { %>
-              <tr style="border-top:1px solid rgba(102,86,51,0.06);">
-                <td style="padding:12px 18px; font-size:14px; color:#fff; font-weight:600; vertical-align:middle;"><%= user.fullName %></td>
+              <tr style="border-bottom:1px solid #dee2e6;">
+                <td style="padding:12px 18px; font-size:14px; color:#1a1a1a; font-weight:600; vertical-align:middle;">
+                  <%= user.fullName %>
+                </td>
 
-                <td style="padding:12px 18px; font-size:13px; color:#d6c28a; vertical-align:middle;"><%= user.email %></td>
+                <td style="padding:12px 18px; font-size:13px; color:#495057; vertical-align:middle;">
+                  <%= user.email %>
+                </td>
+
+                <td style="padding:12px 18px; text-align:center; font-size:13px; color:#6c757d; vertical-align:middle;">
+                  <%= user.phone || 'N/A' %>
+                </td>
 
                 <td style="padding:12px 18px; text-align:center; vertical-align:middle;">
                   <% if (user.isVerified) { %>
-                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#66f3a6; background:rgba(34,64,40,0.12); box-shadow:inset 0 -1px 0 rgba(0,0,0,0.15);">Verified</span>
+                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#155724; background:#d4edda;">
+                      Verified
+                    </span>
                   <% } else { %>
-                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#ff8b8b; background:rgba(64,24,24,0.08);">Unverified</span>
+                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#721c24; background:#f8d7da;">
+                      Unverified
+                    </span>
                   <% } %>
                 </td>
 
                 <td style="padding:12px 18px; text-align:center; vertical-align:middle;">
                   <% if (user.isBlocked) { %>
-                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#ff8b8b; background:rgba(64,24,24,0.08);">Blocked</span>
+                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#721c24; background:#f8d7da;">
+                      Blocked
+                    </span>
                   <% } else { %>
-                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#c6ba93; background:rgba(102,86,51,0.04);">Active</span>
+                    <span style="display:inline-block; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:700; color:#004085; background:#cce5ff;">
+                      Active
+                    </span>
                   <% } %>
                 </td>
 
-                <td style="padding:12px 18px; text-align:center; vertical-align:middle; color:#d6c28a;"><%= new Date(user.createdAt).toLocaleDateString() %></td>
+                <td style="padding:12px 18px; text-align:center; vertical-align:middle; color:#495057; font-size:13px;">
+                  <%= new Date(user.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  }) %>
+                </td>
 
                 <td style="padding:12px 18px; text-align:center; vertical-align:middle;">
                   <div style="display:inline-flex; gap:8px; align-items:center; justify-content:center;">
-                    <a href="/admin/users/<%= user._id %>" style="display:inline-block; padding:8px 12px; border-radius:10px; font-weight:700; font-size:13px; text-decoration:none; color:#231f0f; background:linear-gradient(90deg,#c6ba93,#d6c28a); box-shadow:0 8px 18px rgba(0,0,0,0.45);">View</a>
+                    <a href="/admin/users/<%= user._id %>"
+                       style="display:inline-block; padding:8px 12px; border-radius:10px; font-weight:700; font-size:13px; text-decoration:none; color:#ffffff; background:#007bff;">
+                      View
+                    </a>
 
-                    <!-- Edit removed per request -->
-
-                    <form action="/admin/users/<%= user._id %>/block" method="post" style="display:inline;">
-                      <button type="submit" name="action" value="<%= user.isBlocked ? 'unblock' : 'block' %>" style="padding:8px 12px; border-radius:10px; font-weight:700; font-size:13px; border:0; cursor:pointer; color:#fff; background:<%= user.isBlocked ? '#2ea44f' : '#9b2b2b' %>;">
-                        <%= user.isBlocked ? 'Unblock' : 'Block' %>
-                      </button>
-                    </form>
+                    <button type="button"
+                            class="block-btn"
+                            data-user-id="<%= user._id %>"
+                            data-user-name="<%= user.fullName %>"
+                            data-user-email="<%= user.email %>"
+                            data-current-status="<%= user.isBlocked ? 'blocked' : 'active' %>"
+                            style="padding:8px 12px; border-radius:10px; font-weight:700; font-size:13px; border:0; cursor:pointer; color:#fff; background:<%= user.isBlocked ? '#28a745' : '#dc3545' %>;">
+                      <%= user.isBlocked ? 'Unblock' : 'Block' %>
+                    </button>
                   </div>
                 </td>
               </tr>
             <% }); %>
           <% } else { %>
             <tr>
-              <td colspan="6" style="padding:48px; text-align:center; color:#c6ba93;">
+              <td colspan="7" style="padding:48px; text-align:center; color:#6c757d;">
                 <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
-                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#c6ba93"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" stroke-width="1.5"/></svg>
-                  <h3 style="margin:0; font-size:18px; font-weight:700;">No Users Yet</h3>
-                  <p style="margin:0; color:#d6c28a; opacity:0.9;">Start by adding your first customer!</p>
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#adb5bd">
+                    <path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+                          stroke-width="1.5" />
+                  </svg>
+                  <h3 style="margin:0; font-size:18px; font-weight:700; color:#495057;">No Users Found</h3>
+                  <p style="margin:0; color:#6c757d;">
+                    <% if (filters.search || filters.status !== 'all' || filters.from || filters.to) { %>
+                      Try adjusting your search criteria
+                    <% } else { %>
+                      No users in the system yet
+                    <% } %>
+                  </p>
                 </div>
               </td>
             </tr>
@@ -109,59 +204,153 @@
     </div>
   </div>
 
-  <!-- Pagination (server-side) -->
-  <% if (typeof pagination !== 'undefined' && pagination.totalPages > 1) { 
-       const totalPages = pagination.totalPages;
-       const currentPage = pagination.page;
+  <!-- Pagination -->
+  <!-- Enhanced Pagination -->
+<% if (typeof pagination !== 'undefined' && pagination.totalPages > 0) {
+  const totalPages = pagination.totalPages;
+  const currentPage = pagination.page;
+  const perPage = pagination.perPage || 11;
 
-       // build base query preserving search, status & date range
-       const qpParts = [];
-       if (filters && filters.search) qpParts.push('search=' + encodeURIComponent(filters.search));
-       if (filters && filters.status) qpParts.push('status=' + encodeURIComponent(filters.status));
-       if (filters && filters.from) qpParts.push('from=' + encodeURIComponent(filters.from));
-       if (filters && filters.to) qpParts.push('to=' + encodeURIComponent(filters.to));
-       const baseQuery = qpParts.length ? '&' + qpParts.join('&') : '';
-  %>
-    <div style="margin-top:20px; display:flex; justify-content:center; gap:8px; align-items:center;">
-      <!-- Previous -->
-      <a href="/admin/users?page=<%= Math.max(1, currentPage - 1) %><%= baseQuery %>" style="padding:10px 14px; border-radius:8px; text-decoration:none; color:#fff; background:transparent; border:1px solid rgba(102,86,51,0.12);">
-        Previous
-      </a>
-
-      <% 
-        const windowSize = 5;
-        let start = Math.max(1, currentPage - Math.floor(windowSize/2));
-        let end = Math.min(totalPages, start + windowSize - 1);
-        start = Math.max(1, Math.min(start, end - windowSize + 1));
-      %>
-
-      <% if (start > 1) { %>
-        <a href="/admin/users?page=1<%= baseQuery %>" style="padding:8px 12px; border-radius:8px; text-decoration:none; color:#fff; border:1px solid rgba(102,86,51,0.12); background:transparent;">1</a>
-        <% if (start > 2) { %>
-          <span style="color:#c6ba93; padding:8px 6px;">…</span>
-        <% } %>
-      <% } %>
-
-      <% for (let p = start; p <= end; p++) { %>
-        <% if (p === currentPage) { %>
-          <span style="padding:10px 14px; border-radius:8px; background:linear-gradient(90deg,#c6ba93,#d6c28a); color:#231f0f; font-weight:800; box-shadow:0 8px 18px rgba(0,0,0,0.45);"><%= p %></span>
-        <% } else { %>
-          <a href="/admin/users?page=<%= p %><%= baseQuery %>" style="padding:10px 14px; border-radius:8px; text-decoration:none; color:#fff; border:1px solid rgba(102,86,51,0.12); background:transparent;"><%= p %></a>
-        <% } %>
-      <% } %>
-
-      <% if (end < totalPages) { %>
-        <% if (end < totalPages - 1) { %>
-          <span style="color:#c6ba93; padding:8px 6px;">…</span>
-        <% } %>
-        <a href="/admin/users?page=<%= totalPages %><%= baseQuery %>" style="padding:8px 12px; border-radius:8px; text-decoration:none; color:#fff; border:1px solid rgba(102,86,51,0.12); background:transparent;"><%= totalPages %></a>
-      <% } %>
-
-      <!-- Next -->
-      <a href="/admin/users?page=<%= Math.min(totalPages, currentPage + 1) %><%= baseQuery %>" style="padding:10px 14px; border-radius:8px; text-decoration:none; color:#fff; background:transparent; border:1px solid rgba(102,86,51,0.12);">
-        Next
-      </a>
+  const queryParams = new URLSearchParams();
+  if (filters.search) queryParams.set('search', filters.search);
+  if (filters.status && filters.status !== 'all') queryParams.set('status', filters.status);
+  if (filters.sort && filters.sort !== 'latest') queryParams.set('sort', filters.sort);
+  if (filters.from) queryParams.set('from', filters.from);
+  if (filters.to) queryParams.set('to', filters.to);
+  
+  // Keep perPage in pagination
+  queryParams.set('perPage', perPage);
+  
+  const queryString = queryParams.toString();
+%>
+  <div style="margin-top:32px; display:flex; justify-content:space-between; align-items:center; gap:20px; flex-wrap:wrap;">
+    
+    <!-- Left side: Items per page selector -->
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="color:#6c757d; font-size:14px;">Items per page:</span>
+      <div style="display:flex; gap:4px;">
+        <% const pageSizes = [5, 11, 20, 50, 100]; %>
+        <% pageSizes.forEach(size => { %>
+          <a href="/admin/users?page=1&perPage=<%= size %><%= filters.search ? '&search=' + filters.search : '' %><%= filters.status && filters.status !== 'all' ? '&status=' + filters.status : '' %><%= filters.sort && filters.sort !== 'latest' ? '&sort=' + filters.sort : '' %>"
+             style="padding:6px 12px; border-radius:6px; text-decoration:none; 
+                    <%= perPage === size ? 'background:#007bff; color:white; font-weight:bold;' : 'background:#f8f9fa; color:#495057; border:1px solid #dee2e6;' %>">
+            <%= size %>
+          </a>
+        <% }) %>
+      </div>
     </div>
-  <% } %>
 
+    <!-- Center: Page numbers -->
+    <div style="display:flex; align-items:center; gap:12px;">
+      <span style="color:#6c757d; font-size:14px;">
+        Page <%= currentPage %> of <%= totalPages %> (<%= pagination.totalUsers %> users)
+      </span>
+      
+      <!-- Previous Button -->
+      <% if (pagination.hasPrev) { %>
+        <a href="/admin/users?page=<%= pagination.prevPage %><%= queryString ? '&' + queryString : '' %>"
+           style="padding:10px 16px; border-radius:8px; text-decoration:none; color:#1a1a1a; background:#ffffff; border:1px solid #dee2e6; display:flex; align-items:center; gap:6px;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M15 18l-6-6 6-6"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Prev
+        </a>
+      <% } else { %>
+        <span style="padding:10px 16px; border-radius:8px; color:#adb5bd; border:1px solid #dee2e6; opacity:0.5; display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M15 18l-6-6 6-6"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+          Prev
+        </span>
+      <% } %>
+
+      <!-- Page Numbers -->
+      <div style="display:flex; gap:4px;">
+        <%
+          let startPage = Math.max(1, currentPage - 2);
+          let endPage = Math.min(totalPages, startPage + 4);
+
+          if (endPage - startPage < 4 && startPage > 1) {
+            startPage = Math.max(1, endPage - 4);
+          }
+        %>
+
+        <% if (startPage > 1) { %>
+          <a href="/admin/users?page=1<%= queryString ? '&' + queryString : '' %>"
+             style="padding:10px 14px; border-radius:8px; text-decoration:none; color:#1a1a1a; border:1px solid #dee2e6; background:#ffffff;">
+            1
+          </a>
+          <% if (startPage > 2) { %>
+            <span style="padding:10px 6px; color:#6c757d;">...</span>
+          <% } %>
+        <% } %>
+
+        <% for (let i = startPage; i <= endPage; i++) { %>
+          <% if (i === currentPage) { %>
+            <span style="padding:10px 14px; border-radius:8px; background:#007bff; color:#ffffff; font-weight:700;">
+              <%= i %>
+            </span>
+          <% } else { %>
+            <a href="/admin/users?page=<%= i %><%= queryString ? '&' + queryString : '' %>"
+               style="padding:10px 14px; border-radius:8px; text-decoration:none; color:#1a1a1a; border:1px solid #dee2e6; background:#ffffff;">
+              <%= i %>
+            </a>
+          <% } %>
+        <% } %>
+
+        <% if (endPage < totalPages) { %>
+          <% if (endPage < totalPages - 1) { %>
+            <span style="padding:10px 6px; color:#6c757d;">...</span>
+          <% } %>
+          <a href="/admin/users?page=<%= totalPages %><%= queryString ? '&' + queryString : '' %>"
+             style="padding:10px 14px; border-radius:8px; text-decoration:none; color:#1a1a1a; border:1px solid #dee2e6; background:#ffffff;">
+            <%= totalPages %>
+          </a>
+        <% } %>
+      </div>
+
+      <!-- Next Button -->
+      <% if (pagination.hasNext) { %>
+        <a href="/admin/users?page=<%= pagination.nextPage %><%= queryString ? '&' + queryString : '' %>"
+           style="padding:10px 16px; border-radius:8px; text-decoration:none; color:#1a1a1a; background:#ffffff; border:1px solid #dee2e6; display:flex; align-items:center; gap:6px;">
+          Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M9 18l6-6-6-6"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </a>
+      <% } else { %>
+        <span style="padding:10px 16px; border-radius:8px; color:#adb5bd; border:1px solid #dee2e6; opacity:0.5; display:flex; align-items:center; gap:6px; cursor:not-allowed;">
+          Next
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+            <path d="M9 18l6-6-6-6"
+                  stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </span>
+      <% } %>
+    </div>
+
+    <!-- Right side: Jump to page -->
+    <div style="display:flex; align-items:center; gap:8px;">
+      <span style="color:#6c757d; font-size:14px;">Go to:</span>
+      <form method="get" action="/admin/users" style="display:flex; gap:4px;">
+        <input type="hidden" name="search" value="<%= filters.search || '' %>">
+        <input type="hidden" name="status" value="<%= filters.status || 'all' %>">
+        <input type="hidden" name="sort" value="<%= filters.sort || 'latest' %>">
+        <input type="hidden" name="from" value="<%= filters.from || '' %>">
+        <input type="hidden" name="to" value="<%= filters.from || '' %>">
+        <input type="hidden" name="perPage" value="<%= perPage %>">
+        <input type="number" 
+               name="page" 
+               min="1" 
+               max="<%= totalPages %>" 
+               value="<%= currentPage %>"
+               style="width:70px; padding:8px 12px; border-radius:6px; border:1px solid #dee2e6;"
+               onchange="this.form.submit()">
+      </form>
+    </div>
+  </div>
+<% } %>
 </div>
