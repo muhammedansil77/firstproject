@@ -1,0 +1,50 @@
+<body>
+
+<h1>LUXTIME — INVOICE</h1>
+
+<p><strong>Invoice:</strong> <%= invoiceNumber %></p>
+<p><strong>Date:</strong> <%= invoiceDate %></p>
+<p><strong>Order:</strong> <%= order.orderNumber %></p>
+
+<hr>
+
+<h3>Billing Address</h3>
+<p>
+  <%= order.address.fullName %><br>
+  <%= order.address.house %><br>
+  <%= order.address.city %>, <%= order.address.state %> - <%= order.address.pincode %><br>
+  Phone: <%= order.address.phone %>
+</p>
+
+<table>
+  <thead>
+    <tr>
+      <th>Product</th>
+      <th>Qty</th>
+      <th class="right">Price</th>
+      <th class="right">Total</th>
+    </tr>
+  </thead>
+  <tbody>
+    <% order.items.forEach(item => { %>
+      <tr>
+        <td><%= item.product.name %></td>
+        <td><%= item.quantity %></td>
+        <td class="right">₹<%= item.price %></td>
+        <td class="right">₹<%= item.total %></td>
+      </tr>
+    <% }) %>
+  </tbody>
+</table>
+
+<table style="margin-top:20px">
+  <tr><td class="right">Subtotal</td><td class="right">₹<%= order.subtotal %></td></tr>
+  <tr><td class="right">Tax</td><td class="right">₹<%= order.tax %></td></tr>
+  <tr><th class="right">Total</th><th class="right">₹<%= order.finalAmount %></th></tr>
+</table>
+
+<div class="no-print" style="margin-top:20px">
+  <button onclick="window.print()">Print Invoice</button>
+</div>
+
+</body>

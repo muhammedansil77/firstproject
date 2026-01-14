@@ -28,17 +28,17 @@ const viewProduct = async (req, res, next) => {
     let product = null;
     let variantFromId = null;
 
-    // Find product by ID
+   
     if (mongoose.Types.ObjectId.isValid(param)) {
       product = await Product.findById(param).lean().catch(() => null);
     }
 
-    // Find product by slug
+  
     if (!product) {
       product = await Product.findOne({ slug: param }).lean().catch(() => null);
     }
 
-    // Find product by variant ID
+    
     if (!product) {
       if (Variant && mongoose.Types.ObjectId.isValid(param)) {
         variantFromId = await Variant.findById(param).lean().catch(() => null);
@@ -47,22 +47,40 @@ const viewProduct = async (req, res, next) => {
         product = await Product.findById(variantFromId.product).lean().catch(() => null);
       }
     }
+    
 
     if (!product) {
       console.log('viewProduct: not found for param:', param);
       return res.status(404).redirect('/user/shop');
     }
 
-    const isUnavailable = !!(
-      product.isDeleted ||
-      product.isBlocked ||
-      product.isListed === false
-    );
-    if (isUnavailable) {
+  const isUnavailable = (
+  product.isDeleted === true ||
+  product.status === 'blocked'
+);
+
+   if (isUnavailable) {
+  return res.redirect('/user/shop');
+}
+if (product.category && mongoose.Types.ObjectId.isValid(product.category)) {
+  try {
+    const Category = (await import('../models/Category.js')).default;
+
+    const category = await Category.findById(product.category)
+      .select('active isDeleted')
+      .lean();
+
+    if (!category || category.isDeleted === true || category.active === false) {
+      console.log('Product blocked due to category status');
       return res.redirect('/user/shop');
     }
+  } catch (err) {
+    console.error('Category validation error:', err.message);
+    return res.redirect('/user/shop');
+  }
+}
 
-    // Load variants
+   
     let rawVariants = [];
     try {
       if (Array.isArray(product.variants) && product.variants.length) {
@@ -75,23 +93,23 @@ const viewProduct = async (req, res, next) => {
       rawVariants = [];
     }
 
-    // Process variants with offers
+   
     const variants = await Promise.all(rawVariants.map(async (v) => {
       let imgs = [];
       if (Array.isArray(v.images) && v.images.length) imgs = v.images;
       else if (v.image) imgs = Array.isArray(v.image) ? v.image : [v.image];
 
-      // Calculate price for this variant
+    
       const variantPriceCandidates = [
         toNum(v.salePrice),
         toNum(v.regularPrice || v.price),
         toNum(v.price)
       ];
-      
+
       const variantBasePrice = variantPriceCandidates
         .find(val => Number.isFinite(val) && val > 0) || 0;
 
-      // Get offer for this variant
+     
       let variantOffer = null;
       let variantDiscountedPrice = variantBasePrice;
       let variantDiscountAmount = 0;
@@ -122,7 +140,7 @@ const viewProduct = async (req, res, next) => {
           }
         } catch (offerErr) {
           console.warn('Error calculating offer for variant:', offerErr.message);
-          // Continue without offer
+         
         }
       }
 
@@ -137,8 +155,8 @@ const viewProduct = async (req, res, next) => {
         color: v.color || v.colour || v.colorName || 'Default',
         colour: v.color || v.colour || v.colorName || 'Default',
         colorCode: v.colorCode || v.hexColor || '#888888',
-        
-        // Add offer data
+
+     
         offerData: {
           hasOffer: !!variantOffer,
           title: variantOffer?.title || '',
@@ -153,7 +171,6 @@ const viewProduct = async (req, res, next) => {
       };
     }));
 
-    // Organize variants by color
     const colorGroups = {};
     variants.forEach(v => {
       const c = (v.color || 'Default').toString();
@@ -161,7 +178,7 @@ const viewProduct = async (req, res, next) => {
       colorGroups[c].push(v);
     });
 
-    // Select variant
+
     let selectedVariant = null;
     const qVar = req.query.variant && mongoose.Types.ObjectId.isValid(req.query.variant)
       ? String(req.query.variant)
@@ -178,7 +195,7 @@ const viewProduct = async (req, res, next) => {
 
     if (!selectedVariant) selectedVariant = {};
 
-    // Calculate main offer for selected variant
+   
     const priceCandidates = [
       selectedVariant?.salePrice,
       selectedVariant?.regularPrice,
@@ -220,7 +237,7 @@ const viewProduct = async (req, res, next) => {
       }
     }
 
-    // Load reviews
+  
     let reviews = [];
     try {
       if (Review) {
@@ -234,13 +251,13 @@ const viewProduct = async (req, res, next) => {
       reviews = [];
     }
 
-    // Load related products
+   
     let related = [];
     try {
       if (product.category) {
         let categoryId = product.category;
 
-        // Handle category name vs ID
+      
         if (typeof categoryId === 'string' && !mongoose.Types.ObjectId.isValid(categoryId)) {
           try {
             const Category = (await import('../models/Category.js')).default;
@@ -260,7 +277,7 @@ const viewProduct = async (req, res, next) => {
           }
         }
 
-        // Find related products
+     
         related = await Product.find({
           category: categoryId,
           _id: { $ne: product._id },
@@ -278,7 +295,7 @@ const viewProduct = async (req, res, next) => {
           .limit(10)
           .lean();
 
-        // Process related products
+   
         related = related.map(p => {
           let images = [];
           if (Array.isArray(p.images) && p.images.length > 0) {
@@ -338,7 +355,7 @@ const viewProduct = async (req, res, next) => {
       related = [];
     }
 
-    // Prepare product images
+ 
     const productImagesNormalized = Array.isArray(product.images) ? product.images.map(normPath).filter(Boolean) : [];
     const effectiveImages = (selectedVariant && Array.isArray(selectedVariant.images) && selectedVariant.images.length)
       ? selectedVariant.images
@@ -352,24 +369,24 @@ const viewProduct = async (req, res, next) => {
 
     const totalStock = variants.reduce((sum, v) => sum + (Number(v.stock) || 0), 0);
 
-    // Render the page
+
     return res.render("user/pages/product", {
       product: viewProduct,
       selectedVariant,
       colorGroups,
-      variants, // Pass all variants for dynamic updates
+      variants, 
       related,
       reviews: reviews || [],
       totalStock,
 
-      // Offer data
+   
       offer,
       discountedPrice,
       discountAmount,
       discountLabel,
       basePrice,
 
-      // Additional data
+  
       productId: String(product._id),
       availabilityUrl: `/user/shop/${product._id}/availability`,
       pageTitle: product.name,

@@ -85,7 +85,7 @@ export const preventCacheForAuth = (req, res, next) => {
 
   // 🚫 User logged in → block ONLY user auth pages
   if (isUserAuthPage && req.session?.isLoggedIn && req.session?.userId) {
-    return res.redirect('/user/home');
+    return res.redirect('/user');
   }
 
   // 🚫 Admin logged in → block ONLY admin auth pages

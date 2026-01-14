@@ -1,37 +1,84 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Image Upload</title>
+  <meta charset="UTF-8">
+  <title>Upload Image</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
-    img {
-      width: 200px;
-      border-radius: 10px;
-      margin-top: 10px;
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      padding: 40px;
+    }
+
+    .upload-box {
+      max-width: 500px;
+      margin: auto;
+      background: #fff;
+      padding: 25px;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input[type="file"] {
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    button {
+      width: 100%;
+      padding: 10px;
+      background: #000;
+      color: #fff;
+      border: none;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    button:hover {
+      background: #333;
+    }
+
+    .preview img {
+      max-width: 100%;
+      margin-top: 15px;
+      border-radius: 4px;
     }
   </style>
 </head>
 <body>
 
-<h2>Upload Image</h2>
+  <div class="upload-box">
+    <h2>Upload Image to Cloudinary</h2>
 
-<form action="/upload-image" method="POST" enctype="multipart/form-data">
-  <input type="text" name="title" placeholder="Image Title" required />
-  <br><br>
-  <input type="file" name="image" accept="image/*" required />
-  <br><br>
-  <button type="submit">Upload</button>
-</form>
+    <form
+      action="/upload-image"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <input
+        type="file"
+        name="image"
+        accept="image/*"
+        required
+      />
 
-<hr>
+      <button type="submit">Upload Image</button>
+    </form>
 
-<h3>Uploaded Images</h3>
-
-<% images.forEach(img => { %>
-  <div>
-    <h4><%= img.title %></h4>
-    <img src="<%= img.imagePath %>" alt="image">
+    <% if (imageUrl) { %>
+      <div class="preview">
+        <h4>Uploaded Image:</h4>
+        <img src="<%= imageUrl %>" alt="Uploaded Image">
+      </div>
+    <% } %>
   </div>
-<% }) %>
 
 </body>
 </html>

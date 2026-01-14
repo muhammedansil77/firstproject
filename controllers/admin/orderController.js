@@ -17,9 +17,12 @@ export const loadAdminOrders = async (req, res) => {
     console.log('Received Query Parameters:', {
       page, limit, status, search, sort, startDate, endDate
     });
-
+let query= {}
  
-    let query = {};
+    // let query = {
+    //   paymentMethod:"Razorpay",
+    //   orderStatus: "Delliv"
+    // };
 
    
     if (status && status !== 'all') {
@@ -80,7 +83,7 @@ export const loadAdminOrders = async (req, res) => {
       
       query.$or = searchConditions;
     }
-
+  
    
     let sortOption = {};
     switch (sort) {

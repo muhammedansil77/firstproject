@@ -314,7 +314,7 @@ export const deleteReturn = async (req, res) => {
     res.json({ success: true, message: 'Return deleted successfully' });
     
   } catch (error) {
-    console.error('Delete return error:', error);
+   
     res.status(500).json({ success: false, message: error.message });
   }
 };
@@ -409,8 +409,7 @@ export const getReturnDetail = async (req, res) => {
     }
     
 
-    console.log('=== IMAGE DEBUG INFO ===');
-    console.log('Return ID:', returnReq._id);
+   
     
  const item = returnReq.items?.[0] || {};
 
@@ -444,9 +443,8 @@ res.render('admin/returnDetail', {
 
 export const updateReturnStatusWithNotes = async (req, res) => {
   try {
-    console.log('=== UPDATE STATUS REQUEST ===');
-    console.log('Params:', req.params);
-    console.log('Body:', req.body);
+  
+   
     
     const { id } = req.params;
     const { status, adminNotes } = req.body;
@@ -570,7 +568,7 @@ case 'refund_completed': {
 
     returnReq.walletRefunded = true;
 
-    console.log(`💰 Wallet credited ₹${refundAmount} for return ${returnReq._id}`);
+    console.log(` Wallet credited ₹${refundAmount} for return ${returnReq._id}`);
   }
 
   break;

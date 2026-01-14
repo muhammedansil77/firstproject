@@ -12,27 +12,27 @@ try {
 
   const hasKeyId = process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID.startsWith('rzp_');
   const hasKeySecret = !!process.env.RAZORPAY_KEY_SECRET;
-  
+
   if (hasKeyId && hasKeySecret) {
-  
+
     razorpayInstance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
       key_secret: process.env.RAZORPAY_KEY_SECRET
     });
-   
+
   } else {
 
     throw new Error('Razorpay keys not configured, using mock mode');
   }
 } catch (error) {
-  console.warn('⚠️ ' + error.message);
+  console.warn(' ' + error.message);
   isMockMode = true;
-  
+
 
   razorpayInstance = {
     orders: {
       create: async (options) => {
-       
+
         return {
           id: 'mock_order_' + Date.now(),
           amount: options.amount,
@@ -65,9 +65,9 @@ export const checkRazorpay = (req, res) => {
 export const getWalletPage = async (req, res) => {
   try {
     const userId = req.session.userId;
-    
+
     let wallet = await Wallet.findOne({ user: userId });
-    
+
     if (!wallet) {
       wallet = new Wallet({
         user: userId,
@@ -76,17 +76,17 @@ export const getWalletPage = async (req, res) => {
       });
       await wallet.save();
     }
-    
-    const sortedTransactions = [...wallet.transactions].sort((a, b) => 
+
+    const sortedTransactions = [...wallet.transactions].sort((a, b) =>
       new Date(b.createdAt) - new Date(a.createdAt)
     );
-    
+
     const razorpayKeyId = process.env.RAZORPAY_KEY_ID;
-    
- 
-    
+
+
+
     res.render('user/pages/wallet', {
-         title: 'My wallet',
+      title: 'My wallet',
       pageJs: 'wallet.js',
       wallet: {
         balance: wallet.balance || 0,
@@ -95,11 +95,11 @@ export const getWalletPage = async (req, res) => {
       razorpayKeyId: razorpayKeyId,
       user: req.session.user
     });
-    
+
   } catch (error) {
     console.error('Error loading wallet:', error);
-    res.status(500).render('error', { 
-      message: 'Failed to load wallet page' 
+    res.status(500).render('error', {
+      message: 'Failed to load wallet page'
     });
   }
 };
@@ -110,39 +110,39 @@ export const getWalletPage = async (req, res) => {
 export const createPaymentOrder = async (req, res) => {
   try {
     const { amount } = req.body;
-    
-   
+
+
     if (!amount || amount < 10) {
       return res.status(400).json({
         success: false,
         error: 'Minimum amount is ₹10'
       });
     }
-    
- 
-    const receiptId = Date.now().toString(); 
- 
-    
+
+
+    const receiptId = Date.now().toString();
+
+
     const order = await razorpay.orders.create({
       amount: amount * 100,
       currency: "INR",
-      receipt: receiptId, 
+      receipt: receiptId,
       payment_capture: 1
     });
-    
-  
-    
+
+
+
     res.json({
       success: true,
       orderId: order.id,
       amount: order.amount,
       currency: order.currency
     });
-    
+
   } catch (error) {
     console.error('Razorpay error:', error);
-    
-   
+
+
     if (error.error) {
       console.error('Error details:', {
         field: error.error.field,
@@ -150,7 +150,7 @@ export const createPaymentOrder = async (req, res) => {
         code: error.error.code
       });
     }
-    
+
     res.status(400).json({
       success: false,
       error: error.error?.description || 'Payment order creation failed'
@@ -167,20 +167,20 @@ export const processPayment = async (req, res) => {
       razorpay_signature,
       amount
     } = req.body;
-    
-    const userId = req.session.userId;
-    
 
-    
-  
+    const userId = req.session.userId;
+
+
+
+
     if (!isMockMode) {
-     
+
       const body = razorpay_order_id + "|" + razorpay_payment_id;
       const expectedSignature = crypto
         .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
         .update(body.toString())
         .digest('hex');
-      
+
       if (expectedSignature !== razorpay_signature) {
         return res.status(400).json({
           success: false,
@@ -188,10 +188,10 @@ export const processPayment = async (req, res) => {
         });
       }
     }
-    
-   
+
+
     let wallet = await Wallet.findOne({ user: userId });
-    
+
     if (!wallet) {
       wallet = new Wallet({
         user: userId,
@@ -199,29 +199,29 @@ export const processPayment = async (req, res) => {
         transactions: []
       });
     }
-    
-  
+
+
     const paymentDetails = {
       razorpay_payment_id: razorpay_payment_id || `mock_pay_${Date.now()}`,
       razorpay_order_id,
       razorpay_signature: razorpay_signature || `mock_sig_${Date.now()}`,
       amount: parseFloat(amount)
     };
-    
+
 
     await wallet.addMoney(parseFloat(amount), paymentDetails);
-    
- 
-    
+
+
+
     res.json({
       success: true,
       message: `₹${amount} added to wallet successfully!`,
       newBalance: wallet.balance,
       isMockMode: isMockMode
     });
-    
+
   } catch (error) {
-    console.error('❌ Payment processing failed:', error);
+    console.error(' Payment processing failed:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to process payment'
@@ -233,30 +233,30 @@ export const processPayment = async (req, res) => {
 export const getTransactions = async (req, res) => {
   try {
     const userId = req.session.userId;
-    
+
     if (!userId) {
-      return res.status(401).json({ 
-        success: false, 
-        error: 'Unauthorized' 
+      return res.status(401).json({
+        success: false,
+        error: 'Unauthorized'
       });
     }
-    
+
     const wallet = await Wallet.findOne({ user: userId });
-    
+
     if (!wallet) {
-      return res.json({ 
-        success: true, 
-        transactions: [] 
+      return res.json({
+        success: true,
+        transactions: []
       });
     }
-    
-    
-    const transactions = [...wallet.transactions].sort((a, b) => 
+
+
+    const transactions = [...wallet.transactions].sort((a, b) =>
       new Date(b.createdAt) - new Date(a.createdAt)
     );
-    
-    res.json({ 
-      success: true, 
+
+    res.json({
+      success: true,
       transactions: transactions.map(tx => ({
         id: tx._id,
         amount: tx.amount,
@@ -268,20 +268,20 @@ export const getTransactions = async (req, res) => {
         createdAt: tx.createdAt
       }))
     });
-    
+
   } catch (error) {
     console.error('Error fetching transactions:', error);
-    res.status(500).json({ 
-      success: false, 
-      error: 'Failed to fetch transactions' 
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch transactions'
     });
   }
 };
 
 export const testAuth = async (req, res) => {
   try {
-  
-    
+
+
     res.json({
       success: true,
       sessionExists: !!req.session,

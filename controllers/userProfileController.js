@@ -8,37 +8,37 @@ import { sendOtpEmail } from "../helpers/mail.js";
 
 export const loadProfile = async (req, res) => {
   try {
-   
-    
+
+
     if (!req.session.userId) {
-     
+
       return res.redirect('/login');
     }
-    
+
     const userId = req.session.userId;
-  
-    
+
+
     const user = await User.findById(userId).select('-password');
-  
-    
+
+
     const addresses = await Address.find({ userId: userId }).lean();
-  
+
     res.render('user/pages/profile', {
       user,
       addresses,
       title: 'My Profile',
-       pageJs: "profile.js"
+      pageJs: "profile.js"
     });
-    
 
-    
+
+
   } catch (error) {
     console.error('Profile load error:', error);
 
-    res.status(500).json({ 
-      success: false, 
+    res.status(500).json({
+      success: false,
       message: 'Server error',
-      error: error.message 
+      error: error.message
     });
   }
 };
@@ -90,7 +90,7 @@ export const uploadProfileImage = async (req, res) => {
         success: false,
         message: 'No image uploaded'
       });
-    } 
+    }
 
     const imagePath = `/uploads/${req.file.filename}`;
 
@@ -169,35 +169,35 @@ export const changePassword = async (req, res) => {
   try {
     const userId = req.session.userId;
     const { currentPassword, newPassword } = req.body;
-    
+
     const user = await User.findById(userId);
-    
-  
+
+
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ success: false, message: 'Current password is incorrect' });
     }
-    
-   
+
+
     if (newPassword.length < 6) {
       return res.status(400).json({ success: false, message: 'Password must be at least 6 characters' });
     }
-    
- 
+
+
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(newPassword, salt);
-    
-   
+
+
     await User.findByIdAndUpdate(userId, {
       password: hashedPassword,
       updatedAt: Date.now()
     });
-    
+
     res.json({
       success: true,
       message: 'Password changed successfully'
     });
-    
+
   } catch (error) {
     console.error('Password change error:', error);
     res.status(500).json({ success: false, message: 'Error changing password' });
@@ -209,18 +209,18 @@ export const updateAccountSettings = async (req, res) => {
   try {
     const userId = req.session.userId;
     const { twoFactorEnabled, loginNotifications } = req.body;
-    
+
     await User.findByIdAndUpdate(userId, {
       'settings.twoFactorEnabled': twoFactorEnabled || false,
       'settings.loginNotifications': loginNotifications || false,
       updatedAt: Date.now()
     });
-    
+
     res.json({
       success: true,
       message: 'Settings updated successfully'
     });
-    
+
   } catch (error) {
     console.error('Settings update error:', error);
     res.status(500).json({ success: false, message: 'Error updating settings' });

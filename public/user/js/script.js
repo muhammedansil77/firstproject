@@ -158,13 +158,37 @@ function validateForm() {
   }
 
 
-  const email = document.getElementById('email');
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!email || !emailRegex.test(email.value.trim())) {
-    const el = document.getElementById('emailError');
-    if (el) el.textContent = 'Please enter a valid email address';
+const email = document.getElementById('email');
+const emailError = document.getElementById('emailError');
+const emailValue = email ? email.value.trim() : '';
+
+if (!emailValue) {
+  emailError.textContent = 'Email is required';
+  isValid = false;
+} 
+else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
+  emailError.textContent = 'Please enter a valid email address';
+  isValid = false;
+} 
+else {
+  const username = emailValue.split('@')[0];
+
+  // ✅ rule 1: at least 6 characters before @
+  if (username.length < 6) {
+    emailError.textContent = 'Email name must be at least 6 characters (before @)';
     isValid = false;
   }
+  // ✅ rule 2: not only numbers
+  else if (/^\d+$/.test(username)) {
+    emailError.textContent = 'Email name cannot be only numbers';
+    isValid = false;
+  }
+  else {
+    emailError.textContent = '';
+  }
+}
+
+
 
 
   const password = document.getElementById('password');

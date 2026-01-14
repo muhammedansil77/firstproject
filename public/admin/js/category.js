@@ -396,30 +396,63 @@ function renderRow(cat, index) {
       return;
     }
 
-    const blockBtn = e.target.closest('.category-block-toggle');
-    if (blockBtn) {
-      const id = blockBtn.dataset.id;
-      const action = blockBtn.dataset.action; 
+   const blockBtn = e.target.closest('.category-block-toggle');
+if (blockBtn) {
+  const id = blockBtn.dataset.id;
+  const action = blockBtn.dataset.action; // block | unblock
 
-      blockBtn.disabled = true;
-      try {
-        const url = (action === 'block') ? BLOCK_ENDPOINT(id) : UNBLOCK_ENDPOINT(id);
-        const res = await axios.post(url);
-        if (res?.data?.success) {
-          toastr?.success(res.data.message || 'Updated');
-        
-          await load();
-        } else {
-          toastr?.error(res?.data?.message || 'Update failed');
-        }
-      } catch (err) {
-        console.error('block/unblock error', err);
-        toastr?.error(err.response?.data?.message || 'Server error');
-      } finally {
-        blockBtn.disabled = false;
-      }
-      return;
+  const isBlock = action === 'block';
+
+  const result = await Swal.fire({
+    title: isBlock ? 'Block this category?' : 'Unblock this category?',
+    text: isBlock
+      ? 'All products under this category will become unavailable.'
+      : 'Products under this category will become available again.',
+    icon: isBlock ? 'warning' : 'question',
+    showCancelButton: true,
+    confirmButtonColor: isBlock ? '#d33' : '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: isBlock ? 'Yes, block it' : 'Yes, unblock it',
+    cancelButtonText: 'Cancel'
+  });
+
+  if (!result.isConfirmed) return;
+
+  blockBtn.disabled = true;
+
+  try {
+    const url = isBlock ? BLOCK_ENDPOINT(id) : UNBLOCK_ENDPOINT(id);
+    const res = await axios.post(url);
+
+    if (res?.data?.success) {
+      Swal.fire({
+        icon: 'success',
+        title: 'Success',
+        text: res.data.message || 'Category updated',
+        timer: 1500,
+        showConfirmButton: false
+      });
+      await load();
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Failed',
+        text: res?.data?.message || 'Update failed'
+      });
     }
+  } catch (err) {
+    console.error('block/unblock error', err);
+    Swal.fire({
+      icon: 'error',
+      title: 'Server Error',
+      text: err.response?.data?.message || 'Something went wrong'
+    });
+  } finally {
+    blockBtn.disabled = false;
+  }
+  return;
+}
+
   });
 
   paginationContainer?.addEventListener('click', (e) => {

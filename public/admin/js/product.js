@@ -892,7 +892,19 @@ function addVariantRow(container, variantData) {
           const newStatus = currentStatus === 'active' ? 'blocked' : 'active';
           const action = currentStatus === 'active' ? 'block' : 'unblock';
           
-          if (!confirm(`Are you sure you want to ${action} this product?`)) return;
+          const result = await Swal.fire({
+    title: action === 'block' ? 'Block this product?' : 'Unblock this product?',
+    text: action === 'block'
+      ? 'This product will no longer be visible to users.'
+      : 'This product will be visible to users again.',
+    icon: action === 'block' ? 'warning' : 'question',
+    showCancelButton: true,
+    confirmButtonColor: action === 'block' ? '#d33' : '#16a34a',
+    cancelButtonColor: '#6b7280',
+    confirmButtonText: action === 'block' ? 'Yes, block it' : 'Yes, unblock it',
+    cancelButtonText: 'Cancel'
+  });
+  if (!result.isConfirmed) return;
           
           const updatedStatus = await toggleProductStatusAPI(id, currentStatus);
           

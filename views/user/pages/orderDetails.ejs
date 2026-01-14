@@ -1050,6 +1050,22 @@
         <!-- Action Buttons -->
         <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] p-6">
           <div class="space-y-4">
+            <!-- View Invoice -->
+<a
+  href="/orders/<%= order._id %>/invoice"
+  target="_blank"
+  class="w-full border border-[#d4af37]/40 text-[#d4af37]
+         hover:bg-[#d4af37]/10 hover:border-[#d4af37]
+         font-semibold py-3 px-4 rounded-lg transition-all
+         flex items-center justify-center gap-3"
+>
+  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+      d="M9 12h6m-6 4h6M7 7h10a2 2 0 012 2v10a2 2 0 01-2 2H7a2 2 0 01-2-2V9a2 2 0 012-2z"/>
+  </svg>
+  View Invoice
+</a>
+
            <% if (order.orderStatus === 'Placed' || order.orderStatus === 'Confirmed') { %>
 <button 
   onclick="openCancelModal('<%= order._id %>')" 

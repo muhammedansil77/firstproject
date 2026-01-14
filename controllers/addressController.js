@@ -75,23 +75,24 @@ export const loadAddresses = async (req, res) => {
     .sort({ isDefault: -1, createdAt: -1 })
     .lean();
 
-  res.render("user/pages/address-management", { 
+  res.render("user/pages/address-management", {
     addresses,
-   pageJs: "address.js" });
+    pageJs: "address.js"
+  });
 };
-export const showUploadPage = async (req,res)=>{
-  const images = (await Image.find()).toSorted({cretedAt:-1}).lean();
-  res.render("user/pages/image",{images})
+export const showUploadPage = async (req, res) => {
+  const images = (await Image.find()).toSorted({ cretedAt: -1 }).lean();
+  res.render("user/pages/image", { images })
 }
-export const uploadImage = async (req,res )=>{
-  try{
+export const uploadImage = async (req, res) => {
+  try {
     await Image.create({
-      title:req.body.title,
-      imagePath:"/uploads"+req.file.filename
+      title: req.body.title,
+      imagePath: "/uploads" + req.file.filename
     })
     res.redirect("/user/address/upload-image")
 
-  }catch(err){
+  } catch (err) {
 
   }
 }

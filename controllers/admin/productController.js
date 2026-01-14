@@ -357,7 +357,7 @@ console.log('SAFE variantIndices:', variantIndices);
   for (const f of uploadedFiles) {
     const savedPath = await processVariantImage(f);
     if (savedPath) {
-      saved.push(savedPath); // ✅ SAVE CLOUDINARY URL DIRECTLY
+      saved.push(savedPath);
     }
   }
   return saved;
@@ -534,7 +534,7 @@ export const deleteProductImage = async (req, res) => {
       return res.status(400).json({ success: false, message: 'Missing required fields' });
     }
 
-    // 🔹 Extract Cloudinary public_id
+  
     const publicId = getCloudinaryPublicId(imagePath);
 
     if (variantId) {
@@ -543,7 +543,7 @@ export const deleteProductImage = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Variant not found' });
       }
 
-      // ✅ EXACT MATCH (not includes)
+     
       variant.images = variant.images.filter(img => img !== imagePath);
       await variant.save();
     } else {
@@ -552,12 +552,12 @@ export const deleteProductImage = async (req, res) => {
         return res.status(404).json({ success: false, message: 'Product not found' });
       }
 
-      // ✅ EXACT MATCH
+    
       product.images = product.images.filter(img => img !== imagePath);
       await product.save();
     }
 
-    // ✅ DELETE FROM CLOUDINARY
+    
     if (publicId) {
       await cloudinary.uploader.destroy(publicId);
       console.log('Deleted from Cloudinary:', publicId);
@@ -624,7 +624,7 @@ export async function patchProduct(req, res) {
         try {
          const saved = await processProductImages([f]);
 if (saved && saved[0]) {
-  newImages.push(saved[0]); // ✅ Cloudinary URL
+  newImages.push(saved[0]); 
 }
         } catch (e) {
           console.warn('Failed to process product image:', e.message);
@@ -740,7 +740,7 @@ if (saved && saved[0]) {
             try {
              const saved = await processVariantImage(file);
 if (saved) {
-  newImages.push(saved); // ✅ Cloudinary URL
+  newImages.push(saved);
 }
             } catch (e) {
               console.warn(`Failed to process variant image:`, e.message);
@@ -750,7 +750,7 @@ if (saved) {
             variant.images = [...variant.images, ...newImages];
           }
         }
-// ✅ DELETE VARIANT IMAGES (CLOUDINARY + DB)
+
 if (variantData.deletedImages) {
   let deletedImages = [];
 
@@ -762,10 +762,10 @@ if (variantData.deletedImages) {
 
   if (Array.isArray(deletedImages) && deletedImages.length > 0) {
     for (const imgUrl of deletedImages) {
-      // Remove from DB
+   
       variant.images = variant.images.filter(img => img !== imgUrl);
 
-      // Remove from Cloudinary
+     
       const publicId = getCloudinaryPublicId(imgUrl);
       if (publicId) {
         await cloudinary.uploader.destroy(publicId);

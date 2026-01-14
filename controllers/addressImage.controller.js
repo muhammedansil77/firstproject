@@ -1,22 +1,27 @@
-import Image from "../models/image.js";
+import { processVariantImage } from '../middlewares/upload.js';
 
-/* SHOW PAGE */
-export const showUploadPage = async (req, res) => {
-  const images = await Image.find().sort({ createdAt: -1 }).lean();
-  res.render("user/pages/image", { images });
+export const uploadImagePage = async (req, res) => {
+  res.render('user/pages/image', {
+    imageUrl: null
+  });
 };
 
-/* HANDLE UPLOAD */
-export const uploadImage = async (req, res) => {
+export const uploadImagePost = async (req, res) => {
   try {
-    await Image.create({
-      title: req.body.title,
-      imagePath: "/uploads/" + req.file.filename
-    });
+    if (!req.file) {
+      return res.render('user/pages/image', {
+        imageUrl: null
+      });
+    }
 
-    res.redirect("/upload-image");
+    // Upload to Cloudinary using your existing function
+    const imageUrl = await processVariantImage(req.file);
+
+    res.render('user/pages/image', {
+      imageUrl
+    });
   } catch (err) {
-    console.error(err);
-    res.redirect("/upload-image");
+    console.error('Upload image error:', err);
+    res.status(500).send('Image upload failed');
   }
 };

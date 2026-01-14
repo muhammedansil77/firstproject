@@ -1,0 +1,51 @@
+<div class="max-w-6xl mx-auto px-4 py-8">
+
+  <% if (coupons.length === 0) { %>
+    <div class="text-center text-gray-500 py-10">
+      No coupons available right now
+    </div>
+  <% } else { %>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+
+      <% coupons.forEach(coupon => { %>
+
+        <div class="border border-dashed border-gray-300 rounded-lg p-5 bg-white shadow-sm">
+
+          <!-- Coupon Code -->
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-sm text-gray-500">Coupon Code</span>
+            <span class="bg-black text-white text-xs px-3 py-1 rounded tracking-wider">
+              <%= coupon.code %>
+            </span>
+          </div>
+
+          <!-- Coupon Name -->
+          <h3 class="text-lg font-semibold text-gray-800 mb-1">
+            <%= coupon.name %>
+          </h3>
+
+          <!-- Description -->
+          <p class="text-sm text-gray-600 mb-4">
+            <%= coupon.description %>
+          </p>
+
+          <!-- Discount & Min Purchase -->
+          <div class="flex justify-between items-center text-sm">
+            <span class="text-green-600 font-medium">
+              Save ₹<%= coupon.discountValue %>
+            </span>
+            <span class="text-gray-500">
+              Min purchase ₹<%= coupon.minPurchaseAmount %>
+            </span>
+          </div>
+
+        </div>
+
+      <% }) %>
+
+    </div>
+
+  <% } %>
+
+</div>

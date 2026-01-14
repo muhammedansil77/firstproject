@@ -36,7 +36,7 @@ const sendOtpEmail = async (email, otp) => {
             </div>
             
         `,
-        
+
     };
 
     try {

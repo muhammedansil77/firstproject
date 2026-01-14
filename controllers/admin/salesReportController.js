@@ -38,9 +38,8 @@ export const getSalesReportPage = async (req, res) => {
       exportType
     } = req.query;
     const page = parseInt(req.query.page) || 1;
-const limit = 10; 
-const search = req.query.search || '';
-
+    const limit = 10; 
+    const search = req.query.search || '';
 
   
     let start, end;
@@ -96,7 +95,7 @@ const search = req.query.search || '';
         end = new Date();
     }
 
-   
+
     const query = {
       createdAt: { $gte: start, $lte: end }
     };
@@ -109,24 +108,27 @@ const search = req.query.search || '';
       query.orderStatus = orderStatus;
     }
 
-  
     if (exportType) {
       return handleExport(req, res, query, exportType);
     }
+    
     if (search) {
-  query.$or = [
-    { orderNumber: { $regex: search, $options: 'i' } },
-    { 'user.name': { $regex: search, $options: 'i' } },
-    { 'user.email': { $regex: search, $options: 'i' } },
-    { paymentMethod: { $regex: search, $options: 'i' } },
-    { orderStatus: { $regex: search, $options: 'i' } }
-  ];
-}
-const skip = (page - 1) * limit;
-
-const totalOrdersCount = await Order.countDocuments(query);
-const totalPages = Math.ceil(totalOrdersCount / limit);
-
+      query.$or = [
+        { orderNumber: { $regex: search, $options: 'i' } },
+        { 'user.name': { $regex: search, $options: 'i' } },
+        { 'user.email': { $regex: search, $options: 'i' } },
+        { paymentMethod: { $regex: search, $options: 'i' } },
+        { orderStatus: { $regex: search, $options: 'i' } }
+      ];
+    }
+    
+    const skip = (page - 1) * limit;
+    const totalOrdersCount = await Order.countDocuments(query);
+    const totalPages = Math.ceil(totalOrdersCount / limit);
+   
+const allOrdersForStats = await Order.find(query)
+  .populate('items.product', 'name category')
+  .populate('coupon');
 
 
 
@@ -135,12 +137,17 @@ const totalPages = Math.ceil(totalOrdersCount / limit);
       .populate('items.product', 'name images category')
       .populate('items.variant', 'name color size')
       .populate('coupon', 'code name discountType discountValue')
-        .limit(limit)
-        .skip(skip)
+      .limit(limit)
+      .skip(skip)
       .sort({ createdAt: -1 });
-    
 
-   
+  
+    const totalUsers = await User.countDocuments({});
+    const newUsersThisPeriod = await User.countDocuments({
+      createdAt: { $gte: start, $lte: end }
+    });
+
+  
     let totalRevenue = 0;
     let totalOrders = orders.length;
     let totalItemsSold = 0;
@@ -156,116 +163,193 @@ const totalPages = Math.ceil(totalOrdersCount / limit);
     const hourlySales = {};
     const categorySales = {};
     const couponUsage = {};
-    
 
- orders.forEach(order => {
+  allOrdersForStats.forEach(order => {
+      const revenueEligible = isRevenueOrder(order);
 
-  const revenueEligible = isRevenueOrder(order);
-
- 
-  if (revenueEligible) {
-    totalRevenue += order.finalAmount || 0;
-  }
-
-  
-  if (revenueEligible) {
-    order.items.forEach(item => {
-
-      totalItemsSold += item.quantity || 0;
-
-
-      if (item.product) {
-        const productId = item.product._id.toString();
-        if (!topProducts[productId]) {
-          topProducts[productId] = {
-            product: item.product,
-            quantity: 0,
-            revenue: 0
-          };
-        }
-        topProducts[productId].quantity += item.quantity || 0;
-        topProducts[productId].revenue += item.total || 0;
+      if (revenueEligible) {
+        totalRevenue += order.finalAmount || 0;
       }
 
-   
-      if (item.product && item.product.category) {
-        const category = item.product.category;
-        if (!categorySales[category]) {
-          categorySales[category] = {
-            quantity: 0,
-            revenue: 0
-          };
-        }
-        categorySales[category].quantity += item.quantity || 0;
-        categorySales[category].revenue += item.total || 0;
+      if (revenueEligible) {
+        order.items.forEach(item => {
+          totalItemsSold += item.quantity || 0;
+
+          if (item.product) {
+            const productId = item.product._id.toString();
+            if (!topProducts[productId]) {
+              topProducts[productId] = {
+                product: item.product,
+                quantity: 0,
+                revenue: 0
+              };
+            }
+            topProducts[productId].quantity += item.quantity || 0;
+            topProducts[productId].revenue += item.total || 0;
+          }
+
+          if (item.product && item.product.category) {
+            const category = item.product.category;
+            if (!categorySales[category]) {
+              categorySales[category] = {
+                quantity: 0,
+                revenue: 0
+              };
+            }
+            categorySales[category].quantity += item.quantity || 0;
+            categorySales[category].revenue += item.total || 0;
+          }
+        });
       }
 
+      if (revenueEligible) {
+        totalDiscount += order.discount || 0;
+        totalTax += order.tax || 0;
+        totalShipping += order.shipping || 0;
+      }
+
+      const paymentMethod = order.paymentMethod || 'Unknown';
+      paymentMethods[paymentMethod] = (paymentMethods[paymentMethod] || 0) + 1;
+
+      const status = order.orderStatus || 'Unknown';
+      orderStatuses[status] = (orderStatuses[status] || 0) + 1;
+
+      const dateStr = formatDate(order.createdAt);
+      if (!dailySales[dateStr]) {
+        dailySales[dateStr] = { revenue: 0, orders: 0 };
+      }
+
+      if (revenueEligible) {
+        dailySales[dateStr].revenue += order.finalAmount || 0;
+        dailySales[dateStr].orders += 1;
+      }
+
+      const hour = order.createdAt.getHours();
+      if (!hourlySales[hour]) {
+        hourlySales[hour] = { revenue: 0, orders: 0 };
+      }
+
+      if (revenueEligible) {
+        hourlySales[hour].revenue += order.finalAmount || 0;
+        hourlySales[hour].orders += 1;
+      }
+
+      if (revenueEligible && order.coupon) {
+        const couponCode = order.couponCode || 'Unknown';
+        if (!couponUsage[couponCode]) {
+          couponUsage[couponCode] = {
+            code: couponCode,
+            name: order.coupon.name || 'Unknown',
+            usage: 0,
+            discount: 0
+          };
+        }
+        couponUsage[couponCode].usage += 1;
+        couponUsage[couponCode].discount += order.couponDiscount || 0;
+      }
     });
-  }
 
 
-  if (revenueEligible) {
-    totalDiscount += order.discount || 0;
-    totalTax += order.tax || 0;
-    totalShipping += order.shipping || 0;
-  }
+    averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    
+  
+    const conversionRate = totalUsers > 0 ? (totalOrdersCount / totalUsers) * 100 : 0;
 
 
-  const paymentMethod = order.paymentMethod || 'Unknown';
-  paymentMethods[paymentMethod] = (paymentMethods[paymentMethod] || 0) + 1;
-
-
-  const status = order.orderStatus || 'Unknown';
-  orderStatuses[status] = (orderStatuses[status] || 0) + 1;
-
- 
-  const dateStr = order.createdAt.toISOString().split('T')[0];
-  if (!dailySales[dateStr]) {
-    dailySales[dateStr] = { revenue: 0, orders: 0 };
-  }
-
-  if (revenueEligible) {
-    dailySales[dateStr].revenue += order.finalAmount || 0;
-    dailySales[dateStr].orders += 1;
-  }
-
-  const hour = order.createdAt.getHours();
-  if (!hourlySales[hour]) {
-    hourlySales[hour] = { revenue: 0, orders: 0 };
-  }
-
-  if (revenueEligible) {
-    hourlySales[hour].revenue += order.finalAmount || 0;
-    hourlySales[hour].orders += 1;
-  }
-
-
-  if (revenueEligible && order.coupon) {
-    const couponCode = order.couponCode || 'Unknown';
-    if (!couponUsage[couponCode]) {
-      couponUsage[couponCode] = {
-        code: couponCode,
-        name: order.coupon.name || 'Unknown',
-        usage: 0,
-        discount: 0
-      };
-    }
-    couponUsage[couponCode].usage += 1;
-    couponUsage[couponCode].discount += order.couponDiscount || 0;
-  }
-
-});
-
+    const bestSellingProducts = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: start, $lte: end },
+          orderStatus: 'Delivered'
+        }
+      },
+      { $unwind: '$items' },
+      {
+        $group: {
+          _id: '$items.product',
+          totalQuantity: { $sum: '$items.quantity' },
+          totalRevenue: { $sum: '$items.total' },
+          orderCount: { $addToSet: '$_id' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'products',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'productDetails'
+        }
+      },
+      { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          name: '$productDetails.name',
+          sku: '$productDetails.sku',
+          category: '$productDetails.category',
+          totalQuantity: 1,
+          totalRevenue: 1,
+          orderCount: { $size: '$orderCount' }
+        }
+      },
+      { $sort: { totalRevenue: -1 } },
+      { $limit: 10 }
+    ]);
 
    
-    averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+    const bestSellingCategories = await Order.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: start, $lte: end },
+          orderStatus: 'Delivered'
+        }
+      },
+      { $unwind: '$items' },
+      {
+        $lookup: {
+          from: 'products',
+          localField: 'items.product',
+          foreignField: '_id',
+          as: 'productDetails'
+        }
+      },
+      { $unwind: { path: '$productDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $group: {
+          _id: '$productDetails.category',
+          totalQuantity: { $sum: '$items.quantity' },
+          totalRevenue: { $sum: '$items.total' },
+          productCount: { $addToSet: '$items.product' },
+          orderCount: { $addToSet: '$_id' }
+        }
+      },
+      {
+        $lookup: {
+          from: 'categories',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'categoryDetails'
+        }
+      },
+      { $unwind: { path: '$categoryDetails', preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          categoryName: '$categoryDetails.name',
+          totalQuantity: 1,
+          totalRevenue: 1,
+          productCount: { $size: '$productCount' },
+          orderCount: { $size: '$orderCount' }
+        }
+      },
+      { $sort: { totalRevenue: -1 } },
+      { $limit: 10 }
+    ]);
 
-
+   
     const sortedTopProducts = Object.values(topProducts)
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 10);
 
-
+   
     const sortedCategories = Object.entries(categorySales)
       .map(([category, data]) => ({
         category,
@@ -276,23 +360,42 @@ const totalPages = Math.ceil(totalOrdersCount / limit);
  
     const dailySalesArray = Object.entries(dailySales)
       .map(([date, data]) => ({
-        date,
+        date: new Date(date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         ...data
       }))
       .sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  
+    
     const hourlySalesArray = Array.from({ length: 24 }, (_, hour) => ({
-      hour: `${hour}:00`,
+      hour: `${hour.toString().padStart(2, '0')}:00`,
       revenue: hourlySales[hour]?.revenue || 0,
       orders: hourlySales[hour]?.orders || 0
     }));
 
-  
-    const totalUsers = await User.countDocuments();
-    const newUsersThisPeriod = await User.countDocuments({
-      createdAt: { $gte: start, $lte: end }
-    });
+
+    const paymentMethodsArray = Object.entries(paymentMethods).map(([method, count]) => ({
+      method,
+      count
+    }));
+
+
+    const orderStatusesArray = Object.entries(orderStatuses).map(([status, count]) => ({
+      status,
+      count
+    }));
+    const charts = {
+  dailySales: dailySalesArray,
+  hourlySales: hourlySalesArray,
+  paymentMethods: paymentMethodsArray,
+  orderStatuses: orderStatusesArray,
+  topProducts: sortedTopProducts,
+  bestSellingProducts,
+  bestSellingCategories,
+  categories: sortedCategories,
+  coupons: Object.values(couponUsage)
+};
+
+
     const getFilterParams = () => {
       let params = '';
       if (period && period !== 'today') params += `&period=${period}`;
@@ -303,18 +406,19 @@ const totalPages = Math.ceil(totalOrdersCount / limit);
       return params;
     };
 
-
-   
-    const conversionRate = totalUsers > 0 ? (totalOrders / totalUsers) * 100 : 0;
-
     res.render('admin/sales', {
-      title: 'Sales Report',
+      title: 'Dashboard Report',
       pageJS: 'sales.js',
+        pageData: `
+    <script>
+      window.DASHBOARD_DATA = ${JSON.stringify(charts)};
+    </script>
+  `,
       orders,
       getFilterParams,
       stats: {
         totalRevenue,
-        totalOrders,
+        totalOrders: totalOrdersCount,
         totalItemsSold,
         totalDiscount,
         totalTax,
@@ -323,21 +427,7 @@ const totalPages = Math.ceil(totalOrdersCount / limit);
         conversionRate: conversionRate.toFixed(2),
         newUsers: newUsersThisPeriod
       },
-      charts: {
-        dailySales: dailySalesArray,
-        hourlySales: hourlySalesArray,
-        paymentMethods: Object.entries(paymentMethods).map(([method, count]) => ({
-          method,
-          count
-        })),
-        orderStatuses: Object.entries(orderStatuses).map(([status, count]) => ({
-          status,
-          count
-        })),
-        topProducts: sortedTopProducts,
-        categories: sortedCategories,
-        coupons: Object.values(couponUsage)
-      },
+    charts,
       filters: {
         period,
         startDate: formatDate(start),
@@ -352,12 +442,12 @@ const totalPages = Math.ceil(totalOrdersCount / limit);
         startObj: start,
         endObj: end
       },
-        pagination: {
-    currentPage: page,
-    totalPages,
-    totalOrders: totalOrdersCount
-  },
-  search
+      pagination: {
+        currentPage: page,
+        totalPages,
+        totalOrders: totalOrdersCount
+      },
+      search
     });
 
   } catch (error) {
@@ -368,7 +458,6 @@ const totalPages = Math.ceil(totalOrdersCount / limit);
     });
   }
 };
-
 
 const handleExport = async (req, res, query, exportType) => {
   try {

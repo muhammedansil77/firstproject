@@ -33,10 +33,10 @@ const loadShop = async (req, res, next) => {
     const limit = Math.max(1, parseInt(req.query.limit || '12', 10));
     const skip = (currentPage - 1) * limit;
 
-   
-    const match = { 
+
+    const match = {
       isDeleted: { $ne: true },
-      status: 'active' 
+      status: 'active'
     };
 
     if (search) {
@@ -51,14 +51,14 @@ const loadShop = async (req, res, next) => {
         match.category = new mongoose.Types.ObjectId(category);
       } else if (categoryModel) {
         const catDoc = await categoryModel.findOne(
-          { 
+          {
             name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' },
             active: true,
             isDeleted: { $ne: true }
           },
           { _id: 1 }
         ).lean();
-        
+
         if (catDoc) {
           match.category = catDoc._id;
         } else {
@@ -68,12 +68,33 @@ const loadShop = async (req, res, next) => {
     }
 
     const pipeline = [
-   
+
       { $match: match },
+      {
+  $lookup: {
+    from: 'categories',
+    localField: 'category',
+    foreignField: '_id',
+    as: 'categoryData'
+  }
+},
+{
+  $unwind: {
+    path: '$categoryData',
+    preserveNullAndEmptyArrays: false
+  }
+},
+{
+  $match: {
+    'categoryData.active': true,
+    'categoryData.isDeleted': { $ne: true }
+  }
+},
+
 
       {
         $lookup: {
-          from: 'variants',               
+          from: 'variants',
           let: { varIds: '$variants', prodId: '$_id' },
           pipeline: [
             {
@@ -95,8 +116,8 @@ const loadShop = async (req, res, next) => {
                 color: 1,
                 colour: 1,
                 colorName: 1,
-                images: 1,   
-                image: 1,    
+                images: 1,
+                image: 1,
                 isListed: 1
               }
             }
@@ -105,7 +126,7 @@ const loadShop = async (req, res, next) => {
         }
       },
 
-     
+
       {
         $addFields: {
           _listedVariants: {
@@ -118,7 +139,7 @@ const loadShop = async (req, res, next) => {
         }
       },
 
-     
+
       {
         $addFields: {
           _useVariantsForPrice: {
@@ -131,7 +152,7 @@ const loadShop = async (req, res, next) => {
         }
       },
 
-     
+
       {
         $addFields: {
           _priceCandidates: {
@@ -228,7 +249,7 @@ const loadShop = async (req, res, next) => {
           createdAt: 1,
           updatedAt: 1,
           variantsFull: 1,
-          status: 1  
+          status: 1
         }
       }
     ];
@@ -242,17 +263,17 @@ const loadShop = async (req, res, next) => {
 
     const sortStage = {};
     if (sort === 'latest') {
-      sortStage.createdAt = -1; 
+      sortStage.createdAt = -1;
     } else if (sort === 'price-asc') {
-      sortStage.minPrice = 1; 
+      sortStage.minPrice = 1;
     } else if (sort === 'price-desc') {
-      sortStage.minPrice = -1; 
+      sortStage.minPrice = -1;
     } else if (sort === 'a-z') {
-      sortStage.name = 1; 
+      sortStage.name = 1;
     } else if (sort === 'z-a') {
-      sortStage.name = -1; 
+      sortStage.name = -1;
     } else {
-      sortStage.createdAt = -1; 
+      sortStage.createdAt = -1;
     }
     pipeline.push({ $sort: sortStage });
 
@@ -268,23 +289,23 @@ const loadShop = async (req, res, next) => {
     const totalCount = aggOut?.[0]?.totalCount?.[0]?.count || 0;
     const totalPages = Math.max(1, Math.ceil(totalCount / limit));
 
-  
+
     const blockedInResults = results.filter(p => p.status !== 'active');
     if (blockedInResults.length > 0) {
-      console.warn('WARNING: Found blocked products in shop results:', 
+      console.warn('WARNING: Found blocked products in shop results:',
         blockedInResults.map(p => ({ id: p._id, name: p.name, status: p.status }))
       );
     }
 
     const products = results
-      .filter(p => p.status === 'active') 
+      .filter(p => p.status === 'active')
       .map((p, idx) => {
         function norm(item) {
           if (!item) return null;
           const s = String(item).trim();
           if (!s) return null;
-          if (/^https?:\/\//i.test(s)) return s;        
-          return '/' + s.replace(/^\/+/, '');           
+          if (/^https?:\/\//i.test(s)) return s;
+          return '/' + s.replace(/^\/+/, '');
         }
 
         let imgs = Array.isArray(p.images) ? p.images.filter(Boolean).map(norm) : [];
@@ -318,7 +339,7 @@ const loadShop = async (req, res, next) => {
         imgs = imgs.slice(0, 3);
         while (imgs.length < 3) imgs.push(null);
 
-       
+
 
         return {
           _id: p._id,
@@ -330,53 +351,54 @@ const loadShop = async (req, res, next) => {
           variantsCount: p.variantsCount || 0,
           availableColors: Array.isArray(p.availableColors) ? p.availableColors : [],
           sampleVariantId: p.sampleVariantId || null,
-         category: mongoose.Types.ObjectId.isValid(p.category)
-  ? new mongoose.Types.ObjectId(p.category)
-  : null
+          category: mongoose.Types.ObjectId.isValid(p.category)
+            ? new mongoose.Types.ObjectId(p.category)
+            : null
 
         };
       });
-for (const product of products) {
-  const basePrice = product.minPrice || product.price;
+      
+    for (const product of products) {
+      const basePrice = product.minPrice || product.price;
 
-  if (!basePrice) {
-    product.offer = null;
-    continue;
-  }
+      if (!basePrice) {
+        product.offer = null;
+        continue;
+      }
 
-  const offer = await getBestOfferForProduct({
-    _id: product._id,
-    category: product.category,
-    price: basePrice     
-  });
+      const offer = await getBestOfferForProduct({
+        _id: product._id,
+        category: product.category,
+        price: basePrice
+      });
 
-  if (!offer) {
-    product.offer = null;
-    continue;
-  }
+      if (!offer) {
+        product.offer = null;
+        continue;
+      }
 
-  let discountAmount = 0;
+      let discountAmount = 0;
 
-  if (offer.discountType === 'percentage') {
-    discountAmount = (basePrice * offer.discountValue) / 100;
-  } else {
-    discountAmount = offer.discountValue;
-  }
+      if (offer.discountType === 'percentage') {
+        discountAmount = (basePrice * offer.discountValue) / 100;
+      } else {
+        discountAmount = offer.discountValue;
+      }
 
-  if (offer.maxDiscountAmount) {
-    discountAmount = Math.min(discountAmount, offer.maxDiscountAmount);
-  }
+      if (offer.maxDiscountAmount) {
+        discountAmount = Math.min(discountAmount, offer.maxDiscountAmount);
+      }
 
-  product.offer = {
-    title: offer.title,
-    type: offer.type,              
-    discountType: offer.discountType,
-    discountValue: offer.discountValue,
-    discountAmount,
-    finalPrice: Math.max(basePrice - discountAmount, 0)
-  };
-} 
-   
+      product.offer = {
+        title: offer.title,
+        type: offer.type,
+        discountType: offer.discountType,
+        discountValue: offer.discountValue,
+        discountAmount,
+        finalPrice: Math.max(basePrice - discountAmount, 0)
+      };
+    }
+
 
     let categories = [];
     try {
@@ -393,11 +415,11 @@ for (const product of products) {
 
     return res.render('user/pages/shop', {
       layout: 'user/layouts/main',
-      pageTitle: 'Shop',              
+      pageTitle: 'Shop',
       query: req.query,
       products,
       brands: [],
-      categories,                     
+      categories,
       breadcrumbs: [
         { name: 'Home', link: '/home' },
         { name: 'Shop', link: '/shop' }
@@ -408,8 +430,8 @@ for (const product of products) {
         hasPrevPage: currentPage > 1,
         hasNextPage: currentPage < totalPages
       },
-      pageJs: 'shop-filters.js',      
-      pageCss: 'shop.css'             
+      pageJs: 'shop-filters.js',
+      pageCss: 'shop.css'
     });
 
   } catch (err) {
@@ -418,6 +440,6 @@ for (const product of products) {
   }
 };
 export default {
-  
+
   loadShop
 }

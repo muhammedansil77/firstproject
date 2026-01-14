@@ -394,20 +394,14 @@ function renderCouponsTable(coupons) {
                             data-toggle="tooltip" title="Edit Coupon">
                         <i class="fas fa-edit mr-1"></i>Edit
                     </button>
-                    <button class="btn btn-outline-success mb-1" onclick="duplicateCoupon('${coupon._id}')" 
-                            data-toggle="tooltip" title="Duplicate Coupon">
-                        <i class="fas fa-copy mr-1"></i>Duplicate
-                    </button>
+                 
                     <button class="btn btn-outline-danger mb-1" onclick="toggleCouponStatus('${coupon._id}', ${!coupon.isActive})" 
                             data-toggle="tooltip" title="${coupon.isActive ? 'Deactivate' : 'Activate'}">
                         <i class="fas ${coupon.isActive ? 'fa-toggle-off' : 'fa-toggle-on'} mr-1"></i>
                         ${coupon.isActive ? 'Deactivate' : 'Activate'}
                     </button>
                     ${coupon.usedCount === 0 ? `
-                        <button class="btn btn-outline-dark" onclick="confirmDelete('${coupon._id}')" 
-                                data-toggle="tooltip" title="Delete Coupon">
-                            <i class="fas fa-trash mr-1"></i>Delete
-                        </button>
+                      
                     ` : ''}
                 </div>
             </td>
@@ -987,34 +981,64 @@ async function duplicateCoupon(id) {
     }
 }
 
-// Toggle coupon status
+
 async function toggleCouponStatus(id, newStatus) {
+    const isActivate = newStatus === true;
+
+    const result = await Swal.fire({
+        title: isActivate ? 'Activate this coupon?' : 'Deactivate this coupon?',
+        text: isActivate
+            ? 'Users will be able to apply this coupon.'
+            : 'Users will no longer be able to use this coupon.',
+        icon: isActivate ? 'question' : 'warning',
+        showCancelButton: true,
+        confirmButtonColor: isActivate ? '#16a34a' : '#d33',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: isActivate ? 'Yes, activate' : 'Yes, deactivate',
+        cancelButtonText: 'Cancel'
+    });
+
+    if (!result.isConfirmed) return;
+
     try {
-        if (!confirm(`Are you sure you want to ${newStatus ? 'activate' : 'deactivate'} this coupon?`)) {
-            return;
-        }
-        
         const response = await fetch(`/admin/api/coupons/${id}/toggle-status`, {
             method: 'PATCH',
             headers: {
                 'Content-Type': 'application/json'
             }
         });
-        
-        const result = await response.json();
-        
-        if (result.success) {
-            showAlert(result.message, 'success');
+
+        const data = await response.json();
+
+        if (data.success) {
+            Swal.fire({
+                icon: 'success',
+                title: 'Success',
+                text: data.message || 'Coupon status updated',
+                timer: 1500,
+                showConfirmButton: false
+            });
+
             loadCoupons(currentPage);
             updateStats();
         } else {
-            throw new Error(result.error || 'Failed to toggle status');
+            Swal.fire({
+                icon: 'error',
+                title: 'Failed',
+                text: data.error || 'Failed to update coupon status'
+            });
         }
     } catch (error) {
         console.error('Error toggling coupon status:', error);
-        showAlert(`Error: ${error.message}`, 'error');
+        Swal.fire({
+            icon: 'error',
+            title: 'Server Error',
+            text: error.message || 'Something went wrong'
+        });
     }
 }
+
+
 
 // Confirm delete
 function confirmDelete(id) {
@@ -1022,7 +1046,7 @@ function confirmDelete(id) {
     $('#deleteModal').modal('show');
 }
 
-// Delete coupon
+
 async function deleteCoupon() {
     try {
         $('#deleteModal').modal('hide');

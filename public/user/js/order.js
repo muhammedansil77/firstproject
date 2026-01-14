@@ -449,12 +449,12 @@ async function applyCoupon() {
             updateCouponUI(response.data.data, couponCode);
             
         } else {
-            console.log('❌ Coupon application failed:', response.data.message);
+            console.log(' Coupon application failed:', response.data.message);
             showCouponMessage(response.data.message, 'error');
         }
     } catch (error) {
-        console.error('❌ Error applying coupon:', error);
-        showCouponMessage('This coupen Already used', 'error');
+        console.error('Error applying coupon:', error);
+        showCouponMessage('Error applying coupon ', 'error');
     }
 }
 

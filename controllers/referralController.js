@@ -7,7 +7,7 @@ import Wallet from "../models/Wallet.js";
 export const getReferralPage = async (req, res) => {
     try {
         const userId = req.session.userId;
-        
+
         if (!userId) {
             req.flash('error', 'Please login to view referral program');
             return res.redirect('/login');
@@ -15,23 +15,23 @@ export const getReferralPage = async (req, res) => {
 
         const user = await User.findById(userId)
             .select('fullName referralCode referralLink referralPoints totalReferrals referralEarnings referralStats');
-        
+
         if (!user) {
             req.flash('error', 'User not found');
             return res.redirect('/login');
         }
 
-       
+
         const referrals = await Referral.find({ referrer: userId })
             .populate('referredUser', 'fullName email createdAt')
             .sort({ createdAt: -1 });
 
-       
+
         const wallet = await Wallet.findOne({ user: userId });
         const walletBalance = wallet ? wallet.balance : 0;
 
         res.render('user/pages/referrals', {
-             pageJs: "referral.js",
+            pageJs: "referral.js",
             user: {
                 ...user.toObject(),
                 walletBalance
@@ -54,23 +54,23 @@ export const getReferralPage = async (req, res) => {
 export const processReferralSignup = async (referralCode, newUserId) => {
     try {
         console.log('Processing referral for new user:', newUserId, 'with code:', referralCode);
-        
-     
+
+
         const referrer = await User.findOne({ referralCode: referralCode.toUpperCase() });
-        
+
         if (!referrer) {
             console.log('Referrer not found for code:', referralCode);
             return null;
         }
 
- 
+
         const existingReferral = await Referral.findOne({ referredUser: newUserId });
         if (existingReferral) {
             console.log('Referral already exists for this user');
             return existingReferral;
         }
 
-      
+
         const referral = await Referral.create({
             referrer: referrer._id,
             referredUser: newUserId,
@@ -86,16 +86,16 @@ export const processReferralSignup = async (referralCode, newUserId) => {
 
         console.log('Referral record created:', referral._id);
 
-    
+
         await User.findByIdAndUpdate(referrer._id, {
-            $inc: { 
+            $inc: {
                 totalReferrals: 1,
                 'referralStats.totalReferred': 1,
                 'referralStats.pendingReferrals': 1
             }
         });
 
-    
+
         await User.findByIdAndUpdate(newUserId, {
             referredBy: referrer._id
         });
@@ -112,11 +112,11 @@ export const processReferralSignup = async (referralCode, newUserId) => {
 export const completeReferral = async (userId) => {
     try {
         console.log('Completing referral for user:', userId);
-        
-     
-        const referral = await Referral.findOne({ 
-            referredUser: userId, 
-            status: 'pending' 
+
+
+        const referral = await Referral.findOne({
+            referredUser: userId,
+            status: 'pending'
         });
 
         if (!referral) {
@@ -124,18 +124,18 @@ export const completeReferral = async (userId) => {
             return null;
         }
 
-       
+
         referral.status = 'completed';
         referral.rewardStatus = 'credited';
         referral.creditedAt = new Date();
         referral.conditions.firstPurchase = true;
         await referral.save();
 
-      
+
         const referrerWallet = await Wallet.findOne({ user: referral.referrer });
-        
+
         if (!referrerWallet) {
-           
+
             await Wallet.create({
                 user: referral.referrer,
                 balance: 100,
@@ -151,7 +151,7 @@ export const completeReferral = async (userId) => {
                 }]
             });
         } else {
-          
+
             referrerWallet.balance += 100;
             referrerWallet.transactions.push({
                 amount: 100,
@@ -166,9 +166,9 @@ export const completeReferral = async (userId) => {
             await referrerWallet.save();
         }
 
-       
+
         await User.findByIdAndUpdate(referral.referrer, {
-            $inc: { 
+            $inc: {
                 referralPoints: 100,
                 referralEarnings: 100,
                 'referralStats.successfulReferrals': 1,
@@ -189,14 +189,14 @@ export const completeReferral = async (userId) => {
 export const getReferralStats = async (req, res) => {
     try {
         const userId = req.session.userId;
-        
+
         if (!userId) {
             return res.json({ success: false, message: 'Not logged in' });
         }
 
         const user = await User.findById(userId)
             .select('referralCode referralLink referralPoints totalReferrals referralEarnings referralStats');
-        
+
         const referrals = await Referral.find({ referrer: userId })
             .populate('referredUser', 'fullName email createdAt profilePicture')
             .sort({ createdAt: -1 })
@@ -226,13 +226,13 @@ export const getReferralStats = async (req, res) => {
 export const copyReferralLink = async (req, res) => {
     try {
         const userId = req.session.userId;
-        
+
         if (!userId) {
             return res.json({ success: false, message: 'Not logged in' });
         }
 
         const user = await User.findById(userId).select('referralLink');
-        
+
         res.json({
             success: true,
             message: 'Referral link copied to clipboard',

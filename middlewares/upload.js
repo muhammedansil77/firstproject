@@ -3,7 +3,7 @@ import sharp from 'sharp';
 import { v2 as cloudinary } from 'cloudinary';
 import stream from 'stream';
 
-// Configure Cloudinary
+
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME || 'dfpey4ga9',
   api_key: process.env.CLOUDINARY_API_KEY || '915743991263249',
@@ -22,14 +22,14 @@ export const upload = multer({
   }
 });
 
-// Helper function to upload buffer to Cloudinary
+
 async function uploadToCloudinary(buffer, options = {}) {
   return new Promise((resolve, reject) => {
     const uploadStream = cloudinary.uploader.upload_stream(
       options,
       (error, result) => {
         if (error) reject(error);
-        else resolve(result); // Return the full result object
+        else resolve(result); 
       }
     );
     
@@ -39,7 +39,7 @@ async function uploadToCloudinary(buffer, options = {}) {
   });
 }
 
-// OPTION 1: Functions that return STRINGS (for your current model)
+
 export async function processProductImages(files = [], minCount = 3) {
   if (!Array.isArray(files)) files = [];
   if (minCount > 0 && files.length < minCount) {
@@ -50,20 +50,20 @@ export async function processProductImages(files = [], minCount = 3) {
 
   const tasks = files.map(async (file, i) => {
     try {
-      // Process image with sharp first
+      
       const processedBuffer = await sharp(file.buffer)
         .resize(1200, 1200, { fit: 'cover' })
         .jpeg({ quality: 85 })
         .toBuffer();
 
-      // Upload to Cloudinary
+
       const result = await uploadToCloudinary(processedBuffer, {
         folder: 'products',
         public_id: `product-${Date.now()}-${i}`,
         resource_type: 'image'
       });
 
-      // Return ONLY the URL string (for your current Variant model)
+    
       return result.secure_url;
     } catch (err) {
       err.message = `processProductImages failed #${i}: ${err.message}`;
@@ -84,20 +84,20 @@ export async function processVariantImages(files = [], minCount = 3) {
 
   const tasks = files.map(async (file, i) => {
     try {
-      // Process image with sharp
+   
       const processedBuffer = await sharp(file.buffer)
         .resize(800, 800, { fit: 'cover' })
         .jpeg({ quality: 82 })
         .toBuffer();
 
-      // Upload to Cloudinary
+   
       const result = await uploadToCloudinary(processedBuffer, {
         folder: 'variants',
         public_id: `variant-${Date.now()}-${i}`,
         resource_type: 'image'
       });
 
-      // Return ONLY the URL string
+  
       return result.secure_url;
     } catch (err) {
       err.message = `processVariantImages failed #${i}: ${err.message}`;
@@ -123,14 +123,14 @@ export async function processVariantImage(file) {
       resource_type: 'image'
     });
 
-    // Return ONLY the URL string
+ 
     return result.secure_url;
   } catch (err) {
     throw err;
   }
 }
 
-// OPTION 2: Alternative functions that return objects (if you update your model later)
+
 export async function processProductImagesWithInfo(files = [], minCount = 3) {
   if (!Array.isArray(files)) files = [];
   if (minCount > 0 && files.length < minCount) {

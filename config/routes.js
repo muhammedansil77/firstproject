@@ -23,6 +23,7 @@ import couponRoutes from "../routes/admin/couponRoutes.js"
 import salesRoutes from "../routes/admin/salesReportRoutes.js"
 import wishlistRoutes from "../routes/wishlistRoute.js"
 import dashboardRoutes from "../routes/admin/dashbordRoutes.js"
+import couprnn from "../routes/couponRoutes.js"
 
 
 /**
@@ -59,6 +60,7 @@ const protectedUserMiddlewares = [
   app.use("/user", ...protectedUserMiddlewares, walletRoute);
   app.use("/user",protectedUserMiddlewares, refferalRoutes)
   app.use("/user",protectedUserMiddlewares, wishlistRoutes)
+  app.use("/user",protectedUserMiddlewares,couprnn)
 
 
   app.use(

@@ -167,7 +167,7 @@ app.use((err, req, res, next) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}`);
+  console.log(`✅ Server running at http://localhost:${PORT}/user`);
   console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`📦 Session Store: MongoDB (via config/session/)`);
   console.log(`🔒 Session Cookie Secure: ${process.env.NODE_ENV === 'production'}`);

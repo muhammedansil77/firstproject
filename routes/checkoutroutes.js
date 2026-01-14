@@ -21,7 +21,8 @@ import {
   verifyRazorpayPayment  ,
   createRazorpayOrder,
   applyCoupon,
-  removeCoupon
+  removeCoupon,
+  loadUserInvoice 
 
 
 
@@ -60,6 +61,8 @@ router.post("/orders/:orderId/cancel", cancelUserOrder);
 router.get("/orders/:orderId/refund", loadRefundRequest);
 router.post("/api/refunds/request", submitRefundRequest);
 router.get("/refunds", getUserRefunds);
+router.get('/orders/:id/invoice', loadUserInvoice );
+
 
 router.get("/api/refund-status/:id", checkRefundStatus);    
 router.get("/api/refunds/:id", getRefundDetails); 
