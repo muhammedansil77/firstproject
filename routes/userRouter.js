@@ -9,7 +9,9 @@ import {
   addToCart,
   viewCart,
   updateCartQty,
-  removeFromCart
+  removeFromCart,
+  removrAll,
+  validateCheckout
 } from "../controllers/cartController.js";
 
 
@@ -41,5 +43,7 @@ router.get("/cart", authMiddle.protectRoute, viewCart);
 router.post("/cart/add", authMiddle.protectRoute, addToCart);
 router.post("/cart/update", authMiddle.protectRoute, updateCartQty);
 router.post("/cart/remove", authMiddle.protectRoute, removeFromCart);
+router.get('/validate',  validateCheckout);
+router.post("/cart/clear",removrAll)
 
 export default router;

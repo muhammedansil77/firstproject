@@ -94,11 +94,11 @@ passport.use(new GoogleStrategy({
         });
 
         await newUser.save();
-        console.log("✅ New Google user created:", newUser.email);
+        console.log(" New Google user created:", newUser.email);
         return done(null, newUser);
 
     } catch (error) {
-        console.error('❌ Google authentication error:', error);
+        console.error(' Google authentication error:', error);
         return done(error, null);
     }
 }));

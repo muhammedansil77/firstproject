@@ -14,7 +14,7 @@ export const uploadImagePost = async (req, res) => {
       });
     }
 
-    // Upload to Cloudinary using your existing function
+
     const imageUrl = await processVariantImage(req.file);
 
     res.render('user/pages/image', {

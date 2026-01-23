@@ -1,10 +1,10 @@
-// Hardcode your Razorpay key here
+
 const RAZORPAY_KEY = 'rzp_test_Rnzlor5sRgTtD2';
 
-// Store last payment attempt details for retry
+
 let lastPaymentAttempt = null;
 
-// Modal functions
+
 function openAddMoneyModal() {
     document.getElementById('addMoneyModal').classList.remove('hidden');
     document.getElementById('addMoneyModal').classList.add('flex');
@@ -18,7 +18,7 @@ function closeModal() {
     resetPayButton();
 }
 
-// Close modal on outside click
+
 document.getElementById('addMoneyModal').addEventListener('click', function(e) {
     if (e.target.id === 'addMoneyModal') {
         closeModal();
@@ -41,17 +41,17 @@ function closeSuccessModal() {
     modal.classList.remove('flex');
     document.body.style.overflow = 'auto';
 
-    // Refresh wallet after success
+  
     window.location.reload();
 }
 
-// Payment failed modal functions
+
 function showPaymentFailedModal(message) {
     const modal = document.getElementById('paymentFailedModal');
     const messageEl = document.getElementById('failedMessage');
 
     if (!modal || !messageEl) {
-        console.error('❌ Failed modal elements not found');
+        console.error(' Failed modal elements not found');
         return;
     }
 
@@ -62,7 +62,7 @@ function showPaymentFailedModal(message) {
     modal.classList.add('flex');
     document.body.style.overflow = 'hidden';
 
-    console.log('✅ Failed modal opened');
+    console.log('Failed modal opened');
 }
 
 
@@ -86,12 +86,12 @@ function retryPayment() {
     }
 }
 
-// Amount functions
+
 function setAmount(amount) {
     document.getElementById('amountInput').value = amount;
 }
 
-// Show toast functions
+
 function showToast(message) {
     document.getElementById('toastMessage').textContent = message;
     document.getElementById('successToast').classList.remove('hidden');
@@ -112,7 +112,7 @@ function hideErrorToast() {
     document.getElementById('errorToast').classList.add('hidden');
 }
 
-// Update pay button state
+
 function setPayButtonLoading(isLoading) {
     const button = document.getElementById('payButton');
     const buttonText = document.getElementById('payButtonText');
@@ -133,7 +133,7 @@ function resetPayButton() {
     setPayButtonLoading(false);
 }
 
-// Refresh transactions
+
 async function refreshTransactions() {
     try {
         const response = await fetch('/user/api/wallet/transactions');
@@ -147,7 +147,7 @@ async function refreshTransactions() {
     }
 }
 
-// Main payment function with enhanced error handling
+
 async function processPayment() {
     const amountInput = document.getElementById('amountInput');
     const amount = parseFloat(amountInput.value);
@@ -157,7 +157,7 @@ async function processPayment() {
         return;
     }
     
-    // Store for retry
+
     lastPaymentAttempt = { amount };
     
     try {
@@ -165,7 +165,7 @@ async function processPayment() {
         
         console.log('Creating order for ₹' + amount);
         
-        // Step 1: Create order on server
+    
         const orderResponse = await fetch('/user/api/wallet/create-order', {
             method: 'POST',
             headers: {
@@ -174,7 +174,7 @@ async function processPayment() {
             body: JSON.stringify({ amount: amount })
         });
         
-        // Check if response is JSON
+      
         const contentType = orderResponse.headers.get('content-type');
         if (!contentType || !contentType.includes('application/json')) {
             const text = await orderResponse.text();
@@ -191,7 +191,7 @@ async function processPayment() {
         
         console.log('Opening Razorpay checkout with order:', orderData.orderId);
         
-        // Step 2: Open Razorpay checkout
+  
         const options = {
             key: RAZORPAY_KEY,
             amount: orderData.amount,
@@ -204,7 +204,7 @@ async function processPayment() {
                 setPayButtonLoading(true);
                 
                 try {
-                    // Step 3: Verify payment on server
+                    
                     const verifyResponse = await fetch('/user/api/wallet/process-payment', {
                         method: 'POST',
                         headers: {
@@ -220,7 +220,7 @@ async function processPayment() {
                     
                     console.log('Verify response status:', verifyResponse.status);
                     
-                    // Check if response is JSON
+                  
                     const verifyContentType = verifyResponse.headers.get('content-type');
                     if (!verifyContentType || !verifyContentType.includes('application/json')) {
                         const text = await verifyResponse.text();
@@ -232,7 +232,7 @@ async function processPayment() {
                     console.log('Verify data:', verifyData);
                     
                     if (verifyResponse.ok && verifyData.success) {
-                        // Success
+                      
                      closeModal();
 showPaymentSuccessModal(
     verifyData.message || 'Payment successful! Funds added to wallet.'
@@ -240,18 +240,18 @@ showPaymentSuccessModal(
 
                         
                     } else {
-                        // Payment verification failed
+                       
                         const errorMsg = verifyData.error || 'Payment verification failed';
                         console.error('Payment verification failed:', errorMsg);
                         
-                        // Show payment failed modal with detailed message
+                       
                         showPaymentFailedModal(errorMsg);
                     }
                     
                 } catch (error) {
                     console.error('Verification error:', error);
                     
-                    // Show payment failed modal
+                   
                     showPaymentFailedModal(error.message || 'Payment processing failed. Please try again.');
                     
                     resetPayButton();
@@ -263,7 +263,7 @@ showPaymentSuccessModal(
                 contact: '<%= user.phone || "9876543210" %>'
             },
             theme: {
-                color: '#d4af37' // Gold color
+                color: '#d4af37'
             },
             modal: {
                 ondismiss: function() {
@@ -272,23 +272,23 @@ showPaymentSuccessModal(
                     resetPayButton();
                 }
             },
-            // Add error handler for Razorpay
+          
             
         };
         
         
         console.log('Razorpay options:', options);
         
-        // Check if Razorpay is available
+        
         if (typeof Razorpay === 'undefined') {
             throw new Error('Payment gateway not available. Please refresh the page.');
         }
         
      const rzp = new Razorpay(options);
 
-// ✅ HANDLE PAYMENT FAILURE (THIS IS IMPORTANT)
+
 rzp.on('payment.failed', function (response) {
-    console.error('❌ Razorpay payment failed:', response);
+    console.error(' Razorpay payment failed:', response);
 
     let msg = 'Payment failed. Please try again.';
     if (response.error && response.error.description) {
@@ -299,7 +299,7 @@ rzp.on('payment.failed', function (response) {
     resetPayButton();
 });
 
-// ✅ OPEN RAZORPAY
+
 rzp.open();
 
         
@@ -307,24 +307,24 @@ rzp.open();
         console.error('Payment error:', error);
         console.error('Error stack:', error.stack);
         
-        // Show payment failed modal instead of toast
+  
         showPaymentFailedModal(error.message || 'Payment failed. Please try again.');
         
         resetPayButton();
     }
 }
 
-// Initialize
+
 document.addEventListener('DOMContentLoaded', function() {
     console.log('Wallet page loaded');
     console.log('Razorpay available:', typeof Razorpay !== 'undefined');
     
-    // Focus amount input when modal opens
+    
     document.getElementById('amountInput').addEventListener('focus', function() {
         this.select();
     });
     
-    // Allow Enter key to trigger payment
+   
     document.getElementById('amountInput').addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
             e.preventDefault();
@@ -332,14 +332,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Close failed modal on outside click
+   
     document.getElementById('paymentFailedModal').addEventListener('click', function(e) {
         if (e.target.id === 'paymentFailedModal') {
             closeFailedModal();
         }
     });
     
-    // Check if there's a payment failure in URL
+  
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('payment_failed')) {
         showPaymentFailedModal(urlParams.get('message') || 'Payment failed. Please try again.');

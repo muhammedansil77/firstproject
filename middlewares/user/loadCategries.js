@@ -1,5 +1,6 @@
 
-const Category = require('../../models/Category');
+import Category from "../../models/Category.js";
+
 
 async function loadCategories(req, res, next) {
   try {
@@ -22,4 +23,4 @@ async function loadCategories(req, res, next) {
   next();
 }
 
-module.exports = loadCategories;
+export default loadCategories;

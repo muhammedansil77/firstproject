@@ -1,5 +1,4 @@
-const mongoose = require('mongoose');
-
+import mongoose from "mongoose";
 const OfferSchema = new mongoose.Schema({
   title: { 
     type: String, 
@@ -82,4 +81,4 @@ OfferSchema.virtual('category', {
   justOne: true
 });
 
-module.exports = mongoose.model('Offer', OfferSchema);
+export default mongoose.model('Offer', OfferSchema);

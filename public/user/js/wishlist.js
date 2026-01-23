@@ -1,10 +1,9 @@
-// Remove the duplicate showNotification function and update the others
+
 
 async function removeFromWishlist(itemId, button) {
   try {
     const card = button.closest('.group');
     
-    // Add loading animation
     card.style.opacity = '0.5';
     card.style.pointerEvents = 'none';
     
@@ -18,7 +17,6 @@ async function removeFromWishlist(itemId, button) {
     const result = await response.json();
     
     if (response.ok) {
-      // Add fade out animation
       card.style.transition = 'all 0.5s ease';
       card.style.transform = 'translateX(-100px)';
       card.style.opacity = '0';
@@ -26,7 +24,6 @@ async function removeFromWishlist(itemId, button) {
       setTimeout(() => {
         card.remove();
         showNotification('Item removed from wishlist', 'success');
-        // Update count from result if available
         if (result.remainingCount !== undefined) {
           updateWishlistCount(result.remainingCount);
         } else {
@@ -46,11 +43,9 @@ async function removeFromWishlist(itemId, button) {
 
 async function moveToCart(itemId, button) {
   try {
-    // Get the card element
     const card = button.closest('.group');
     const originalContent = button.innerHTML;
     
-    // Add loading state
     button.innerHTML = `
       <div class="flex items-center justify-center gap-2">
         <svg class="w-5 h-5 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -62,7 +57,6 @@ async function moveToCart(itemId, button) {
     button.disabled = true;
     button.classList.add('opacity-75');
     
-    // Send request
     const response = await fetch('/user/api/wishlist/move-to-cart', {
       method: 'POST',
       headers: {
@@ -75,7 +69,6 @@ async function moveToCart(itemId, button) {
     const result = await response.json();
     
     if (response.ok && result.success) {
-      // Success animation
       button.innerHTML = `
         <div class="flex items-center justify-center gap-2">
           <svg class="w-5 h-5 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -87,7 +80,6 @@ async function moveToCart(itemId, button) {
       button.classList.remove('bg-gradient-to-r', 'from-blue-600', 'to-purple-600');
       button.classList.add('bg-gradient-to-r', 'from-green-500', 'to-teal-600');
       
-      // Remove from wishlist UI after delay
       setTimeout(() => {
         card.style.transition = 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)';
         card.style.transform = 'scale(0.95)';
@@ -104,7 +96,6 @@ async function moveToCart(itemId, button) {
     }else if (response.ok && result.alreadyInCart) {
   showNotification(result.message, 'info');
 
-  // reset button state
   button.innerHTML = `
     <div class="flex items-center justify-center gap-2">
       <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -124,7 +115,6 @@ async function moveToCart(itemId, button) {
   } catch (error) {
     console.error('Error moving to cart:', error);
     
-    // Reset button state
     button.innerHTML = `
       <div class="flex items-center justify-center gap-2">
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -140,13 +130,11 @@ async function moveToCart(itemId, button) {
   }
 }
 
-// Function to move all items to cart
 async function moveAllToCart() {
   try {
     const confirmMove = confirm('Add all available items to cart?');
     if (!confirmMove) return;
     
-    // Find the button
     const button = document.querySelector('button[onclick*="moveAllToCart"]');
     if (button) {
       const originalText = button.innerHTML;
@@ -187,11 +175,9 @@ async function moveAllToCart() {
       
       showNotification(`Successfully added ${result.added} item(s) to cart!`, 'success');
       
-      // Update counts
       updateCartCount(result.cartCount);
       updateWishlistCount(result.wishlistCount);
       
-      // Refresh page if items were added
       if (result.added > 0) {
         setTimeout(() => {
           window.location.reload();
@@ -205,7 +191,6 @@ async function moveAllToCart() {
   } catch (error) {
     console.error('Error moving all to cart:', error);
     
-    // Reset button
     const button = document.querySelector('button[onclick*="moveAllToCart"]');
     if (button) {
       button.innerHTML = `
@@ -221,12 +206,10 @@ async function moveAllToCart() {
   }
 }
 
-// Function to update cart count in navbar
 function updateCartCount(count) {
   const countElements = document.querySelectorAll('.cart-count');
   countElements.forEach(element => {
     element.textContent = count || 0;
-    // Add animation
     element.classList.add('animate-ping');
     setTimeout(() => {
       element.classList.remove('animate-ping');
@@ -234,15 +217,12 @@ function updateCartCount(count) {
   });
 }
 
-// Function to update wishlist count in navbar - FIXED VERSION
 function updateWishlistCount(count) {
   const countElement = document.querySelector('.wishlist-count');
   if (countElement) {
     if (count !== undefined) {
-      // Use the provided count
       countElement.textContent = count;
     } else {
-      // Fetch the count if not provided
       fetch('/user/api/wishlist/count')
         .then(res => res.json())
         .then(data => {
@@ -252,7 +232,6 @@ function updateWishlistCount(count) {
         })
         .catch(console.error);
     }
-    // Add animation
     countElement.classList.add('animate-ping');
     setTimeout(() => {
       countElement.classList.remove('animate-ping');
@@ -260,13 +239,10 @@ function updateWishlistCount(count) {
   }
 }
 
-// SINGLE showNotification function - REMOVE DUPLICATE
 function showNotification(message, type = 'info') {
-  // Remove existing notifications
   const existingNotifications = document.querySelectorAll('.notification-toast');
   existingNotifications.forEach(notif => notif.remove());
   
-  // Create notification element
   const notification = document.createElement('div');
   notification.className = `notification-toast fixed top-6 right-6 z-50 px-6 py-4 rounded-xl shadow-2xl transform transition-all duration-500 translate-x-0 ${
     type === 'success' ? 'bg-gradient-to-r from-emerald-500 to-teal-600' : 
@@ -274,7 +250,6 @@ function showNotification(message, type = 'info') {
     'bg-gradient-to-r from-blue-500 to-indigo-600'
   } text-white border border-white/10 backdrop-blur-sm`;
   
-  // Add icon
   let icon = '';
   if (type === 'success') {
     icon = '<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
@@ -298,18 +273,15 @@ function showNotification(message, type = 'info') {
   
   document.body.appendChild(notification);
   
-  // Auto remove after 4 seconds
   setTimeout(() => {
     notification.style.transform = 'translateX(100%)';
     setTimeout(() => notification.remove(), 300);
   }, 4000);
 }
 
-// Initialize when page loads
 document.addEventListener('DOMContentLoaded', function() {
   console.log('Wishlist page loaded');
   
-  // Add event listeners for better UX
   const addToCartButtons = document.querySelectorAll('button[onclick*="moveToCart"]');
   addToCartButtons.forEach(button => {
     button.addEventListener('mouseenter', function() {

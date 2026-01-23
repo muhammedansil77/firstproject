@@ -1,4 +1,4 @@
-// Copy referral code
+
 function copyReferralCode() {
   const codeElement = document.getElementById('referralCodeDisplay');
   if (!codeElement) {
@@ -24,7 +24,7 @@ function copyReferralCode() {
     });
 }
 
-// Copy referral link
+
 function copyReferralLink() {
   const linkElement = document.getElementById('referralLink');
   if (!linkElement) {
@@ -50,7 +50,7 @@ function copyReferralLink() {
     });
 }
 
-// Fallback clipboard method for older browsers
+
 function copyToClipboardFallback(text) {
   const textArea = document.createElement('textarea');
   textArea.value = text;
@@ -76,7 +76,7 @@ function copyToClipboardFallback(text) {
   }
 }
 
-// Share via WhatsApp
+
 function shareViaWhatsApp() {
   const codeElement = document.getElementById('referralCodeDisplay');
   const linkElement = document.getElementById('referralLink');
@@ -99,7 +99,7 @@ function shareViaWhatsApp() {
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-// Share via Email
+
 function shareViaEmail() {
   const codeElement = document.getElementById('referralCodeDisplay');
   const linkElement = document.getElementById('referralLink');
@@ -124,7 +124,7 @@ function shareViaEmail() {
   window.location.href = url;
 }
 
-// Share via SMS
+
 function shareViaSMS() {
   const codeElement = document.getElementById('referralCodeDisplay');
   const linkElement = document.getElementById('referralLink');
@@ -147,7 +147,7 @@ function shareViaSMS() {
   window.location.href = url;
 }
 
-// Remind friend
+
 function remindFriend(email) {
   if (!email) {
     console.error('No email provided');
@@ -156,7 +156,7 @@ function remindFriend(email) {
   }
   
   if (confirm(`Send reminder email to ${email}?`)) {
-    // Adjust the API endpoint based on your routes
+   
     fetch('/user/referrals/remind', {
       method: 'POST',
       headers: {
@@ -184,9 +184,9 @@ function remindFriend(email) {
   }
 }
 
-// Show notification
+
 function showNotification(message, type = 'info') {
-  // Remove any existing notifications
+
   const existingNotifications = document.querySelectorAll('.custom-notification');
   existingNotifications.forEach(notif => {
     if (notif.parentNode) {
@@ -227,13 +227,13 @@ function showNotification(message, type = 'info') {
   
   document.body.appendChild(notification);
   
-  // Animate in
+
   setTimeout(() => {
     notification.style.transform = 'translateY(0)';
     notification.style.opacity = '1';
   }, 10);
   
-  // Remove after 5 seconds
+
   setTimeout(() => {
     notification.style.transform = 'translateX(100%)';
     notification.style.opacity = '0';
@@ -245,7 +245,7 @@ function showNotification(message, type = 'info') {
   }, 5000);
 }
 
-// Add CSS for notification
+
 const style = document.createElement('style');
 style.textContent = `
   .custom-notification {

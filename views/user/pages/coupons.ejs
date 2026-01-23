@@ -1,4 +1,22 @@
 <div class="max-w-6xl mx-auto px-4 py-8">
+  <form method="GET" class="mb-6 flex gap-2">
+  <input type="text"
+         name="search"
+         value="<%= search %>"
+         placeholder="Search coupon..."
+         class="border px-3 py-2 rounded w-full">
+
+  <select name="status" class="border px-3 py-2 rounded">
+    <option value="all" <%= status === 'all' ? 'selected' : '' %>>All</option>
+    <option value="active" <%= status === 'active' ? 'selected' : '' %>>Active</option>
+    <option value="inactive" <%= status === 'inactive' ? 'selected' : '' %>>Inactive</option>
+    <option value="expired" <%= status === 'expired' ? 'selected' : '' %>>Expired</option>
+  </select>
+
+  <button class="bg-black text-white px-4 py-2 rounded">
+    Filter
+  </button>
+</form>
 
   <% if (coupons.length === 0) { %>
     <div class="text-center text-gray-500 py-10">
@@ -45,6 +63,35 @@
       <% }) %>
 
     </div>
+    <!-- Pagination -->
+<div class="flex justify-center mt-10 space-x-2">
+
+  <% if (currentPage > 1) { %>
+   <a href="?page=<%= currentPage - 1 %>&search=<%= search %>">
+       class="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100">
+      Prev
+    </a>
+  <% } %>
+
+  <% for (let i = 1; i <= totalPages; i++) { %>
+ <a href="?page=<%= i %>&search=<%= search %>">
+       class="px-3 py-1 border rounded 
+       <%= i === currentPage ? 'bg-black text-white' : 'text-gray-600 hover:bg-gray-100' %>">
+      <%= i %>
+    </a>
+  <% } %>
+
+  <% if (currentPage < totalPages) { %>
+<a href="?page=<%= currentPage + 1 %>&search=<%= search %>">
+
+       class="px-3 py-1 border rounded text-gray-600 hover:bg-gray-100">
+      Next
+    </a>
+  <% } %>
+
+</div>
+
+    
 
   <% } %>
 

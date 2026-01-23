@@ -658,7 +658,8 @@ if (saved && saved[0]) {
   
     const variantFilesMap = {};
     allFilesFlat.forEach(file => {
-      const match = file.fieldname && file.fieldname.match(/^variants\[(\d+)\]\[image\](?:\[\])?$/);
+    const match = file.fieldname.match(/^variants\[(\d+)\]\[image\](?:\[\])?$/);
+
       if (match) {
         const idx = match[1];
         variantFilesMap[idx] = variantFilesMap[idx] || [];
@@ -667,121 +668,62 @@ if (saved && saved[0]) {
     });
 
  
-    for (const variantData of variantsToUpdate) {
-      if (!variantData._id) {
-        console.warn('Variant missing _id, skipping:', variantData);
-        continue;
-      }
+   for (let i = 0; i < variantsToUpdate.length; i++) {
+  const variantData = variantsToUpdate[i];
+  let variant;
 
-      try {
-        const variant = await Variant.findById(variantData._id);
-        
-        if (!variant) {
-          console.warn(`Variant ${variantData._id} not found`);
-          continue;
-        }
 
-       
-        if (String(variant.product) !== String(productId)) {
-          console.warn(`Variant ${variantData._id} does not belong to product ${productId}`);
-          continue;
-        }
-
-        if (variantData.color !== undefined && variantData.color !== null && variantData.color.trim() !== '') {
-          variant.color = variantData.color.trim();
-        }
-        
-        if (variantData.stock !== undefined && variantData.stock !== null) {
-  const stockNum = Number(variantData.stock);
-
-  if (isNaN(stockNum)) {
-    return res.status(400).json({
-      success: false,
-      message: 'Stock must be a valid number'
+  if (!variantData._id) {
+    variant = new Variant({
+      product: productId,
+      color: variantData.color?.trim(),
+      stock: Number(variantData.stock) || 0,
+      price: Number(variantData.price) || 0,
+      salePrice: variantData.salePrice ? Number(variantData.salePrice) : null,
+      isListed: true,
+      images: []
     });
+
+    await variant.save();
+    product.variants.push(variant._id);
   }
 
-  // if (stockNum < 0) 
-  // if(stockNum<0){
-  //   return res.status(400).json({
-  //     success:false,
-  //     message:'hjdbhdbh00..'
-  //   })
-  // }
+ 
+  else {
+    variant = await Variant.findById(variantData._id);
+    if (!variant) continue;
 
-  variant.stock = stockNum;
-}
-
-        if (variantData.price !== undefined && variantData.price !== null) {
-          const priceNum = Number(variantData.price);
-          if (!isNaN(priceNum) && priceNum >= 0) {
-            variant.price = priceNum;
-          }
-        }
-        
-        if (variantData.salePrice !== undefined && variantData.salePrice !== null) {
-          const salePriceNum = Number(variantData.salePrice);
-          if (!isNaN(salePriceNum) && salePriceNum >= 0) {
-            variant.salePrice = salePriceNum;
-          } else {
-            variant.salePrice = null;
-          }
-        }
-        
-        if (variantData.isListed !== undefined) {
-          variant.isListed = variantData.isListed === true || variantData.isListed === 'true' || variantData.isListed === 1;
-        }
-       
-        
-        const variantIndex = variantsToUpdate.indexOf(variantData);
-        if (variantFilesMap[variantIndex] && variantFilesMap[variantIndex].length > 0) {
-          const newImages = [];
-          for (const file of variantFilesMap[variantIndex]) {
-            try {
-             const saved = await processVariantImage(file);
-if (saved) {
-  newImages.push(saved);
-}
-            } catch (e) {
-              console.warn(`Failed to process variant image:`, e.message);
-            }
-          }
-          if (newImages.length > 0) {
-            variant.images = [...variant.images, ...newImages];
-          }
-        }
-
-if (variantData.deletedImages) {
-  let deletedImages = [];
-
-  try {
-    deletedImages = JSON.parse(variantData.deletedImages);
-  } catch (e) {
-    deletedImages = [];
+    variant.color = variantData.color?.trim();
+    variant.stock = Number(variantData.stock) || 0;
+    variant.price = Number(variantData.price) || 0;
+    variant.salePrice = variantData.salePrice ? Number(variantData.salePrice) : null;
+    variant.isListed = true;
   }
 
-  if (Array.isArray(deletedImages) && deletedImages.length > 0) {
+
+
+  const files = variantFilesMap[i] || [];
+  for (const file of files) {
+    const saved = await processVariantImage(file);
+    if (saved) variant.images.push(saved);
+  }
+
+  // 🗑 HANDLE DELETED IMAGES
+  if (variantData.deletedImages) {
+    let deletedImages = [];
+    try {
+      deletedImages = JSON.parse(variantData.deletedImages);
+    } catch {}
+
     for (const imgUrl of deletedImages) {
-   
       variant.images = variant.images.filter(img => img !== imgUrl);
-
-     
       const publicId = getCloudinaryPublicId(imgUrl);
-      if (publicId) {
-        await cloudinary.uploader.destroy(publicId);
-        console.log('Deleted variant image:', publicId);
-      }
+      if (publicId) await cloudinary.uploader.destroy(publicId);
     }
   }
-}
 
-    
-        await variant.save();
-        
-      } catch (error) {
-        console.error(`Error updating variant ${variantData._id}:`, error.message);
-      }
-    }
+  await variant.save();
+}
 
  
     const updated = await Product.findById(productId)

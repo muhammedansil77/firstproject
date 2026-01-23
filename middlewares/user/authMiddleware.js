@@ -35,7 +35,7 @@ export const attachUser = async (req, res, next) => {
 
 export const protectRoute = (req, res, next) => {
 
-  // 🚫 DO NOT protect admin routes
+
   if (req.originalUrl.startsWith('/admin')) {
     return next();
   }
@@ -76,19 +76,19 @@ export const preventCacheForAuth = (req, res, next) => {
   const isAdminAuthPage =
     req.path.startsWith('/admin/login');
 
-  // Cache headers
+
   if (isUserAuthPage || isAdminAuthPage) {
     res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
     res.set('Pragma', 'no-cache');
     res.set('Expires', '0');
   }
 
-  // 🚫 User logged in → block ONLY user auth pages
+
   if (isUserAuthPage && req.session?.isLoggedIn && req.session?.userId) {
     return res.redirect('/user');
   }
 
-  // 🚫 Admin logged in → block ONLY admin auth pages
+
   if (isAdminAuthPage && req.session?.adminLoggedIn && req.session?.adminId) {
     return res.redirect('/admin/dashboard');
   }

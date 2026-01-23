@@ -1,8 +1,10 @@
+import User from "../../models/userSchema.js";
+import userController from "../userController.js";
 
-const User = require("../../models/userSchema").default;
-const { loadLoginPage } = require("../userController");
-const Admin = require("../../models/Admin");
-const bcrypt = require("bcrypt");
+const { loadLoginPage } = userController;
+import Admin from "../../models/Admin.js";
+import bcrypt from "bcrypt";
+
 const loadDashboard = async (req, res) => {
   try {
     return res.render('admin/dashboard', {
@@ -316,12 +318,11 @@ const logout = (req, res) => {
 
 
 
-
-module.exports ={
-    loadDashboard,
-    loadUsers,
-    blockUnblockUser,
-    loadLogin,
-    login,
-    logout
-}
+export {
+  loadDashboard,
+  loadUsers,
+  blockUnblockUser,
+  loadLogin,
+  login,
+  logout
+};

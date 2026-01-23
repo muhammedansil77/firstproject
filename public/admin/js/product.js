@@ -12,12 +12,12 @@
 function makeUploadUrl(p) {
   if (!p) return PLACEHOLDER;
 
-  // ✅ Cloudinary or external image → return as-is
+
   if (typeof p === 'string' && p.startsWith('http')) {
     return p;
   }
 
-  // ✅ Local image → prefix with /
+
   return '/' + String(p).replace(/^\/+/, '');
 }
 
@@ -75,7 +75,7 @@ function createImagePreviewElement(file, variantIdx, previewIndex, isNewFile = t
   
   
 if (originalPath && !isNewFile) {
-  // ✅ Store FULL URL (important for Cloudinary)
+ 
   container.dataset.originalPath = originalPath;
 }
 
@@ -358,7 +358,7 @@ function updatePreviewIndices(variantIdx) {
     const addCropApply = $id('addCropApply');
     const addCropNext = $id('addCropNext');
     const addCropCancel = $id('addCropCancel');
-    // ================= EDIT CROP ELEMENTS =================
+   
 const editCropArea = document.getElementById('editCropArea');
 const editCropImage = document.getElementById('editCropImage');
 const editCropControls = document.getElementById('editCropControls');
@@ -788,12 +788,10 @@ function addVariantRow(container, variantData) {
   imgInput.name = `variants[${creationIdx}][image][]`;
   imgInput.multiple = true;
 
-  // ADD THIS EVENT LISTENER FOR VARIANT IMAGES IN ADD MODAL
   imgInput.addEventListener('change', function (ev) {
     const files = Array.from(ev.target.files || []);
     if (!files.length) return;
     
-    // Enqueue each file for cropping
     files.forEach(f => {
       enqueueCropForFile(f, { 
         type: 'variant', 
@@ -801,7 +799,6 @@ function addVariantRow(container, variantData) {
       });
     });
     
-    // Clear the input to allow selecting same files again
     ev.target.value = '';
   });
 
@@ -828,7 +825,6 @@ function addVariantRow(container, variantData) {
     row.remove();
   });
 
-  // Add image count message
   const imageCountDiv = document.createElement('div');
   imageCountDiv.className = 'image-count-message small mt-2 text-danger';
 
@@ -1126,6 +1122,25 @@ function addVariantRow(container, variantData) {
         try {
           console.log('Waiting for cropping to complete...');
           await waitForCroppingComplete(10000);
+          // ✅ At least ONE image required (product OR variant)
+const productImageCount = selectedProductFiles.length;
+
+let variantImageCount = 0;
+Object.values(croppedVariantFiles).forEach(arr => {
+  variantImageCount += arr.length;
+});
+
+const nativeVariantImages = Array.from(
+  variantsContainer.querySelectorAll('.variant-image')
+).reduce((sum, input) => sum + (input.files?.length || 0), 0);
+
+const totalImages = productImageCount + variantImageCount + nativeVariantImages;
+
+if (totalImages < 1) {
+  toastr.error('At least one image is required for the product');
+  throw new Error('No images provided');
+}
+
           
           const name = (pName && pName.value || '').trim();
           if (!name) {
@@ -1307,11 +1322,11 @@ function addEditVariantRow(container, variantData) {
   try {
     console.log('Opening edit modal for product ID:', id);
     
-    // Show loading indicator
+    
     editProductSubmit.disabled = true;
     editProductSubmit.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Loading...';
     
-    // Fetch the product data from the new endpoint
+
     const response = await axios.get(`/admin/product/${id}`);
     
     if (!response.data.success) {
@@ -1322,19 +1337,19 @@ function addEditVariantRow(container, variantData) {
     const product = response.data.product;
     console.log('Product loaded:', product.name);
     
-    // Fill the form with product data
+   
     if (editProductId) editProductId.value = product._id;
     if (editName) editName.value = product.name || '';
     if (editDescription) editDescription.value = product.description || '';
     
-    // Set category
+   
     if (editCategory) {
       const categoryId = product.category ? (product.category._id || product.category) : '';
       editCategory.value = categoryId;
       console.log('Category set to:', categoryId);
     }
 
-    // Display existing product images
+ 
     if (editExistingImages) {
       editExistingImages.innerHTML = '';
       if (product.images && product.images.length) {
@@ -1369,7 +1384,7 @@ function addEditVariantRow(container, variantData) {
             e.stopPropagation();
             if (confirm('Delete this image from product?')) {
               container.remove();
-              // Track deleted images
+             
               if (!window.deletedExistingImages) {
                 window.deletedExistingImages = [];
               }
@@ -1387,7 +1402,7 @@ function addEditVariantRow(container, variantData) {
       }
     }
 
-    // Clear and populate variants
+   
     if (editVariantsContainer) {
       editVariantsContainer.innerHTML = '';
       
@@ -1411,30 +1426,26 @@ function addEditVariantRow(container, variantData) {
       }
     }
 
-    // Clear new image previews
+ 
     if (editImagesPreview) editImagesPreview.innerHTML = '';
     if (editImages) editImages.value = '';
     
-    // Reset cropping data
+   
     croppedEditProductFiles = [];
     croppedEditVariantFiles = {};
     editCroppingQueue = [];
     editCroppingInProgress = false;
     
-    // Reset deleted images tracking
     window.deletedExistingImages = [];
     window.deletedExistingVariantImages = {};
 
-    // Show the modal
     const modal = new bootstrap.Modal(editModalEl);
     modal.show();
     
-    console.log('Edit modal opened successfully');
     
   } catch (err) {
     console.error('openEditModal error:', err);
     
-    // Check if it's an axios error
     if (err.response) {
       console.error('Response error:', err.response.status, err.response.data);
       toastr.error(err.response.data?.message || `Server error (${err.response.status})`);
@@ -1446,7 +1457,7 @@ function addEditVariantRow(container, variantData) {
       toastr.error('Failed to load product: ' + err.message);
     }
   } finally {
-    // Reset button state
+   
     editProductSubmit.disabled = false;
     editProductSubmit.innerHTML = '<i class="bi bi-check-circle me-2"></i>Save Changes';
   }
@@ -1469,15 +1480,10 @@ function addEditVariantRow(container, variantData) {
       });
     }
 
-    // Edit submit (PATCH)
-    // Edit submit (PATCH)
-// Edit submit (PATCH)
-// In the editForm submit event listener
-// In the editForm submit event handler:
-// In product-management.js, update the editForm submit handler:
+  
 function closeEditModal() {
   try {
-    // Method 1: Get Bootstrap modal instance and hide
+    
     const modalInstance = bootstrap.Modal.getInstance(editModalEl);
     if (modalInstance) {
       modalInstance.hide();
@@ -1485,7 +1491,7 @@ function closeEditModal() {
       return;
     }
     
-    // Method 2: Use Bootstrap modal if it exists globally
+  
     if (typeof bootstrap !== 'undefined' && bootstrap.Modal) {
       const modal = new bootstrap.Modal(editModalEl);
       modal.hide();
@@ -1493,14 +1499,14 @@ function closeEditModal() {
       return;
     }
     
-    // Method 3: Use jQuery if available
+  
     if (typeof $ !== 'undefined' && $.fn.modal) {
       $('#editProductModal').modal('hide');
       console.log('Modal closed via jQuery');
       return;
     }
     
-    // Method 4: Direct DOM manipulation (last resort)
+
     editModalEl.classList.remove('show');
     editModalEl.style.display = 'none';
     document.body.classList.remove('modal-open');
@@ -1517,6 +1523,39 @@ if (editForm) {
     ev.preventDefault();
 
     const id = editProductId?.value;
+
+
+
+const existingProductImages =
+  (editExistingImages?.querySelectorAll('img')?.length || 0);
+
+
+const newProductImages = croppedEditProductFiles.length;
+
+
+const existingVariantImages = editVariantsContainer
+  .querySelectorAll('.variant-image-preview img')
+  .length;
+
+
+let newVariantImages = 0;
+Object.values(croppedEditVariantFiles).forEach(arr => {
+  newVariantImages += arr.length;
+});
+
+const totalImages =
+  existingProductImages +
+  newProductImages +
+  existingVariantImages +
+  newVariantImages;
+
+if (totalImages < 1) {
+  toastr.error('At least one image is required for the product');
+  editProductSubmit.disabled = false;
+  editProductSubmit.innerHTML = '<i class="bi bi-check-circle me-2"></i>Save Changes';
+  return;
+}
+
     if (!id) {
       toastr.error('Missing product id');
       return;
@@ -1540,18 +1579,15 @@ if (editForm) {
         fd.append('category', editCategory.value);
       }
 
-      // Add new product images
       croppedEditProductFiles.forEach(f => {
         fd.append('images[]', f);
       });
 
-      // Add deleted product images
       if (window.deletedExistingImages && window.deletedExistingImages.length > 0) {
         fd.append('deletedImages', JSON.stringify(window.deletedExistingImages));
         console.log('Sending deleted images:', window.deletedExistingImages);
       }
 
-      // Handle variants
       const variantsArray = [];
       const rows = editVariantsContainer.querySelectorAll('.variant-row');
       
@@ -1563,7 +1599,7 @@ if (editForm) {
         const stock = row.querySelector('.variant-stock')?.value || '0';
         const price = row.querySelector('.variant-price')?.value || '0';
         
-        // Validate variant fields
+    
         if (!color) {
           toastr.error(`Variant ${index + 1}: Color is required`);
           hasErrors = true;
@@ -1600,14 +1636,14 @@ if (editForm) {
         fd.append(`variants[${index}][stock]`, stock);
         fd.append(`variants[${index}][price]`, price);
         fd.append(`variants[${index}][isListed]`, 'true');
+        // formData.append(`variants[${idx}][size]`, sizeValue);
+
         
-        // Add deleted variant images
         const deletedVariantImages = window.deletedExistingVariantImages?.[row.dataset.idx] || [];
         if (deletedVariantImages.length > 0) {
           fd.append(`variants[${index}][deletedImages]`, JSON.stringify(deletedVariantImages));
         }
         
-        // Add new variant images
         const newVariantFiles = croppedEditVariantFiles[row.dataset.idx] || [];
         newVariantFiles.forEach(file => {
           fd.append(`variants[${index}][image][]`, file);
@@ -1620,12 +1656,10 @@ if (editForm) {
         return;
       }
 
-      // Send variants as JSON array
       fd.append('variants', JSON.stringify(variantsArray));
       
       console.log('Saving product with ID:', id);
       
-      // API call
       const resp = await axios.patch(`/admin/product/${id}`, fd, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
@@ -1633,18 +1667,15 @@ if (editForm) {
       if (resp?.data?.success) {
         toastr.success('Product updated successfully');
         
-        // Get the Bootstrap modal instance and hide it
         const editModal = bootstrap.Modal.getInstance(editModalEl);
         if (editModal) {
           editModal.hide();
           console.log('Modal hidden successfully');
         } else {
-          // Fallback: hide using jQuery if Bootstrap method fails
           $('#editProductModal').modal('hide');
           console.log('Modal hidden using jQuery fallback');
         }
         
-        // Refresh the product table
         await loadProductsToTable();
         
       } else {
@@ -1654,7 +1685,6 @@ if (editForm) {
     } catch (err) {
       console.error('Error in edit form submit:', err);
       
-      // Show detailed error message
       if (err.response) {
         console.error('Response error:', err.response.status, err.response.data);
         toastr.error(err.response.data?.message || `Server error (${err.response.status})`);
@@ -1667,17 +1697,17 @@ if (editForm) {
       }
       
     } finally {
-      // Reset button state
+      
       editProductSubmit.disabled = false;
       editProductSubmit.innerHTML = '<i class="bi bi-check-circle me-2"></i>Save Changes';
       
-      // Clear deleted images tracking
+     
       window.deletedExistingImages = [];
       window.deletedExistingVariantImages = {};
     }
   });
 }
-    // ---------- Modal sizing & cleanup ----------
+   
     (function () {
       const modalBody = (addModalEl && addModalEl.querySelector('.modal-body')) || null;
 
@@ -1720,34 +1750,34 @@ if (editForm) {
         if (firstInput) firstInput.focus();
       });
 
-    // In your modal cleanup section, update it to include:
+ 
 addModalEl.addEventListener('hidden.bs.modal', function () {
   try {
-    // Clear product images
+    
     if (pImagesPreview) pImagesPreview.innerHTML = '';
     modalBody.style.maxHeight = '';
     modalBody.style.overflowY = '';
     
-    // Clear cropping state
+  
     if (addCropImage) { 
       addCropImage.style.maxHeight = ''; 
       addCropImage.style.display = 'none'; 
     }
     if (addCropArea) addCropArea.style.display = 'none';
     
-    // Destroy cropper
+  
     if (cropper) { 
       cropper.destroy(); 
       cropper = null; 
     }
     
-    // Clear all blob URLs
+ 
     const allImages = document.querySelectorAll('img[src^="blob:"]');
     allImages.forEach(img => {
       URL.revokeObjectURL(img.src);
     });
     
-    // Clear cropping queue and variant files
+    
     croppingQueue = [];
     window.croppingQueue = [];
     croppingInProgress = false;
@@ -1755,7 +1785,7 @@ addModalEl.addEventListener('hidden.bs.modal', function () {
     selectedProductFiles.length = 0;
     clearCroppedVariantFiles();
     
-    // Clear form data
+   
     if (addForm) addForm.reset();
     
     const ev = new CustomEvent('adminAddProductModalHidden');
@@ -1779,38 +1809,36 @@ addModalEl.addEventListener('hidden.bs.modal', function () {
       window.adjustAddProductModal = adjustAddModalSize;
     })();
     
-    // Edit modal cleanup
-// Add this to your modal close handler
-// Add this after your modal initialization
+
 if (editModalEl) {
   editModalEl.addEventListener('hidden.bs.modal', function () {
     console.log('Edit modal hidden event triggered');
     
-    // Reset form
+  
     if (editForm) editForm.reset();
     
-    // Clear all previews
+ 
     if (editImagesPreview) editImagesPreview.innerHTML = '';
     if (editExistingImages) editExistingImages.innerHTML = '';
     if (editVariantsContainer) editVariantsContainer.innerHTML = '';
     
-    // Reset cropping data
+   
     croppedEditProductFiles = [];
     croppedEditVariantFiles = {};
     editCroppingQueue = [];
     editCroppingInProgress = false;
     
-    // Reset tracking arrays
+    
     window.deletedExistingImages = [];
     window.deletedExistingVariantImages = {};
     
-    // Reset button
+   
     if (editProductSubmit) {
       editProductSubmit.disabled = false;
       editProductSubmit.innerHTML = '<i class="bi bi-check-circle me-2"></i>Save Changes';
     }
     
-    // Clean up blob URLs
+   
     const allImages = document.querySelectorAll('img[src^="blob:"]');
     allImages.forEach(img => {
       URL.revokeObjectURL(img.src);

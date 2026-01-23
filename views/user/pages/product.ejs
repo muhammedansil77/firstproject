@@ -4,6 +4,13 @@
 <main class="min-h-screen bg-gradient-to-br from-[#0a0a0a] via-[#0f0f0f] to-[#1a1a1a] text-white antialiased">
  <div class="w-full px-10 py-12">
 
+<div id="toast"
+     class="fixed top-6 right-6 z-[9999] hidden
+            bg-black/90 text-white px-5 py-3 rounded-xl
+            border border-[#d4af37]/40 shadow-2xl
+            transition-all duration-300">
+  <span id="toast-msg"></span>
+</div>
 
     <!-- Breadcrumb with enhanced styling -->
     <nav class="text-sm text-gray-400 mb-8 flex items-center gap-2">
@@ -33,6 +40,7 @@
   class="relative rounded-2xl overflow-hidden bg-black shadow-2xl group cursor-zoom-in"
 >
   <div class="absolute inset-0 bg-gradient-to-tr from-[#d4af37]/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"></div>
+
 
   <img 
     id="main-product-image"
@@ -189,7 +197,30 @@
 
           <!-- Product Info Card -->
           <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl p-6 shadow-2xl">
-            
+       <button
+  id="wishlist-btn"
+  data-product-id="<%= product._id %>"
+  data-variant-id="<%= selectedVariant?._id || '' %>"
+  data-active="<%= isWishlisted ? 'true' : 'false' %>"
+  class="absolute top-5 right-5 z-20 p-3 rounded-full bg-black/70 border border-white/10 transition"
+  title="Add to wishlist"
+>
+  <svg id="wishlist-icon"
+       xmlns="http://www.w3.org/2000/svg"
+       viewBox="0 0 24 24"
+       width="22"
+       height="22"
+       fill="<%= isWishlisted ? '#d4af37' : 'none' %>"
+       stroke="<%= isWishlisted ? '#d4af37' : 'white' %>"
+       stroke-width="2">
+    <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 0 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8z"/>
+  </svg>
+</button>
+
+
+
+
+
             <!-- Title -->
             <div class="mb-6">
               <h1 class="text-3xl font-bold bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent mb-2">
@@ -376,13 +407,7 @@
   Add to Cart
 </button>
 
-              <button id="buy-now" 
-                class="w-full px-6 py-4 rounded-xl border-2 border-[#d4af37] text-[#d4af37] font-semibold text-lg hover:bg-[#d4af37]/10 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-                </svg>
-                Buy Now
-              </button>
+             
             </div>
 
             <!-- Trust Badges -->

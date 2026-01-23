@@ -325,6 +325,67 @@ createOffer: async (req, res) => {
       }
     }
 
+
+const parsedDiscountValue = parseFloat(discountValue);
+const parsedMinPurchase = parseFloat(minPurchaseAmount) || 0;
+const parsedMaxDiscount = parseFloat(maxDiscountAmount) || 0;
+
+
+if (parsedMinPurchase < 0) {
+  return res.status(400).json({
+    success: false,
+    message: 'Minimum purchase amount cannot be negative'
+  });
+}
+
+
+if (discountType === 'percentage') {
+  if (parsedDiscountValue <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Percentage discount must be greater than 0'
+    });
+  }
+
+  if (parsedDiscountValue > 100) {
+    return res.status(400).json({
+      success: false,
+      message: 'Percentage discount cannot exceed 100%'
+    });
+  }
+
+  if (parsedMaxDiscount < 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Max discount amount cannot be negative'
+    });
+  }
+
+  if (parsedMaxDiscount > 0 && parsedMinPurchase > 0 && parsedMaxDiscount > parsedMinPurchase) {
+    return res.status(400).json({
+      success: false,
+      message: 'Max discount cannot exceed minimum purchase amount'
+    });
+  }
+}
+
+
+if (discountType === 'fixed') {
+  if (parsedDiscountValue <= 0) {
+    return res.status(400).json({
+      success: false,
+      message: 'Fixed discount must be greater than 0'
+    });
+  }
+
+  if (parsedMinPurchase > 0 && parsedDiscountValue > parsedMinPurchase) {
+    return res.status(400).json({
+      success: false,
+      message: 'Fixed discount cannot exceed minimum purchase amount'
+    });
+  }
+}
+
    
     if (type === 'product') {
       const product = await Product.findById(targetId);

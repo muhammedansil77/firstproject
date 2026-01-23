@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const {schema} = mongoose;
 
@@ -37,5 +37,6 @@ const {schema} = mongoose;
     }
  })
 
-  const Coupon = mongoose.model("Coupon",couponSchema);
-  module.exports = Coupon;
+const Coupon = mongoose.model("Coupon", couponSchema);
+
+export default Coupon;

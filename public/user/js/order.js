@@ -1,7 +1,6 @@
-// public/js/order.js - COMPLETE WORKING VERSION WITH COUPON
-console.log('✅ Order.js loading...');
+console.log('Order.js loading...');
 
-// Check if axios is available, load if not
+
 if (typeof axios === 'undefined') {
     console.log('📦 Loading axios from CDN...');
     const script = document.createElement('script');
@@ -9,13 +8,16 @@ if (typeof axios === 'undefined') {
     document.head.appendChild(script);
 }
 
-// ========== GLOBAL VARIABLES ==========
-let orderInProgress = false;
-let orderLockDuration = 5000; // 5 seconds
 
-// ========== TOAST NOTIFICATIONS ==========
+let orderInProgress = false;
+let orderLockDuration = 5000; 
+
+let lastRazorpayOrderData = null;
+
+
+
 function showToast(message, type = 'info') {
-    // Create toast container if it doesn't exist
+ 
     let toastContainer = document.getElementById('toastContainer');
     if (!toastContainer) {
         toastContainer = document.createElement('div');
@@ -38,24 +40,23 @@ function showToast(message, type = 'info') {
     `;
     
     toastContainer.appendChild(toast);
-    
-    // Animate in
+
     setTimeout(() => toast.classList.remove('translate-x-full'), 10);
     
-    // Auto remove after 5 seconds
+
     setTimeout(() => {
         toast.classList.add('translate-x-full');
         setTimeout(() => toast.remove(), 300);
     }, 5000);
 }
 
-// ========== COUPON MESSAGE FUNCTION ==========
+
 function showCouponMessage(message, type = 'info') {
-    console.log(`📢 Coupon message: ${message} (${type})`);
+    console.log(` Coupon message: ${message} (${type})`);
     
     const couponMessage = document.getElementById('couponMessage');
     if (!couponMessage) {
-        console.log('❌ Coupon message element not found');
+        console.log(' Coupon message element not found');
         return;
     }
     
@@ -81,13 +82,13 @@ function showCouponMessage(message, type = 'info') {
     }
 }
 
-// ========== PLACE ORDER BUTTON VALIDATION ==========
+
 function updatePlaceOrderButton() {
     console.log('🔄 Updating place order button state');
     const hasAddress = document.querySelector('input[name="deliveryAddress"]:checked');
     const hasPayment = document.querySelector('input[name="paymentMethod"]:checked');
     
-    // Get cart items from hidden input
+
     const cartItemsData = document.getElementById('cartItemsData');
     const hasCartItems = cartItemsData && cartItemsData.value === 'true';
     
@@ -106,7 +107,7 @@ function updatePlaceOrderButton() {
     }
 }
 
-// ========== PAYMENT METHOD STYLING ==========
+
 function stylePaymentOptions() {
     console.log('🎨 Styling payment options');
     
@@ -121,7 +122,7 @@ function stylePaymentOptions() {
         option.addEventListener('change', function() {
             console.log('💳 Payment method changed to:', this.value);
             
-            // Reset all styles
+         
             Object.values(paymentContainers).forEach(container => {
                 if (container) {
                     container.classList.remove('border-[#d4af37]', 'bg-[#d4af37]/5');
@@ -129,7 +130,7 @@ function stylePaymentOptions() {
                 }
             });
             
-            // Style selected option
+      
             const selectedContainer = paymentContainers[this.value.toLowerCase()];
             if (selectedContainer) {
                 selectedContainer.classList.add('border-[#d4af37]', 'bg-[#d4af37]/5');
@@ -139,7 +140,7 @@ function stylePaymentOptions() {
             updatePlaceOrderButton();
         });
         
-        // Initial styling
+   
         if (option.checked) {
             const selectedContainer = paymentContainers[option.value.toLowerCase()];
             if (selectedContainer) {
@@ -150,26 +151,26 @@ function stylePaymentOptions() {
     });
 }
 
-// ========== WALLET VALIDATION ==========
+
 function validateWalletPayment() {
     const walletOption = document.getElementById('wallet');
     if (!walletOption) return;
     
-    // Get wallet balance from data attribute
+   
     const walletBalanceElem = document.getElementById('walletBalanceData');
     const walletBalance = walletBalanceElem ? parseFloat(walletBalanceElem.value) : 0;
     
-    // Get final amount from hidden input or data attribute
+    
     const finalAmountElem = document.querySelector('[data-final-amount]');
     const finalAmount = finalAmountElem ? parseFloat(finalAmountElem.dataset.finalAmount) : 0;
     
-    console.log('💰 Wallet validation:', {
+    console.log(' Wallet validation:', {
         balance: walletBalance,
         finalAmount: finalAmount,
         isSufficient: walletBalance >= finalAmount
     });
     
-    // If wallet balance is insufficient, disable wallet option
+ 
     if (walletBalance < finalAmount) {
         walletOption.disabled = true;
         const walletContainer = document.getElementById('walletOption');
@@ -179,15 +180,18 @@ function validateWalletPayment() {
     }
 }
 
-// ========== RAZORPAY PAYMENT ==========
+
 async function handleRazorpayPayment(orderData) {
     try {
-        console.log('💳 Starting Razorpay payment for order:', orderData);
+        console.log(' Starting Razorpay payment for order:', orderData);
+       
+lastRazorpayOrderData = orderData;
+
         
-        // Get final amount correctly
+    
         let finalAmount;
         
-        // Method 1: Try to get from data attribute
+       
         const amountElement = document.getElementById('finalAmountData');
         if (amountElement && amountElement.dataset.amount) {
             const amountStr = amountElement.dataset.amount;
@@ -195,7 +199,7 @@ async function handleRazorpayPayment(orderData) {
             console.log('Amount from data attribute:', amountStr, '->', finalAmount);
         }
         
-        // Method 2: If still not valid, try to get from displayed text
+        
         if (!finalAmount || isNaN(finalAmount) || finalAmount <= 0) {
             const displayElement = document.getElementById('displayedFinalAmount');
             if (displayElement) {
@@ -205,11 +209,11 @@ async function handleRazorpayPayment(orderData) {
             }
         }
         
-        // Method 3: Last resort - use EJS variable
+    
         if (!finalAmount || isNaN(finalAmount) || finalAmount <= 0) {
-            // Get from EJS template variable
+          
             const ejsAmount = '<%= finalAmount %>';
-            // Remove any commas and convert
+          
             finalAmount = parseFloat(ejsAmount.replace(/,/g, ''));
             console.log('Amount from EJS variable:', ejsAmount, '->', finalAmount);
         }
@@ -226,14 +230,14 @@ async function handleRazorpayPayment(orderData) {
             return;
         }
 
-        // Round to 2 decimal places to avoid floating point issues
+     
         finalAmount = Math.round(finalAmount * 100) / 100;
-        console.log(`💰 Creating Razorpay order for ₹${finalAmount}`);
+        console.log(` Creating Razorpay order for ₹${finalAmount}`);
 
-        // Show loading
+      
         showToast('Creating payment link...', 'info');
 
-        // First create the order on your server
+        
         const orderResponse = await axios.post('/create-razorpay-order', {
             amount: finalAmount
         });
@@ -244,12 +248,12 @@ async function handleRazorpayPayment(orderData) {
         
         const razorpayOrder = orderResponse.data.data;
         
-        console.log('✅ Razorpay order created:', razorpayOrder.id);
+        console.log(' Razorpay order created:', razorpayOrder.id);
 
-        // Load Razorpay script if not already loaded
+    
         await loadRazorpayScript();
         
-        // Get user details
+     
         const userName = '<%= user.fullName %>' || '';
         const userEmail = '<%= user.email %>' || '';
         const userPhone = '<%= user.phone %>' || '';
@@ -267,11 +271,11 @@ async function handleRazorpayPayment(orderData) {
                     paymentId: response.razorpay_payment_id
                 });
                 
-                // Show loading
+             
                 showToast('Verifying payment...', 'info');
                 
                 try {
-                    // Verify payment on server with addressId
+                   
                     const verifyResponse = await axios.post('/verify-razorpay-payment', {
                         razorpay_order_id: response.razorpay_order_id,
                         razorpay_payment_id: response.razorpay_payment_id,
@@ -280,12 +284,12 @@ async function handleRazorpayPayment(orderData) {
                     });
                     
                     if (verifyResponse.data.success) {
-                        // Show success modal
+                      
                         showSuccessModal(verifyResponse.data);
                     } else {
                        showFailedModal(verifyResponse.data.message || 'Payment verification failed');
 
-                        // Re-enable button
+                       
                         const placeOrderBtn = document.getElementById('placeOrderBtn');
                         if (placeOrderBtn) {
                             placeOrderBtn.disabled = false;
@@ -293,9 +297,9 @@ async function handleRazorpayPayment(orderData) {
                         }
                     }
                 } catch (error) {
-                    console.error('❌ Payment verification error:', error);
+                    console.error(' Payment verification error:', error);
                     showToast(error.response?.data?.message || 'Payment verification failed', 'error');
-                    // Re-enable button
+               
                     const placeOrderBtn = document.getElementById('placeOrderBtn');
                     if (placeOrderBtn) {
                         placeOrderBtn.disabled = false;
@@ -315,7 +319,7 @@ async function handleRazorpayPayment(orderData) {
                 ondismiss: function() {
                     console.log('⚠️ Razorpay modal dismissed');
                   showFailedModal('Payment was cancelled. Please try again.');
-                    // Re-enable place order button
+             
                     const placeOrderBtn = document.getElementById('placeOrderBtn');
                     if (placeOrderBtn) {
                         placeOrderBtn.disabled = false;
@@ -330,16 +334,16 @@ async function handleRazorpayPayment(orderData) {
         
         const rzp = new Razorpay(options);
         
-        // Open Razorpay checkout
+        
         rzp.open();
         
-        // Handle errors
+      
         rzp.on('payment.failed', function(response) {
-            console.error('❌ Razorpay payment failed:', response.error);
+            console.error(' Razorpay payment failed:', response.error);
            showFailedModal(`Payment failed: ${response.error.description}`);
 
             
-            // Re-enable place order button
+          
             const placeOrderBtn = document.getElementById('placeOrderBtn');
             if (placeOrderBtn) {
                 placeOrderBtn.disabled = false;
@@ -348,10 +352,10 @@ async function handleRazorpayPayment(orderData) {
         });
         
     } catch (error) {
-        console.error('❌ Razorpay setup error:', error);
+        console.error('Razorpay setup error:', error);
         showToast(error.message || 'Payment setup failed', 'error');
         
-        // Re-enable button on error
+       
         const placeOrderBtn = document.getElementById('placeOrderBtn');
         if (placeOrderBtn) {
             placeOrderBtn.disabled = false;
@@ -361,7 +365,7 @@ async function handleRazorpayPayment(orderData) {
     }
 }
 
-// Load Razorpay script dynamically
+
 function loadRazorpayScript() {
     return new Promise((resolve, reject) => {
         if (window.Razorpay) {
@@ -370,22 +374,22 @@ function loadRazorpayScript() {
             return;
         }
         
-        console.log('📦 Loading Razorpay script...');
+        console.log(' Loading Razorpay script...');
         const script = document.createElement('script');
         script.src = 'https://checkout.razorpay.com/v1/checkout.js';
         script.onload = () => {
-            console.log('✅ Razorpay script loaded successfully');
+            console.log(' Razorpay script loaded successfully');
             resolve();
         };
         script.onerror = (error) => {
-            console.error('❌ Failed to load Razorpay script:', error);
+            console.error(' Failed to load Razorpay script:', error);
             reject(new Error('Failed to load payment gateway. Please check your internet connection.'));
         };
         document.body.appendChild(script);
     });
 }
 
-// Helper function for success modal
+
 function showSuccessModal(responseData) {
     const orderNumber = responseData.orderNumber || 
         `ORD-${responseData.orderId?.slice(-8).toUpperCase() || 'ORDER'}`;
@@ -405,7 +409,7 @@ function showSuccessModal(responseData) {
         successModal.classList.remove('hidden');
         console.log('🎉 Success modal shown');
         
-        // Auto redirect after 5 seconds
+       
         setTimeout(() => {
             if (responseData.orderId) {
                 window.location.href = `/orders/${responseData.orderId}`;
@@ -414,15 +418,14 @@ function showSuccessModal(responseData) {
     }
 }
 
-// ========== COUPON FUNCTIONS ==========
-// ========== COUPON FUNCTIONS ==========
+
 async function applyCoupon() {
-    console.log('🎫 Applying coupon...');
+    console.log(' Applying coupon...');
     const couponCodeInput = document.getElementById('couponCode');
     const couponCode = couponCodeInput ? couponCodeInput.value.trim() : '';
     
     if (!couponCode) {
-        console.log('❌ No coupon code entered');
+        console.log(' No coupon code entered');
         showCouponMessage('Please enter a coupon code', 'error');
         return;
     }
@@ -439,13 +442,13 @@ async function applyCoupon() {
         console.log('Coupon response:', response.data);
         
         if (response.data.success) {
-            console.log('✅ Coupon applied successfully');
+            console.log(' Coupon applied successfully');
             showCouponMessage(response.data.message, 'success');
             
-            // Update order summary immediately
+         
             updateOrderSummary(response.data.data);
             
-            // Hide coupon input section and show applied coupon
+            
             updateCouponUI(response.data.data, couponCode);
             
         } else {
@@ -453,37 +456,54 @@ async function applyCoupon() {
             showCouponMessage(response.data.message, 'error');
         }
     } catch (error) {
-        console.error('Error applying coupon:', error);
-        showCouponMessage('Error applying coupon ', 'error');
+    console.error('Error applying coupon:', error);
+
+    const message =
+        error.response?.data?.message ||
+        'Failed to apply coupon';
+
+
+    showCouponMessage(message, 'error');
+    showToast(message, 'error');
+
+  
+    if (
+        message.toLowerCase().includes('disabled') ||
+        message.toLowerCase().includes('blocked') ||
+        message.toLowerCase().includes('inactive')
+    ) {
+        restoreCouponInput();
     }
 }
 
-// Function to update coupon UI without refresh
+}
+
+
 function updateCouponUI(couponData, couponCode) {
-    console.log('🎨 Updating coupon UI...');
+    console.log(' Updating coupon UI...');
     
-    // Hide the coupon input section
+
     const couponInputSection = document.querySelector('.coupon-input-section');
     if (couponInputSection) {
         couponInputSection.style.display = 'none';
     }
     
-    // Create or update the applied coupon display
+   
     let couponAppliedDiv = document.querySelector('.coupon-applied');
     
     if (!couponAppliedDiv) {
-        // Create new applied coupon display
+       
         couponAppliedDiv = document.createElement('div');
         couponAppliedDiv.className = 'bg-gradient-to-r from-green-900/20 to-emerald-900/10 border border-green-500/30 rounded-xl p-4 mb-3 coupon-applied';
         
-        // Add remove button to the parent container first
+       
         const removeButton = document.getElementById('removeCouponBtn');
         if (removeButton) {
             removeButton.style.display = 'block';
         }
     }
     
-    // Update coupon applied div content
+   
     couponAppliedDiv.innerHTML = `
         <div class="flex justify-between items-center">
             <div>
@@ -505,7 +525,7 @@ function updateCouponUI(couponData, couponCode) {
         </div>
     `;
     
-    // Insert the coupon applied div before the message
+   
     const couponMessage = document.getElementById('couponMessage');
     const couponSection = document.querySelector('.coupon-section');
     
@@ -520,7 +540,7 @@ function updateCouponUI(couponData, couponCode) {
         }
     }
     
-    // Clear message after 3 seconds
+   
     setTimeout(() => {
         const messageElement = document.getElementById('couponMessage');
         if (messageElement) {
@@ -530,7 +550,7 @@ function updateCouponUI(couponData, couponCode) {
 }
 
 async function removeCoupon() {
-    console.log('🎫 Removing coupon...');
+    console.log(' Removing coupon...');
     
     try {
         showCouponMessage('Removing coupon...', 'loading');
@@ -540,16 +560,16 @@ async function removeCoupon() {
         console.log('Remove coupon response:', response.data);
         
         if (response.data.success) {
-            console.log('✅ Coupon removed successfully');
+            console.log(' Coupon removed successfully');
             showCouponMessage(response.data.message, 'success');
             
-            // Update order summary
+            
             updateOrderSummary(response.data.data);
             
-            // Restore coupon input section
+           
             restoreCouponInput();
             
-            // Clear message after 3 seconds
+           
             setTimeout(() => {
                 const messageElement = document.getElementById('couponMessage');
                 if (messageElement) {
@@ -558,38 +578,35 @@ async function removeCoupon() {
             }, 3000);
             
         } else {
-            console.log('❌ Coupon removal failed:', response.data.message);
+            console.log(' Coupon removal failed:', response.data.message);
             showCouponMessage(response.data.message, 'error');
         }
     } catch (error) {
-        console.error('❌ Error removing coupon:', error);
+        console.error(' Error removing coupon:', error);
         showCouponMessage('Error removing coupon. Please try again.', 'error');
     }
 }
 
-// Function to restore coupon input section
+
 function restoreCouponInput() {
-    console.log('🎨 Restoring coupon input...');
+    console.log(' Restoring coupon input...');
     
-    // Remove applied coupon display
+ 
     const couponAppliedDiv = document.querySelector('.coupon-applied');
     if (couponAppliedDiv) {
         couponAppliedDiv.remove();
     }
     
-    // Show coupon input section
     const couponInputSection = document.querySelector('.coupon-input-section');
     if (couponInputSection) {
         couponInputSection.style.display = 'flex';
     }
     
-    // Clear coupon input value
     const couponCodeInput = document.getElementById('couponCode');
     if (couponCodeInput) {
         couponCodeInput.value = '';
     }
     
-    // Hide remove button
     const removeButton = document.getElementById('removeCouponBtn');
     if (removeButton) {
         removeButton.style.display = 'none';
@@ -597,9 +614,8 @@ function restoreCouponInput() {
 }
 
 function updateOrderSummary(data) {
-    console.log('🔄 Updating order summary with coupon data:', data);
+    console.log(' Updating order summary with coupon data:', data);
     
-    // Helper function to safely update text content
     function updateTextContent(selector, text) {
         const element = document.querySelector(selector);
         if (element) {
@@ -608,13 +624,10 @@ function updateOrderSummary(data) {
         }
     }
     
-    // Update subtotal
     updateTextContent('.summary-subtotal', `₹${data.subtotal}`);
     
-    // Update tax
     updateTextContent('.summary-tax', `₹${data.tax}`);
     
-    // Update shipping
     const shippingElement = document.querySelector('.summary-shipping');
     if (shippingElement) {
         if (data.shipping === '0.00') {
@@ -628,7 +641,7 @@ function updateOrderSummary(data) {
         }
     }
     
-    // Update discount - show/hide the discount row
+
     const discountRow = document.querySelector('.summary-discount');
     const discountAmount = document.querySelector('.discount-amount');
     
@@ -645,21 +658,21 @@ function updateOrderSummary(data) {
         }
     }
     
-    // Update final amount
+
     updateTextContent('.summary-final', `₹${data.finalAmount}`);
     
-    // Update hidden field for place order
+ 
     const finalAmountInput = document.getElementById('finalAmountData');
     if (finalAmountInput) {
         finalAmountInput.setAttribute('data-amount', data.finalAmount);
         console.log('Updated finalAmountData to:', data.finalAmount);
     }
     
-    // Also update wallet validation if needed
+   
     validateWalletPayment();
 }
 
-// ========== MAIN PLACE ORDER FUNCTION ==========
+
 function setupPlaceOrderButton() {
     const placeOrderBtn = document.getElementById('placeOrderBtn');
     if (!placeOrderBtn) return;
@@ -667,7 +680,7 @@ function setupPlaceOrderButton() {
     placeOrderBtn.addEventListener('click', async function() {
         console.log('🛒 Place order button clicked at:', new Date().toISOString());
         
-        // Prevent double click
+    
         if (orderInProgress) {
             showToast('Please wait, your order is being processed', 'warning');
             return;
@@ -686,7 +699,7 @@ function setupPlaceOrderButton() {
             return;
         }
         
-        // Set order in progress
+     
         orderInProgress = true;
         const originalText = placeOrderBtn.innerHTML;
         const originalDisabled = placeOrderBtn.disabled;
@@ -694,7 +707,7 @@ function setupPlaceOrderButton() {
         placeOrderBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
         placeOrderBtn.disabled = true;
         
-        // Disable button for 5 seconds to prevent double click
+        
         setTimeout(() => {
             orderInProgress = false;
         }, orderLockDuration);
@@ -705,40 +718,111 @@ function setupPlaceOrderButton() {
                 paymentMethod: selectedPayment.value
             };
             
-            // Add coupon code if applied
+            
             const couponCode = document.querySelector('.coupon-code');
             if (couponCode) {
                 orderData.couponCode = couponCode.textContent;
-                console.log('🎫 Adding coupon to order:', couponCode.textContent);
+                console.log(' Adding coupon to order:', couponCode.textContent);
             }
             
-            console.log('📤 Sending order:', orderData);
+            console.log(' Sending order:', orderData);
             
-            if (selectedPayment.value === 'Razorpay') {
-                // Handle Razorpay payment
-                await handleRazorpayPayment(orderData);
-                // Don't re-enable button as Razorpay modal is open
-                return;
-            } else {
-                // Handle COD or Wallet payment
+           if (selectedPayment.value === 'Razorpay') {
+
+    // 🔍 STEP 1: VALIDATE ORDER FIRST (NO PAYMENT)
+    const validateResponse = await axios.post('/place-order', {
+        ...orderData,
+        validateOnly: true
+    });
+
+    if (!validateResponse.data.success) {
+        const message = validateResponse.data.message || 'Order validation failed';
+
+        showToast(message, 'error');
+        showFailedModal(message);
+
+        // Coupon blocked → remove it
+        if (
+            message.toLowerCase().includes('coupon') ||
+            message.toLowerCase().includes('blocked') ||
+            message.toLowerCase().includes('disabled')
+        ) {
+            restoreCouponInput();
+            showCouponMessage('Coupon was disabled by admin', 'error');
+        }
+
+        placeOrderBtn.innerHTML = originalText;
+        placeOrderBtn.disabled = false;
+        orderInProgress = false;
+        return;
+    }
+
+    // ✅ STEP 2: ONLY NOW OPEN RAZORPAY
+    await handleRazorpayPayment(orderData);
+    return;
+}
+else {
+              
                 const response = await axios.post('/place-order', orderData);
-                console.log('✅ Order response:', response.data);
+                console.log(' Order response:', response.data);
                 
                 if (response.data.success) {
                     showSuccessModal(response.data);
-                    // Don't re-enable button on success
+                   
                     return;
                 } else {
-                    showFailedModal(response.data.message);
-                }
+    const message = response.data.message || 'Order failed';
+
+    // Show modal + toast
+    showFailedModal(message);
+    showToast(message, 'error');
+
+    // If coupon was blocked / invalid → auto remove it
+    if (
+        message.toLowerCase().includes('coupon') ||
+        message.toLowerCase().includes('disabled') ||
+        message.toLowerCase().includes('blocked')
+    ) {
+        console.warn('🚫 Coupon invalidated by admin, removing from UI');
+
+        // Remove coupon UI
+        restoreCouponInput();
+
+        // Clear coupon message
+        showCouponMessage('Coupon was removed by admin', 'error');
+    }
+}
             }
         } catch (error) {
-            console.error('❌ Error placing order:', error);
-            const errorMsg = error.response?.data?.message || 'Error placing order';
-           showFailedModal(errorMsg);
+    console.error('❌ Error placing order:', error);
 
-        } finally {
-            // Only re-enable if not already re-enabled by success/razorpay
+    const message =
+        error.response?.data?.message ||
+        'Order failed. Please try again.';
+
+    // 🔔 SHOW TOAST
+    showToast(message, 'error');
+
+   
+    showFailedModal(message);
+
+ 
+    if (
+        message.toLowerCase().includes('coupon') ||
+        message.toLowerCase().includes('disabled') ||
+        message.toLowerCase().includes('blocked')
+    ) {
+        console.warn('🚫 Coupon blocked by admin, clearing coupon UI');
+
+        // Remove coupon UI
+        restoreCouponInput();
+
+        // Update coupon message text
+        showCouponMessage('Coupon was disabled by admin', 'error');
+    }
+}
+ finally {
+          
             if (orderInProgress) {
                 placeOrderBtn.innerHTML = originalText;
                 placeOrderBtn.disabled = originalDisabled;
@@ -748,11 +832,11 @@ function setupPlaceOrderButton() {
     });
 }
 
-// ========== MAIN INITIALIZATION ==========
+
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('✅ DOM fully loaded');
+    console.log(' DOM fully loaded');
     
-    // ========== INITIALIZE ELEMENTS ==========
+ 
     const addressModal = document.getElementById('addressModal');
     const addAddressBtn = document.getElementById('addAddressBtn');
     const closeModalBtn = document.getElementById('closeModal');
@@ -763,21 +847,21 @@ document.addEventListener('DOMContentLoaded', function() {
     const saveAddressBtn = document.getElementById('saveAddressBtn');
     const saveSpinner = saveAddressBtn ? saveAddressBtn.querySelector('.fa-spinner') : null;
     
-    console.log('✅ Elements found:', {
+    console.log(' Elements found:', {
         placeOrderBtn: !!document.getElementById('placeOrderBtn'),
         addressModal: !!addressModal,
         addAddressBtn: !!addAddressBtn,
         addressForm: !!addressForm
     });
     
-    // ========== INITIALIZE COUPON FUNCTIONALITY ==========
-    console.log('🎫 Initializing coupon functionality');
+  
+    console.log(' Initializing coupon functionality');
     const applyCouponBtn = document.getElementById('applyCouponBtn');
     const removeCouponBtn = document.getElementById('removeCouponBtn');
     const couponCodeInput = document.getElementById('couponCode');
     
     if (applyCouponBtn) {
-        console.log('✅ Setting up apply coupon button');
+        console.log(' Setting up apply coupon button');
         applyCouponBtn.addEventListener('click', function(e) {
             e.preventDefault();
             applyCoupon();
@@ -785,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (removeCouponBtn) {
-        console.log('✅ Setting up remove coupon button');
+        console.log(' Setting up remove coupon button');
         removeCouponBtn.addEventListener('click', function(e) {
             e.preventDefault();
             removeCoupon();
@@ -793,7 +877,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     if (couponCodeInput) {
-        console.log('✅ Setting up coupon input field');
+        console.log(' Setting up coupon input field');
         couponCodeInput.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
                 e.preventDefault();
@@ -802,35 +886,32 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ========== MODAL FUNCTIONALITY ==========
-    // 1. OPEN MODAL FOR ADDING NEW ADDRESS
+
     if (addAddressBtn && addressModal) {
-        console.log('✅ Setting up add address button');
+        console.log(' Setting up add address button');
         addAddressBtn.addEventListener('click', function(e) {
             e.preventDefault();
-            console.log('➕ Add address button clicked');
+            console.log(' Add address button clicked');
             
-            // Reset form for new address
+       
             if (modalTitle) modalTitle.textContent = 'Add New Address';
             if (addressForm) addressForm.reset();
             if (addressIdInput) addressIdInput.value = '';
             
-            // Show modal
+        
             addressModal.classList.remove('hidden');
             console.log('✅ Add address modal opened');
         });
     }
-    
-    // 2. CLOSE MODAL
-    // Close button
+ 
     if (closeModalBtn) {
         closeModalBtn.addEventListener('click', function() {
-            console.log('❌ Closing modal');
+            console.log(' Closing modal');
             if (addressModal) addressModal.classList.add('hidden');
         });
     }
     
-    // Cancel button
+  
     if (cancelBtn) {
         cancelBtn.addEventListener('click', function() {
             console.log('❌ Canceling modal');
@@ -838,17 +919,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // Click outside to close
+ 
     if (addressModal) {
         addressModal.addEventListener('click', function(e) {
             if (e.target === addressModal) {
-                console.log('👆 Closing modal by clicking outside');
+                console.log(' Closing modal by clicking outside');
                 addressModal.classList.add('hidden');
             }
         });
     }
     
-    // Escape key to close
+
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && addressModal && !addressModal.classList.contains('hidden')) {
             console.log('⌨️ Closing modal with Escape key');
@@ -856,33 +937,33 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // ========== EDIT ADDRESS FUNCTIONALITY ==========
-    console.log('🔧 Setting up edit address buttons');
+   
+    console.log(' Setting up edit address buttons');
     
     document.querySelectorAll('.edit-address-btn').forEach(btn => {
         btn.addEventListener('click', async function() {
             const addressId = this.getAttribute('data-address-id');
-            console.log('✏️ Editing address:', addressId);
+            console.log(' Editing address:', addressId);
             
             try {
-                // Show loading
+                
                 if (saveSpinner) {
                     saveSpinner.classList.remove('hidden');
                     saveAddressBtn.disabled = true;
                 }
                 
-                // Fetch address data
+              
                 const response = await axios.get(`/api/address/${addressId}`);
                 console.log('📥 Address data:', response.data);
                 
                 if (response.data.success) {
                     const address = response.data.data;
                     
-                    // Update modal for editing
+                   
                     if (modalTitle) modalTitle.textContent = 'Edit Address';
                     if (addressIdInput) addressIdInput.value = addressId;
                     
-                    // Fill form fields
+                   
                     document.getElementById('fullName').value = address.fullName || '';
                     document.getElementById('phone').value = address.phone || '';
                     document.getElementById('addressLine1').value = address.addressLine1 || '';
@@ -892,29 +973,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     document.getElementById('postalCode').value = address.postalCode || '';
                     document.getElementById('country').value = address.country || 'India';
                     
-                    // Set address type
+                   
                     const addressTypeSelect = document.getElementById('addressType');
                     if (addressTypeSelect && address.addressType) {
                         addressTypeSelect.value = address.addressType;
                     }
                     
-                    // Set default checkbox
+                    
                     const isDefaultCheckbox = document.getElementById('isDefault');
                     if (isDefaultCheckbox) {
                         isDefaultCheckbox.checked = address.isDefault || false;
                     }
                     
-                    // Show modal
+                   
                     addressModal.classList.remove('hidden');
                     console.log('✅ Edit modal opened');
                 } else {
                     showToast('Failed to load address', 'error');
                 }
             } catch (error) {
-                console.error('❌ Error loading address:', error);
+                console.error('Error loading address:', error);
                 showToast('Error loading address details', 'error');
             } finally {
-                // Hide loading
+             
                 if (saveSpinner) {
                     saveSpinner.classList.add('hidden');
                     saveAddressBtn.disabled = false;
@@ -923,7 +1004,7 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // ========== DELETE ADDRESS ==========
+ 
     document.querySelectorAll('.delete-address-btn').forEach(btn => {
         btn.addEventListener('click', async function() {
             const addressId = this.getAttribute('data-address-id');
@@ -938,7 +1019,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 if (response.data.success) {
                     showToast('Address deleted successfully', 'success');
-                    // Remove from DOM
+                   
                     const card = document.querySelector(`[data-address-id="${addressId}"]`);
                     if (card) {
                         card.style.opacity = '0.5';
@@ -948,19 +1029,18 @@ document.addEventListener('DOMContentLoaded', function() {
                     showToast(response.data.message, 'error');
                 }
             } catch (error) {
-                console.error('❌ Error deleting address:', error);
+                console.error(' Error deleting address:', error);
                 showToast('Error deleting address', 'error');
             }
         });
     });
     
-    // ========== SAVE ADDRESS FORM ==========
+    
     if (addressForm) {
         addressForm.addEventListener('submit', async function(e) {
             e.preventDefault();
-            console.log('💾 Saving address form');
+            console.log(' Saving address form');
             
-            // Get form data
             const formData = {
                 fullName: document.getElementById('fullName').value,
                 phone: document.getElementById('phone').value,
@@ -978,7 +1058,7 @@ document.addEventListener('DOMContentLoaded', function() {
             console.log('Address ID for save:', addressId);
             
             try {
-                // Show loading
+              
                 if (saveSpinner) {
                     saveSpinner.classList.remove('hidden');
                     saveAddressBtn.disabled = true;
@@ -986,22 +1066,22 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 let response;
                 if (addressId) {
-                    // Update existing address with PATCH
-                    console.log('🔄 Updating address with PATCH');
+                    
+                    console.log('Updating address with PATCH');
                     response = await axios.patch(`/api/address/${addressId}`, formData);
                 } else {
-                    // Create new address with POST
-                    console.log('🆕 Creating new address with POST');
+               
+                    console.log(' Creating new address with POST');
                     response = await axios.post('/api/address', formData);
                 }
                 
-                console.log('✅ Save response:', response.data);
+                console.log(' Save response:', response.data);
                 
                 if (response.data.success) {
                     showToast(response.data.message, 'success');
                     addressModal.classList.add('hidden');
                     
-                    // Reload page after delay
+                    
                     setTimeout(() => {
                         window.location.reload();
                     }, 1500);
@@ -1009,11 +1089,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     showToast(response.data.message, 'error');
                 }
             } catch (error) {
-                console.error('❌ Error saving address:', error);
+                console.error(' Error saving address:', error);
                 const errorMsg = error.response?.data?.message || 'Error saving address';
                 showToast(errorMsg, 'error');
             } finally {
-                // Hide loading
+           
                 if (saveSpinner) {
                     saveSpinner.classList.add('hidden');
                     saveAddressBtn.disabled = false;
@@ -1022,29 +1102,30 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
     
-    // ========== ADDRESS SELECTION ==========
+    
     const addressCards = document.querySelectorAll('[data-address-id]');
-    console.log('🏠 Found address cards:', addressCards.length);
+    console.log(' Found address cards:', addressCards.length);
     
     addressCards.forEach(card => {
         const radio = card.querySelector('input[type="radio"]');
         if (radio) {
             radio.addEventListener('change', function() {
-                console.log('📍 Address selected:', this.value);
+                console.log(' Address selected:', this.value);
                 
-                // Update visual selection
+               
                 addressCards.forEach(c => {
-                    c.classList.remove('border-purple-600', 'bg-purple-50');
+                 
                 });
-                card.classList.add('border-purple-600', 'bg-purple-50');
+              card.classList.add('border-[#d4af37]', 'bg-[#d4af37]/5');
+
                 
-                // Enable place order button
+               
                 updatePlaceOrderButton();
             });
         }
     });
     
-    // ========== PAYMENT METHOD SELECTION ==========
+  
     document.querySelectorAll('input[name="paymentMethod"]').forEach(option => {
         option.addEventListener('change', function() {
             console.log('💳 Payment method changed:', this.value);
@@ -1052,19 +1133,19 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     });
     
-    // ========== INITIALIZE ALL FUNCTIONS ==========
+    
     updatePlaceOrderButton();
     stylePaymentOptions();
     validateWalletPayment();
     setupPlaceOrderButton();
     
-    console.log('✅ Order.js setup complete!');
+    console.log('Order.js setup complete!');
 });
 
-// Test functions
+
 window.testEditModal = function(addressId) {
     console.log('🔧 Test: Opening edit modal for', addressId);
-    // Simulate edit button click
+  
     const editBtn = document.querySelector(`[data-address-id="${addressId}"] .edit-address-btn`);
     if (editBtn) editBtn.click();
 };
@@ -1079,9 +1160,66 @@ function showFailedModal(message) {
   modal.classList.remove("hidden");
 }
 
-function closeFailedModal() {
-  document.getElementById("failedModal").classList.add("hidden");
+async function retryRazorpayPayment() {
+  console.log(' Retrying Razorpay payment');
+
+ 
+
+  if (!lastRazorpayOrderData) {
+    showToast('No payment data found. Please try again.', 'error');
+    return;
+  }
+
+  try {
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = true;
+      placeOrderBtn.innerHTML =
+        '<i class="fas fa-spinner fa-spin"></i> Retrying...';
+    }
+
+    await handleRazorpayPayment(lastRazorpayOrderData);
+
+  } catch (error) {
+    console.error(' Retry payment failed:', error);
+    showToast('Retry failed. Please try again.', 'error');
+  }
 }
+const couponModal = document.getElementById('couponModal');
+  const openCouponModalBtn = document.getElementById('openCouponModal');
+  const closeCouponModalBtn = document.getElementById('closeCouponModal');
+  const couponInput = document.getElementById('couponCode');
+  const applyCouponBtn = document.getElementById('applyCouponBtn');
+
+  if (openCouponModalBtn) {
+    openCouponModalBtn.addEventListener('click', () => {
+      couponModal.classList.remove('hidden');
+    });
+  }
+
+  if (closeCouponModalBtn) {
+    closeCouponModalBtn.addEventListener('click', () => {
+      couponModal.classList.add('hidden');
+    });
+  }
+
+  document.querySelectorAll('.applyCouponFromModal').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const code = btn.dataset.code;
+
+      if (couponInput) {
+        couponInput.value = code;
+      }
+
+      couponModal.classList.add('hidden');
+
+      // Trigger existing apply logic
+      if (applyCouponBtn) {
+        applyCouponBtn.click();
+      }
+    });
+  });
 
 
-console.log('✅ Coupon functionality added to order.js');
+
+console.log(' Coupon functionality added to order.js');

@@ -17,7 +17,22 @@ import { isProductUnavailable } from "../helpers/productAvailability.js";
 
 import Razorpay from "razorpay";
 import crypto from "crypto";
+function distributeCoupon(cartItems, totalCouponDiscount) {
+  const cartSubtotal = cartItems.reduce(
+    (sum, item) => sum + item.total,
+    0
+  );
 
+  return cartItems.map(item => {
+    const share = item.total / cartSubtotal;
+    const discount = Number((totalCouponDiscount * share).toFixed(2));
+
+    return {
+      ...item,
+      couponDiscount: discount
+    };
+  });
+}
 function resolveImage(img) {
   if (!img) return '/uploads/placeholder.png';
   if (typeof img === 'string' && img.startsWith('http')) return img; // cloudinary
@@ -100,7 +115,7 @@ export const applyCoupon = async (req, res) => {
         message: "Coupon code is required"
       });
     }
- 
+
 
 
     const cart = await Cart.findOne({ user: userId })
@@ -127,7 +142,7 @@ export const applyCoupon = async (req, res) => {
     for (const cartItem of cart.items) {
       const variant = cartItem.variant;
       const product = cartItem.product;
-  
+
 
 
       if (!variant) continue;
@@ -565,24 +580,20 @@ export const verifyRazorpayPayment = async (req, res) => {
       console.error('Error fetching payment details:', error);
     }
 
-    const orderResult = await createOrderAfterPayment(userId, addressId, "Razorpay", {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature,
-      paymentAmount
-    });
+   
+req.body.paymentMethod = "Razorpay";
+req.body.addressId = addressId;
 
-    if (!orderResult.success) {
-      throw new Error(orderResult.message);
-    }
-    res.json({
-      success: true,
-      message: "Payment successful and order placed!",
-      orderId: orderResult.orderId,
-      orderNumber: orderResult.orderNumber,
-      paymentId: razorpay_payment_id,
-      amount: paymentAmount
-    });
+req.razorpayPayment = {
+  orderId: razorpay_order_id,
+  paymentId: razorpay_payment_id,
+  signature: razorpay_signature,
+  amount: paymentAmount
+};
+
+
+return await placeOrder(req, res);
+
 
   } catch (error) {
     console.error(" Razorpay payment verification error:", error);
@@ -706,6 +717,12 @@ export const loadCheckout = async (req, res) => {
     }
 
     walletBalance = Number(wallet.balance) || 0;
+const availableCoupons = await Coupon.find({
+  isActive: true,
+  isDeleted: false,
+  startDate: { $lte: new Date() },
+  endDate: { $gte: new Date() }
+}).lean();
 
     const cart = await Cart.findOne({ user: userId })
       .populate({
@@ -827,6 +844,8 @@ export const loadCheckout = async (req, res) => {
     res.render("user/pages/checkout", {
       cartItems,
       addresses,
+        availableCoupons,
+
       subtotal: subtotal.toFixed(2),
       tax: tax.toFixed(2),
       discount: discount.toFixed(2),
@@ -1063,6 +1082,16 @@ export const placeOrder = async (req, res) => {
         message: "Please login to continue"
       });
     }
+if (
+  paymentMethod === 'Razorpay' &&
+  !req.body.validateOnly &&
+  !req.razorpayPayment
+) {
+  return res.status(400).json({
+    success: false,
+    message: "Invalid Razorpay payment"
+  });
+}
 
     if (!addressId) {
       return res.status(400).json({
@@ -1086,7 +1115,7 @@ export const placeOrder = async (req, res) => {
     const cart = await Cart.findOne({ user: userId })
       .populate({
         path: "items.product",
-        select: "name images category"
+        select: "name images category status isDeleted"
       })
       .populate({
         path: "items.variant",
@@ -1099,6 +1128,103 @@ export const placeOrder = async (req, res) => {
         message: "Cart empty"
       });
     }
+    if (req.body.validateOnly === true) {
+  return res.json({
+    success: true,
+    message: 'Order validation successful'
+  });
+}
+    const cartSubtotal = cart.items.reduce((sum, item) => {
+  const price = item.variant?.salePrice || item.variant?.price || 0;
+  return sum + price * item.quantity;
+}, 0);
+let coupon = null;
+
+if (req.session.appliedCoupon) {
+  coupon = await Coupon.findOne({
+    code: req.session.appliedCoupon.code,
+    isActive: true,
+    isDeleted: false
+  });
+}
+if (coupon) {
+
+
+  if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) {
+    delete req.session.appliedCoupon;
+
+    return res.status(400).json({
+      success: false,
+      message: 'This coupon has reached its usage limit'
+    });
+  }
+
+
+  const userUsageCount = coupon.usersUsed.filter(
+    u => u.user.toString() === userId.toString()
+  ).length;
+
+  if (coupon.perUserLimit > 0 && userUsageCount >= coupon.perUserLimit) {
+    delete req.session.appliedCoupon;
+
+    return res.status(400).json({
+      success: false,
+      message: 'You have already used this coupon'
+    });
+  }
+}
+
+if (req.session.appliedCoupon && !coupon) {
+  delete req.session.appliedCoupon;
+
+  return res.status(400).json({
+    success: false,
+    message: 'This coupon has been disabled by admin'
+  });
+}
+
+
+let isCouponValid = false;
+
+if (coupon && coupon.isValid(userId)) {
+  isCouponValid = true;
+}
+
+let eligibleSubtotal = 0;
+
+if (coupon && isCouponValid) {
+  eligibleSubtotal = cart.items.reduce((sum, item) => {
+    const price = item.variant?.salePrice || item.variant?.price || 0;
+    return sum + price * item.quantity;
+  }, 0);
+}
+
+
+let totalCouponDiscount = 0;
+
+if (
+  coupon &&
+  isCouponValid &&
+  eligibleSubtotal >= coupon.minPurchaseAmount
+) {
+  totalCouponDiscount =
+    coupon.discountType === 'percentage'
+      ? (eligibleSubtotal * coupon.discountValue) / 100
+      : coupon.discountValue;
+
+  if (coupon.maxDiscountAmount) {
+    totalCouponDiscount = Math.min(
+      totalCouponDiscount,
+      coupon.maxDiscountAmount
+    );
+  }
+}
+
+let remainingCouponDiscount = totalCouponDiscount;
+
+
+
+
 
     const createdOrders = [];
     const orderNumbers = [];
@@ -1108,14 +1234,15 @@ export const placeOrder = async (req, res) => {
       const variant = cartItem.variant;
       const product = cartItem.product;
       if (
-  !product ||
-  product.isDeleted === true ||
-  await isCategoryBlocked(product.category)
-) {
-  throw new Error(
-    `Order failed: ${product?.name || "Product"} is no longer available`
-  );
-}
+        !product ||
+        product.isDeleted === true ||
+          product.status === 'blocked' ||
+        await isCategoryBlocked(product.category)
+      ) {
+        throw new Error(
+          `Order failed: ${product?.name || "Product"} is no longer available`
+        );
+      }
       if (!variant) {
         throw new Error(`Product variant is no longer available`);
       }
@@ -1160,40 +1287,26 @@ export const placeOrder = async (req, res) => {
       const tax = subtotal * 0.10;
       const shipping = subtotal >= 500 ? 0 : 50;
 
+let discount = 0;
+let couponUsed = null;
 
-      let discount = 0;
-      let couponUsed = null;
+if (remainingCouponDiscount > 0 && eligibleSubtotal > 0) {
+  const itemShare = itemTotal / eligibleSubtotal;
 
-      if (req.session.appliedCoupon) {
-        const coupon = await Coupon.findOne({
-          code: req.session.appliedCoupon.code,
-          isActive: true,
-          isDeleted: false
-        });
+  discount =
+    remainingCouponDiscount < 0.01
+      ? remainingCouponDiscount
+      : Math.min(
+          Number((totalCouponDiscount * itemShare).toFixed(2)),
+          remainingCouponDiscount
+        );
 
-        if (coupon && coupon.isValid(userId)) {
+  remainingCouponDiscount -= discount;
+  couponUsed = coupon._id;
+}
 
-          const cartSubtotal = cart.items.reduce((sum, item) => {
-            const itemPrice = item.variant?.salePrice || item.variant?.price || 0;
-            return sum + (itemPrice * item.quantity);
-          }, 0);
 
-          const itemShare = itemTotal / cartSubtotal;
 
-          if (coupon.discountType === 'percentage') {
-            discount = (subtotal * coupon.discountValue * itemShare) / 100;
-          } else {
-            discount = coupon.discountValue * itemShare;
-          }
-
-          if (coupon.maxDiscountAmount && discount > coupon.maxDiscountAmount * itemShare) {
-            discount = coupon.maxDiscountAmount * itemShare;
-          }
-
-          discount = Math.min(discount, subtotal);
-          couponUsed = coupon._id;
-        }
-      }
 
       const finalAmount = subtotal + tax + shipping - discount;
 
@@ -1225,7 +1338,9 @@ export const placeOrder = async (req, res) => {
         shipping: shipping,
         finalAmount: finalAmount,
         paymentMethod: paymentMethod,
-        paymentStatus: paymentMethod === 'COD' ? 'Pending' : 'Paid',
+        paymentStatus:
+  paymentMethod === 'COD' ? 'Pending' : 'Paid',
+
         orderStatus: "Placed",
         coupon: couponUsed
       });
@@ -1538,6 +1653,24 @@ export const loadMyOrders = async (req, res) => {
       .limit(limit)
       .lean();
 
+  const groupedOrders = {};
+
+orders.forEach(order => {
+  const key = new Date(order.createdAt).toISOString().slice(0, 16); // same minute
+
+  if (!groupedOrders[key]) {
+    groupedOrders[key] = {
+      createdAt: order.createdAt,
+      orders: [],
+      totalAmount: 0
+    };
+  }
+
+  groupedOrders[key].orders.push(order);
+  groupedOrders[key].totalAmount += order.finalAmount;
+});
+
+const groupedOrderList = Object.values(groupedOrders);
 
     const formattedOrders = orders.map(order => {
 
@@ -1596,6 +1729,7 @@ export const loadMyOrders = async (req, res) => {
     res.render("user/pages/myOrders", {
       orders: formattedOrders,
       totalOrders: totalOrdersCount,
+        groupedOrders: groupedOrderList,
       page: currentPage,
       totalPages: totalPages,
       statusFilter: status || null,
@@ -1648,7 +1782,9 @@ export const cancelUserOrder = async (req, res) => {
         message: "You are not authorized to cancel this order"
       });
     }
-
+   if (order.refundStatus === 'Refunded') {
+      return res.status(400).json({ message: "Order already refunded" });
+    }
 
     const allowedStatuses = ['Placed', 'Confirmed'];
     if (!allowedStatuses.includes(order.orderStatus)) {
@@ -1675,61 +1811,61 @@ export const cancelUserOrder = async (req, res) => {
 
 
 
-if (order.paymentMethod === 'COD') {
-  order.paymentStatus = 'Refunded';
+    if (order.paymentMethod === 'COD') {
+      order.paymentStatus = 'Refunded';
+    }
+
+
+    if (
+      (order.paymentMethod === 'Wallet' || order.paymentMethod === 'Razorpay') &&
+      order.paymentStatus === 'Paid'
+    ) {
+   const refundAmount = Math.max(order.subtotal - order.discount, 0);
+
+const wallet = await Wallet.findOne({ user: order.user });
+
+if (!wallet) {
+  throw new Error("Wallet not found");
 }
 
+wallet.balance += refundAmount;
 
-if (
-  (order.paymentMethod === 'Wallet' || order.paymentMethod === 'Razorpay') &&
-  order.paymentStatus === 'Paid'
-) {
-  const wallet = await Wallet.findOne({ user: userId });
-
-  if (!wallet) {
-    throw new Error("Wallet not found");
-  }
-
-  const refundAmount = order.finalAmount;
-
-
-  wallet.balance += refundAmount;
-
-  wallet.transactions.push({
-    amount: refundAmount,
-    type: "credit",
-    description: `Refund for cancelled order ${order.orderNumber}`,
-    status: "success",
-     payment_method: order.paymentMethod.toLowerCase(),
-    createdAt: new Date()
-  });
-
-  await wallet.save();
-
-  order.paymentStatus = "Refunded";
-
- 
-}
-
-
-for (const item of order.items) {
-  await Variant.findByIdAndUpdate(
-    item.variant,
-    { $inc: { stock: item.quantity } }
-  );
-}
-
-await order.save();
-
-return res.json({
-  success: true,
-  message: "Order cancelled successfully",
-  data: {
-    orderId: order._id,
-    status: order.orderStatus,
-    reason: reason
-  }
+wallet.transactions.push({
+  amount: refundAmount,
+  type: "credit",
+  description: `Refund for order ${order.orderNumber} (excluding tax & shipping)`,
+  status: "success",
+  payment_method: "wallet",
+  createdAt: new Date()
 });
+
+await wallet.save();
+
+
+      order.paymentStatus = "Refunded";
+
+
+    }
+
+
+    for (const item of order.items) {
+      await Variant.findByIdAndUpdate(
+        item.variant,
+        { $inc: { stock: item.quantity } }
+      );
+    }
+
+    await order.save();
+
+    return res.json({
+      success: true,
+      message: "Order cancelled successfully",
+      data: {
+        orderId: order._id,
+        status: order.orderStatus,
+        reason: reason
+      }
+    });
 
 
   } catch (error) {
@@ -2228,9 +2364,13 @@ export const getRefundDetails = async (req, res) => {
     });
   }
 };
+
+
 export const loadUserInvoice = async (req, res) => {
   try {
     const { id } = req.params;
+    const round2 = (num) => Math.round((Number(num) + Number.EPSILON) * 100) / 100;
+
 
     const order = await Order.findById(id)
       .populate('items.product')
@@ -2245,16 +2385,11 @@ export const loadUserInvoice = async (req, res) => {
     }
 
     /* ================= PDF SETUP ================= */
-    const doc = new PDFDocument({
-      size: 'A4',
-      margin: 50
-    });
-
+    const doc = new PDFDocument({ size: 'A4', margin: 50 });
     const fileName = `Invoice-${order.orderNumber}.pdf`;
 
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
-
     doc.pipe(res);
 
     /* ================= CONSTANTS ================= */
@@ -2272,42 +2407,28 @@ export const loadUserInvoice = async (req, res) => {
       '₹' + Number(amount || 0).toLocaleString('en-IN');
 
     /* ================= HEADER ================= */
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(28)
-      .fillColor('#2C3E50')
+    doc.font('Helvetica-Bold').fontSize(28).fillColor('#2C3E50')
       .text('LUXTIME', PAGE_LEFT, 50);
 
-    doc
-      .font('Helvetica')
-      .fontSize(10)
-      .fillColor('#7F8C8D')
+    doc.font('Helvetica').fontSize(10).fillColor('#7F8C8D')
       .text('Premium Watches & Accessories', PAGE_LEFT, 85);
 
-    doc
-      .font('Helvetica-Bold')
-      .fontSize(24)
-      .fillColor('#E74C3C')
+    doc.font('Helvetica-Bold').fontSize(24).fillColor('#E74C3C')
       .text('INVOICE', PAGE_RIGHT - 150, 50, { align: 'right' });
 
-    doc
-      .fontSize(12)
-      .fillColor('#34495E')
+    doc.fontSize(12).fillColor('#34495E')
       .text(`#${order.orderNumber}`, PAGE_RIGHT - 150, 85, { align: 'right' });
 
-    doc
-      .strokeColor('#E0E0E0')
-      .lineWidth(0.5)
+    doc.strokeColor('#E0E0E0').lineWidth(0.5)
       .moveTo(PAGE_LEFT, 110)
       .lineTo(PAGE_RIGHT, 110)
       .stroke();
 
-    /* ================= BILLED FROM & INVOICE DETAILS ================= */
+    /* ================= BILLED FROM & DETAILS ================= */
     const startY = 130;
     const leftColX = PAGE_LEFT;
     const rightColX = PAGE_LEFT + 300;
 
-    // BILLED FROM
     doc.font('Helvetica-Bold').fontSize(10).fillColor('#2C3E50')
       .text('BILLED FROM:', leftColX, startY);
 
@@ -2318,26 +2439,25 @@ export const loadUserInvoice = async (req, res) => {
       .text('GSTIN: 27AABCU9603R1ZX', leftColX, startY + 60)
       .text('contact@luxtime.com | +91 98765 43210', leftColX, startY + 74);
 
-    // INVOICE DETAILS
     doc.font('Helvetica-Bold').fillColor('#2C3E50')
       .text('INVOICE DETAILS:', rightColX, startY);
 
-    const invoiceDetails = [
+    const details = [
       ['Invoice Number', `#${order.orderNumber}`],
       ['Invoice Date', formatDate(order.createdAt)],
       ['Order Date', formatDate(order.createdAt)],
-      ['Payment Status', 'PAID']
+      ['Payment Status', order.paymentStatus || 'PAID']
     ];
 
-    let detailY = startY + 18;
-    invoiceDetails.forEach(([label, value]) => {
+    let dY = startY + 18;
+    details.forEach(([label, value]) => {
       doc.font('Helvetica').fillColor('#34495E')
-        .text(label, rightColX, detailY)
-        .text(value, PAGE_RIGHT - 100, detailY, { align: 'right' });
-      detailY += 16;
+        .text(label, rightColX, dY)
+        .text(value, PAGE_RIGHT - 100, dY, { align: 'right' });
+      dY += 16;
     });
 
-    /* ================= CUSTOMER & SHIPPING ================= */
+    /* ================= CUSTOMER & ADDRESS ================= */
     const customerY = startY + 110;
 
     doc.font('Helvetica-Bold').fillColor('#2C3E50')
@@ -2357,60 +2477,108 @@ export const loadUserInvoice = async (req, res) => {
       .text(`PIN: ${order.address.pincode}`, rightColX, customerY + 66);
 
     /* ================= ITEMS TABLE ================= */
-    const tableTop = customerY + 110;
+   /* ================= ITEMS TABLE ================= */
+const tableTop = customerY + 110;
+const rowHeight = 26;
 
-    const col = {
-      sn: PAGE_LEFT,
-      desc: PAGE_LEFT + 30,
-      qty: PAGE_LEFT + 300,
-      price: PAGE_LEFT + 360,
-      total: PAGE_RIGHT - 70
-    };
+const col = {
+  sn: PAGE_LEFT,
+  desc: PAGE_LEFT + 30,
+  qty: PAGE_LEFT + 300,
+  price: PAGE_LEFT + 350,
+  total: PAGE_RIGHT - 70
+};
 
-    // Header background
-    doc.fillColor('#2C3E50')
-      .rect(PAGE_LEFT, tableTop, PAGE_RIGHT - PAGE_LEFT, 25)
-      .fill();
+/* Header background */
+doc.fillColor('#2C3E50')
+  .rect(PAGE_LEFT, tableTop, PAGE_RIGHT - PAGE_LEFT, rowHeight)
+  .fill();
 
-    doc.font('Helvetica-Bold').fontSize(10).fillColor('#FFFFFF')
-      .text('#', col.sn + 5, tableTop + 8)
-      .text('DESCRIPTION', col.desc, tableTop + 8)
-      .text('QTY', col.qty, tableTop + 8, { width: 40, align: 'center' })
-      .text('UNIT PRICE', col.price, tableTop + 8, { width: 70, align: 'right' })
-      .text('TOTAL', col.total, tableTop + 8, { width: 70, align: 'right' });
+/* Header text */
+doc.font('Helvetica-Bold').fontSize(10).fillColor('#FFFFFF')
+  .text('#', col.sn + 5, tableTop + 8)
+  .text('Product', col.desc, tableTop + 8, { width: 250 })
+  .text('QTY', col.qty, tableTop + 8, { width: 40, align: 'center' })
+  .text('UNIT PRICE', col.price, tableTop + 8, { width: 70, align: 'right' })
+  .text('TOTAL', col.total, tableTop + 8, { width: 70, align: 'right' });
 
-    let rowY = tableTop + 25;
-    let grandTotal = 0;
+let rowY = tableTop + rowHeight;
+let subtotal = 0;
 
-    order.items.forEach((item, i) => {
-      const itemTotal = item.price * item.quantity;
-      grandTotal += itemTotal;
+/* Table rows */
+order.items.forEach((item, i) => {
+  const itemTotal = item.price * item.quantity;
+  subtotal += itemTotal;
 
-      doc.font('Helvetica').fontSize(9).fillColor('#2C3E50')
-        .text(i + 1, col.sn + 5, rowY + 8)
-        .text(item.product.name, col.desc, rowY + 8, { width: 250 })
-        .text(item.quantity, col.qty, rowY + 8, { width: 40, align: 'center' })
-        .text(formatCurrency(item.price), col.price, rowY + 8, { width: 70, align: 'right' })
-        .text(formatCurrency(itemTotal), col.total, rowY + 8, { width: 70, align: 'right' });
+  // Row divider
+  doc.strokeColor('#E0E0E0').lineWidth(0.5)
+    .moveTo(PAGE_LEFT, rowY)
+    .lineTo(PAGE_RIGHT, rowY)
+    .stroke();
 
-      rowY += 25;
-    });
+  doc.font('Helvetica').fontSize(9).fillColor('#2C3E50')
+    .text(i + 1, col.sn + 5, rowY + 8)
+    .text(item.product?.name || 'Product',
+      col.desc,
+      rowY + 6,
+      { width: 250 }
+    )
+    .text(item.quantity,
+      col.qty,
+      rowY + 8,
+      { width: 40, align: 'center' }
+    )
+    .text(formatCurrency(item.price),
+      col.price,
+      rowY + 8,
+      { width: 70, align: 'right' }
+    )
+    .text(formatCurrency(itemTotal),
+      col.total,
+      rowY + 8,
+      { width: 70, align: 'right' }
+    );
 
-    /* ================= TOTALS ================= */
-    const totalY = rowY + 20;
+  rowY += rowHeight;
+});
 
-    doc.fontSize(10).fillColor('#34495E')
-      .text('Subtotal:', col.price, totalY, { width: 70, align: 'right' })
-      .text(formatCurrency(grandTotal), col.total, totalY, { width: 70, align: 'right' });
+/* Bottom border */
+doc.strokeColor('#E0E0E0')
+  .moveTo(PAGE_LEFT, rowY)
+  .lineTo(PAGE_RIGHT, rowY)
+  .stroke();
+/* ================= TOTALS ================= */
+const totalsY = rowY + 20;
 
-    doc.strokeColor('#E74C3C').lineWidth(1)
-      .moveTo(col.total, totalY + 18)
-      .lineTo(PAGE_RIGHT, totalY + 18)
-      .stroke();
+const tax =  round2(order.tax || 0);
+const shipping = round2(order.shipping || 0);
+const discount =round2(order.discount || 0);
 
-    doc.font('Helvetica-Bold').fontSize(12).fillColor('#E74C3C')
-      .text('Grand Total:', col.price, totalY + 25, { width: 70, align: 'right' })
-      .text(formatCurrency(order.finalAmount), col.total, totalY + 25, { width: 70, align: 'right' });
+const totals = [
+  ['Subtotal', subtotal],
+  ['Tax', tax],
+  ['Shipping', shipping],
+  ['Discount', -discount],
+];
+
+let tY = totalsY;
+
+totals.forEach(([label, value]) => {
+  doc.font('Helvetica').fontSize(10).fillColor('#34495E')
+    .text(label + ':', PAGE_RIGHT - 200, tY, { width: 100, align: 'right' })
+    .text(formatCurrency(value), PAGE_RIGHT - 90, tY, { width: 80, align: 'right' });
+  tY += 16;
+});
+
+/* Grand total highlight */
+doc.strokeColor('#E74C3C').lineWidth(1)
+  .moveTo(PAGE_RIGHT - 200, tY + 4)
+  .lineTo(PAGE_RIGHT, tY + 4)
+  .stroke();
+
+doc.font('Helvetica-Bold').fontSize(12).fillColor('#E74C3C')
+  .text('Grand Total:', PAGE_RIGHT - 200, tY + 10, { width: 100, align: 'right' })
+  .text(formatCurrency(order.finalAmount), PAGE_RIGHT - 90, tY + 10, { width: 80, align: 'right' });
 
     /* ================= FOOTER ================= */
     const footerY = doc.page.height - 90;
@@ -2429,10 +2597,12 @@ export const loadUserInvoice = async (req, res) => {
       );
 
     doc.font('Helvetica-Bold').fontSize(11).fillColor('#2C3E50')
-      .text('Thank You For Shopping With LuxTime!', PAGE_LEFT, footerY + 30, {
-        width: PAGE_RIGHT - PAGE_LEFT,
-        align: 'center'
-      });
+      .text(
+        'Thank You For Shopping With LuxTime!',
+        PAGE_LEFT,
+        footerY + 30,
+        { width: PAGE_RIGHT - PAGE_LEFT, align: 'center' }
+      );
 
     doc.end();
 

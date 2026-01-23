@@ -1,7 +1,7 @@
 
 import { attachUser } from "../middlewares/user/authMiddleware.js";
 import { hardBlock } from "../middlewares/user/hardBlock.js";
-import loadCategories from "../middlewares/user/loadCategries.js";
+import  loadCategories from "../middlewares/user/loadCategries.js";
 import { setAuthLocals } from "../middlewares/user/setAuthLocals.js";
 import adminAuthPkg from "../middlewares/user/adminAuth.js";
 const adminAuth = adminAuthPkg.default || adminAuthPkg;
@@ -10,6 +10,7 @@ import { protectRoute } from "../middlewares/user/authMiddleware.js";
 
 import userRouter from "../routes/userRouter.js";
 import adminRouter from "../routes/admin/adminRouter.js";
+
 import addressRoutes from "../routes/addressRoutes.js";
 import profileRouter from "../routes/profileRoutes.js";
 import checkourPage from "../routes/checkoutroutes.js";

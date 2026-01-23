@@ -1,4 +1,4 @@
-// Payment method templates
+
 const paymentTemplates = {
   upi: `
     <label class="block text-gray-300 mb-2">UPI ID</label>
@@ -104,14 +104,14 @@ const paymentTemplates = {
   `
 };
 
-// Set max amount
+
 function setMaxAmount() {
   const maxAmount = <%= stats.availableBalance %>;
   document.getElementById('amount').value = maxAmount;
   document.getElementById('amount').max = maxAmount;
 }
 
-// Handle payment method change
+
 document.querySelectorAll('input[name="payment_method"]').forEach(radio => {
   radio.addEventListener('change', function() {
     const container = document.getElementById('paymentDetailsContainer');

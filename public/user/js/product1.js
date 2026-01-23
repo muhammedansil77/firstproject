@@ -1,21 +1,15 @@
-// product1.js
+
 'use strict';
 
-console.log("✅ product1.js loaded");
+console.log(" product1.js loaded");
 
-/* =========================================================
-   GLOBAL DATA (SAFE)
-========================================================= */
+
 window.PRODUCT_DATA = window.PRODUCT_DATA || {};
 
-/* =========================================================
-   STATE
-========================================================= */
+
 let selectedVariantId = window.PRODUCT_DATA.selectedVariantId || null;
 
-/* =========================================================
-   HELPERS
-========================================================= */
+
 function showError(msg) {
   console.error("Cart Error:", msg);
   const errorEl = document.getElementById('error-msg');
@@ -28,18 +22,16 @@ function showError(msg) {
   setTimeout(() => errorEl.classList.add('hidden'), 4000);
 }
 
-/* =========================================================
-   STOCK UPDATE FUNCTION
-========================================================= */
+
 function updateStockDisplay(stock, stockBadge) {
   if (!stockBadge) return;
   
   const stockNum = parseInt(stock) || 0;
   
-  // Remove all existing classes
+
   stockBadge.className = 'px-3 py-1.5 rounded-full text-xs font-semibold border';
   
-  // Add appropriate classes based on stock
+ 
   if (stockNum <= 0) {
     stockBadge.classList.add('bg-gray-700/50', 'text-gray-300', 'border-gray-600');
     stockBadge.textContent = 'Out of Stock';
@@ -52,12 +44,33 @@ function updateStockDisplay(stock, stockBadge) {
   }
 }
 
-/* =========================================================
-   MAIN LOGIC – WAIT FOR DOM
-========================================================= */
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  const msg = document.getElementById('toast-msg');
+
+  if (!toast || !msg) return alert(message);
+
+  msg.textContent = message;
+
+  toast.classList.remove('hidden');
+  toast.classList.remove('opacity-0', 'translate-y-2');
+
+  if (type === 'error') {
+    toast.classList.add('border-red-500/40', 'text-red-400');
+  } else {
+    toast.classList.add('border-[#d4af37]/40', 'text-[#d4af37]');
+  }
+
+  setTimeout(() => {
+    toast.classList.add('opacity-0', 'translate-y-2');
+    setTimeout(() => toast.classList.add('hidden'), 300);
+  }, 2500);
+}
+
+
 document.addEventListener('DOMContentLoaded', () => {
 
-  /* ---------------- ELEMENTS ---------------- */
+
   const variantBtns = document.querySelectorAll('.variant-btn');
   const mainImage = document.getElementById('main-product-image');
   const displayPrice = document.getElementById('display-price');
@@ -65,17 +78,14 @@ document.addEventListener('DOMContentLoaded', () => {
   const buyBtn = document.getElementById('buy-now');
   const stockBadge = document.getElementById('variant-stock-badge');
 
-  console.log("🧪 DOM ready");
-  console.log("🧪 PRODUCT_DATA:", window.PRODUCT_DATA);
-  console.log("🧪 Add button:", addBtn);
-  console.log("🧪 Stock badge:", stockBadge);
 
-  /* ---------------- INITIAL VARIANT & STOCK ---------------- */
+
+
   const initiallySelectedBtn = document.querySelector('.variant-btn.selected');
 
   if (initiallySelectedBtn) {
     selectedVariantId = initiallySelectedBtn.dataset.variantId;
-    // Update initial stock display
+
     const initialStock = initiallySelectedBtn.dataset.variantStock;
     if (stockBadge && initialStock !== undefined) {
       updateStockDisplay(initialStock, stockBadge);
@@ -83,14 +93,14 @@ document.addEventListener('DOMContentLoaded', () => {
   } else if (variantBtns.length > 0) {
     variantBtns[0].classList.add('selected');
     selectedVariantId = variantBtns[0].dataset.variantId;
-    // Update initial stock display for first variant
+ 
     const initialStock = variantBtns[0].dataset.variantStock;
     if (stockBadge && initialStock !== undefined) {
       updateStockDisplay(initialStock, stockBadge);
     }
   }
 
-  /* ---------------- THUMBNAILS ---------------- */
+
   document.querySelectorAll('.thumb').forEach(btn => {
     btn.addEventListener('click', () => {
       const img = btn.querySelector('img');
@@ -102,36 +112,35 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  /* ---------------- VARIANT CLICK ---------------- */
+ 
   variantBtns.forEach(btn => {
     btn.addEventListener('click', () => {
 
       selectedVariantId = btn.dataset.variantId;
 
-      // UI state
+  
       variantBtns.forEach(b => b.classList.remove('selected'));
       btn.classList.add('selected');
 
-      // Price
       if (displayPrice && btn.dataset.variantPrice) {
         const price = Number(btn.dataset.variantPrice);
         displayPrice.textContent =
           '₹' + (isNaN(price) ? '—' : price.toLocaleString('en-IN'));
       }
 
-      // Stock - Update stock badge
+ 
       if (stockBadge && btn.dataset.variantStock !== undefined) {
         const stock = btn.dataset.variantStock;
         updateStockDisplay(stock, stockBadge);
       }
 
-      // Images
+
       try {
         const images = JSON.parse(btn.dataset.variantImages || '[]');
         if (images.length && mainImage) {
           mainImage.src = images[0];
           
-          // Update thumbnails if needed
+       
           const thumbnailGrid = document.getElementById('thumbnailsGrid');
           if (thumbnailGrid) {
             const allThumbBtns = thumbnailGrid.querySelectorAll('.thumb-btn');
@@ -147,77 +156,109 @@ document.addEventListener('DOMContentLoaded', () => {
         console.warn("Variant image parse failed:", e);
       }
 
-      // Update URL
+      
       const url = new URL(window.location.href);
       url.searchParams.set('variant', selectedVariantId);
       window.history.replaceState({}, '', url);
     });
   });
+function setButtonLoading(btn, text) {
+  if (!btn) return;
 
-  /* ---------------- ADD TO CART ---------------- */
-  async function actionAddToCart(redirect = false) {
-    console.log("🟢 Add to Cart clicked");
+  btn.dataset.originalHtml = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = `
+    <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10"
+              stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+    <span>${text}</span>
+  `;
+  btn.classList.add('flex', 'items-center', 'justify-center', 'gap-2');
+}
 
-    const productId = window.PRODUCT_DATA.productId;
+function resetButton(btn) {
+  if (!btn) return;
+  btn.disabled = false;
+  btn.innerHTML = btn.dataset.originalHtml;
+}
 
-    if (!productId) {
-      showError("Product data not loaded. Refresh page.");
+
+async function actionAddToCart(redirect = false) {
+  console.log("🟢 Add to Cart clicked");
+
+  const productId = window.PRODUCT_DATA.productId;
+  const btn = redirect ? buyBtn : addBtn;
+
+  if (!productId) {
+    showError("Product data not loaded. Refresh page.");
+    return;
+  }
+
+  if (!selectedVariantId) {
+    showError("Please select a variant");
+    return;
+  }
+
+  // Stock check
+  const selectedBtn = document.querySelector('.variant-btn.selected');
+  if (selectedBtn) {
+    const stock = parseInt(selectedBtn.dataset.variantStock) || 0;
+    if (stock <= 0) {
+      showError("This variant is out of stock");
       return;
-    }
-
-    if (!selectedVariantId) {
-      showError("Please select a variant");
-      return;
-    }
-
-    // Check stock before adding to cart
-    const selectedBtn = document.querySelector('.variant-btn.selected');
-    if (selectedBtn) {
-      const stock = parseInt(selectedBtn.dataset.variantStock) || 0;
-      if (stock <= 0) {
-        showError("This variant is out of stock");
-        return;
-      }
-    }
-
-    try {
-      const res = await axios.post(
-        '/user/cart/add',
-        {
-          productId,
-          variantId: selectedVariantId,
-          quantity: 1
-        },
-        { withCredentials: true }
-      );
-
-      console.log("✅ Cart response:", res.data);
-
-      if (!res.data.ok) {
-        showError(res.data.message || "Unable to add to cart");
-        return;
-      }
-
-      window.location.href = redirect ? '/user/checkout' : '/user/cart';
-
-    } catch (err) {
-      console.error("Axios error:", err);
-      if (err.response?.status === 401) {
-        window.location.href =
-          '/user/login?returnTo=' + encodeURIComponent(location.pathname);
-      } else {
-        showError(err.response?.data?.message || "Server error");
-      }
     }
   }
 
-  /* ---------------- BUY NOW ---------------- */
+  // 🔥 SET LOADING STATE
+  setButtonLoading(btn, redirect ? 'Processing...' : 'Adding...');
+
+  try {
+    const res = await axios.post(
+      '/user/cart/add',
+      {
+        productId,
+        variantId: selectedVariantId,
+        quantity: 1
+      },
+      { withCredentials: true }
+    );
+
+    console.log("🛒 Cart response:", res.data);
+
+    if (!res.data.ok) {
+      showError(res.data.message || "Unable to add to cart");
+      resetButton(btn);
+      return;
+    }
+
+    // ✅ SUCCESS → REDIRECT
+    window.location.href = redirect ? '/user/checkout' : '/user/cart';
+
+  } catch (err) {
+    console.error("Axios error:", err);
+
+    resetButton(btn);
+
+    if (err.response?.status === 401) {
+      window.location.href =
+        '/user/login?returnTo=' + encodeURIComponent(location.pathname);
+    } else {
+      showError(err.response?.data?.message || "Server error");
+    }
+  }
+}
+
+
+
   async function actionBuyNow() {
-    console.log("🟢 Buy Now clicked");
+    console.log(" Buy Now clicked");
     await actionAddToCart(true);
   }
 
-  /* ---------------- EVENTS ---------------- */
+
   if (addBtn) {
     addBtn.addEventListener('click', e => {
       e.preventDefault();
@@ -232,24 +273,52 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---------------- URL PARAMETER CHECK ---------------- */
-  // Check if there's a variant in URL on page load
+
   const urlParams = new URLSearchParams(window.location.search);
   const urlVariant = urlParams.get('variant');
   
   if (urlVariant && variantBtns.length > 0) {
-    // Find button with matching variant ID
+   
     const matchingBtn = Array.from(variantBtns).find(
       btn => btn.dataset.variantId === urlVariant
     );
     
     if (matchingBtn && !matchingBtn.classList.contains('selected')) {
-      // Simulate click on the matching variant
+
       matchingBtn.click();
     }
   }
+   const wishlistBtn = document.getElementById('wishlist-btn');
+const wishlistIcon = document.getElementById('wishlist-icon');
 
-  /* ---------------- ZOOM FUNCTIONALITY ---------------- */
+if (wishlistBtn) {
+  wishlistBtn.addEventListener('click', async () => {
+    const productId = wishlistBtn.dataset.productId;
+    const variantId = selectedVariantId;
+
+    try {
+      const res = await axios.post('/user/api/wishlist/add', {
+        productId,
+        variantId
+      });
+
+      if (res.data.success) {
+        wishlistBtn.style.background = 'rgba(212,175,55,0.25)';
+        wishlistBtn.style.borderColor = '#d4af37';
+
+        wishlistIcon.style.fill = '#d4af37';
+        wishlistIcon.style.stroke = '#d4af37';
+
+        showToast('Added to wishlist ');
+      }
+    } catch (err) {
+      showToast('Failed to add wishlist', 'error');
+    }
+  });
+}
+
+
+ 
   const mainImageWrapper = document.getElementById('main-image-wrapper');
   if (mainImageWrapper && mainImage) {
     mainImageWrapper.addEventListener('mouseenter', () => {
@@ -261,7 +330,7 @@ document.addEventListener('DOMContentLoaded', () => {
       mainImage.style.transform = 'scale(1)';
     });
 
-    // Click to view larger
+    
     mainImageWrapper.addEventListener('click', () => {
       const modal = document.createElement('div');
       modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4';
@@ -290,15 +359,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  /* ---------------- REVIEW BUTTON ---------------- */
+ 
   const writeReviewBtn = document.getElementById('write-review-btn');
   if (writeReviewBtn) {
     writeReviewBtn.addEventListener('click', () => {
-      // Check if user is logged in
+   
       axios.get('/user/auth/check', { withCredentials: true })
         .then(response => {
           if (response.data.loggedIn) {
-            // Show review modal or redirect to review page
+       
             const reviewModal = document.createElement('div');
             reviewModal.className = 'fixed inset-0 bg-black bg-opacity-70 z-50 flex items-center justify-center p-4';
             reviewModal.innerHTML = `
@@ -329,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             document.body.appendChild(reviewModal);
             
-            // Star rating
+       
             let selectedRating = 0;
             reviewModal.querySelectorAll('.star-rating').forEach((star, index) => {
               star.addEventListener('click', () => {
@@ -340,12 +409,12 @@ document.addEventListener('DOMContentLoaded', () => {
               });
             });
             
-            // Cancel button
+         
             reviewModal.querySelector('#cancel-review').addEventListener('click', () => {
               document.body.removeChild(reviewModal);
             });
             
-            // Submit button
+           
             reviewModal.querySelector('#submit-review').addEventListener('click', () => {
               const reviewText = reviewModal.querySelector('#review-text').value.trim();
               if (selectedRating === 0) {
@@ -358,7 +427,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 return;
               }
               
-              // Submit review via AJAX
+             
               const productId = window.PRODUCT_DATA.productId;
               axios.post('/user/review/add', {
                 productId,
@@ -370,7 +439,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   if (response.data.ok) {
                     alert('Review submitted successfully!');
                     document.body.removeChild(reviewModal);
-                    location.reload(); // Reload to show new review
+                    location.reload();
                   } else {
                     alert(response.data.message || 'Failed to submit review');
                   }
@@ -381,14 +450,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 });
             });
             
-            // Close on outside click
+      
             reviewModal.addEventListener('click', (e) => {
               if (e.target === reviewModal) {
                 document.body.removeChild(reviewModal);
               }
             });
           } else {
-            // Redirect to login
+           
             window.location.href = `/user/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
           }
         })
@@ -401,16 +470,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 });
 
-/* =========================================================
-   ENHANCED ERROR HANDLING
-========================================================= */
+
 window.addEventListener('error', function(e) {
   console.error('Global error:', e.error);
 });
 
-/* =========================================================
-   CART ICON UPDATE (IF NEEDED)
-========================================================= */
+
 function updateCartCount(count) {
   const cartCountEl = document.querySelector('.cart-count');
   if (cartCountEl) {
@@ -419,7 +484,7 @@ function updateCartCount(count) {
   }
 }
 
-// Optional: Listen for cart updates
+
 if (typeof window.addEventListener === 'function') {
   document.addEventListener('cartUpdated', function(e) {
     if (e.detail && e.detail.count !== undefined) {
@@ -427,3 +492,4 @@ if (typeof window.addEventListener === 'function') {
     }
   });
 }
+  

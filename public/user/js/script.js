@@ -173,12 +173,12 @@ else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue)) {
 else {
   const username = emailValue.split('@')[0];
 
-  // ✅ rule 1: at least 6 characters before @
+
   if (username.length < 6) {
     emailError.textContent = 'Email name must be at least 6 characters (before @)';
     isValid = false;
   }
-  // ✅ rule 2: not only numbers
+
   else if (/^\d+$/.test(username)) {
     emailError.textContent = 'Email name cannot be only numbers';
     isValid = false;
@@ -216,15 +216,15 @@ else {
 
   return isValid;
 }
-// Validate referral code format
+
 document.getElementById('referralCode')?.addEventListener('blur', function() {
   const code = this.value.trim().toUpperCase();
   const errorElement = document.getElementById('referralCodeError') || 
                        document.createElement('div');
   
-  if (!this.value.trim()) return; // Empty is allowed
+  if (!this.value.trim()) return; 
   
-  // Basic validation: 6-20 characters, alphanumeric
+
   if (code.length < 6 || code.length > 20) {
     errorElement.className = 'text-warning small mt-1';
     errorElement.textContent = 'Referral code should be 6-20 characters';
@@ -240,7 +240,7 @@ document.getElementById('referralCode')?.addEventListener('blur', function() {
       this.parentNode.appendChild(errorElement);
     }
   } else {
-    // Remove error if exists
+ 
     const existingError = document.getElementById('referralCodeError');
     if (existingError) {
       existingError.remove();

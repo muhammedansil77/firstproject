@@ -4,10 +4,10 @@ import { getSalesReportPage, getDashboardData } from '../../controllers/admin/da
 
 const router = express.Router();
 
-// Sales Reports
+
 router.get('/reports/dash', getSalesReportPage);
 
-// Dashboard data (AJAX)
+
 router.get('/reports/dashboard', getDashboardData);
 
 export default router;

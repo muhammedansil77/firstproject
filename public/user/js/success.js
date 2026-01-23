@@ -1,27 +1,27 @@
-// Modal state variables
+
 let selectedOrderId = null;
 
-// Open cancel modal
+
 function openCancelModal(orderId) {
   console.log('Opening cancel modal for order:', orderId);
   selectedOrderId = orderId;
   document.getElementById('cancelModal').classList.remove('hidden');
   document.body.style.overflow = 'hidden';
   
-  // Reset form
+
   document.querySelector('input[name="cancellationReason"][value="changed_mind"]').checked = true;
   document.getElementById('customReason').value = '';
   toggleCustomReason();
 }
 
-// Close cancel modal
+
 function closeCancelModal() {
   document.getElementById('cancelModal').classList.add('hidden');
   document.body.style.overflow = 'auto';
   selectedOrderId = null;
 }
 
-// Toggle custom reason input
+
 function toggleCustomReason() {
   const selectedReason = document.querySelector('input[name="cancellationReason"]:checked').value;
   const customReasonContainer = document.getElementById('customReasonContainer');
@@ -36,7 +36,7 @@ function toggleCustomReason() {
   }
 }
 
-// Submit cancellation
+
 async function submitCancellation() {
   if (!selectedOrderId) {
     alert('No order selected');
@@ -46,7 +46,7 @@ async function submitCancellation() {
   const selectedReason = document.querySelector('input[name="cancellationReason"]:checked').value;
   let reasonText = '';
   
-  // Get reason text
+
   const reasonOptions = {
     'changed_mind': 'Changed my mind',
     'found_better_price': 'Found better price elsewhere',
@@ -72,7 +72,7 @@ async function submitCancellation() {
   console.log('Cancelling order:', selectedOrderId);
   console.log('Reason:', reasonText);
   
-  // Show loading state
+
   const confirmBtn = document.querySelector('button[onclick="submitCancellation()"]');
   const originalText = confirmBtn.innerHTML;
   confirmBtn.innerHTML = `
@@ -97,18 +97,18 @@ async function submitCancellation() {
     
     const result = await response.json();
     
-    // Reset button
+   
     confirmBtn.innerHTML = originalText;
     confirmBtn.disabled = false;
     
     if (result.success) {
-      // Show success message
+    
       showNotification('Order cancelled successfully!', 'success');
       
-      // Close modal
+     
       closeCancelModal();
       
-      // Reload page after 2 seconds
+    
       setTimeout(() => {
         window.location.reload();
       }, 2000);
@@ -118,7 +118,7 @@ async function submitCancellation() {
   } catch (error) {
     console.error('Error cancelling order:', error);
     
-    // Reset button
+
     confirmBtn.innerHTML = originalText;
     confirmBtn.disabled = false;
     
@@ -126,9 +126,9 @@ async function submitCancellation() {
   }
 }
 
-// Show notification
+
 function showNotification(message, type = 'info') {
-  // Create notification element
+
   const notification = document.createElement('div');
   notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ${
     type === 'success' ? 'bg-green-900/90 border border-green-700' :
@@ -153,10 +153,10 @@ function showNotification(message, type = 'info') {
     </div>
   `;
   
-  // Add to page
+
   document.body.appendChild(notification);
   
-  // Remove after 5 seconds
+
   setTimeout(() => {
     notification.style.transform = 'translateX(100%)';
     notification.style.opacity = '0';
@@ -168,14 +168,14 @@ function showNotification(message, type = 'info') {
   }, 5000);
 }
 
-// Close modal when clicking outside
+
 document.getElementById('cancelModal')?.addEventListener('click', function(e) {
   if (e.target === this) {
     closeCancelModal();
   }
 });
 
-// Close modal with Escape key
+
 document.addEventListener('keydown', function(e) {
   if (e.key === 'Escape' && !document.getElementById('cancelModal').classList.contains('hidden')) {
     closeCancelModal();
@@ -184,12 +184,12 @@ document.addEventListener('keydown', function(e) {
 const postalCodeInput = document.getElementById('postalCode');
 const addressForm = document.getElementById('addressForm');
 
-// Allow ONLY numbers while typing
+
 postalCodeInput.addEventListener('input', () => {
   postalCodeInput.value = postalCodeInput.value.replace(/\D/g, '');
 });
 
-// Validate on form submit
+
 addressForm.addEventListener('submit', function (e) {
   const postalCode = postalCodeInput.value.trim();
 

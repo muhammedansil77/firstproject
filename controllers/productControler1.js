@@ -3,6 +3,8 @@ import mongoose from 'mongoose';
 import Product from '../models/Product.js';
 import Variant from '../models/Variant.js';
 import Review from '../models/Review.js';
+import Wishlist from '../models/Wishlist.js';
+
 import { getBestOfferForProduct } from '../helpers/offerHelper.js';
 
 if (!Product) throw new Error('Product model not loaded!');
@@ -54,14 +56,10 @@ const viewProduct = async (req, res, next) => {
       return res.status(404).redirect('/user/shop');
     }
 
-  const isUnavailable = (
-  product.isDeleted === true ||
-  product.status === 'blocked'
-);
-
-   if (isUnavailable) {
-  return res.redirect('/user/shop');
+if (product.isDeleted === true || product.status === 'blocked') {
+  return res.redirect('/user/shop?toast=product_blocked');
 }
+
 if (product.category && mongoose.Types.ObjectId.isValid(product.category)) {
   try {
     const Category = (await import('../models/Category.js')).default;
@@ -92,6 +90,19 @@ if (product.category && mongoose.Types.ObjectId.isValid(product.category)) {
       console.warn('viewProduct: error loading variants', e && e.message);
       rawVariants = [];
     }
+  let isWishlisted = false;
+
+if (req.user) {
+  const wishlist = await Wishlist.findOne({
+    userId: req.user._id,
+    'items.productId': product._id
+  }).lean();
+
+  if (wishlist) {
+    
+    isWishlisted = true;
+  }
+}
 
    
     const variants = await Promise.all(rawVariants.map(async (v) => {
@@ -390,7 +401,8 @@ if (product.category && mongoose.Types.ObjectId.isValid(product.category)) {
       productId: String(product._id),
       availabilityUrl: `/user/shop/${product._id}/availability`,
       pageTitle: product.name,
-      pageJs: "product1.js"
+      pageJs: "product1.js",
+        isWishlisted
     });
 
   } catch (err) {

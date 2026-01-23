@@ -13,9 +13,9 @@
   const UPDATE_ENDPOINT = id => `/admin/category/${id}`;
   const BLOCK_ENDPOINT  = id => `/admin/category/${id}/block`;
   const UNBLOCK_ENDPOINT= id => `/admin/category/${id}/unblock`;
-  const DELETE_ENDPOINT = id => `/admin/category/${id}`; // optional, we won't soft-delete
+  const DELETE_ENDPOINT = id => `/admin/category/${id}`; 
 
-  // DOM elements (from your EJS)
+ 
   const tbody = $id('categoryList');
   const addForm = $id('addForm');
   const imageInput = $id('imageInput');
@@ -31,10 +31,10 @@
   const editImagePreview = $id('editImagePreview');
   const editImagePreviewWrapper = $id('editImagePreviewWrapper');
   const currentImageBox = $id('currentImageBox');
-    // Search + pagination state
+
   let currentPage = 1;
   let currentSearch = '';
-  let currentStatus = 'all'; // you already support it in backend; you can add status filter later
+  let currentStatus = 'all'; 
   const pageSize = 10;
 
   const searchForm = $id('categorySearchForm');
@@ -43,7 +43,7 @@
   const paginationContainer = $id('categoryPagination');
 
 
-  // Bootstrap modal instances
+
   let editModalInstance = null;
   if (editModalEl && window.bootstrap && typeof bootstrap.Modal === 'function') {
     editModalInstance = new bootstrap.Modal(editModalEl);
@@ -160,12 +160,12 @@ function renderRow(cat, index) {
 
     let html = '<div class="pagination-inner">';
 
-    // Info
+  
     html += `<div class="pagination-info">Total: ${totalItems} categories</div>`;
 
     html += '<div class="pagination-buttons">';
 
-    // Prev
+  
     if (hasPrev && prevPage) {
       html += `<button class="page-btn" data-page="${prevPage}">&laquo; Prev</button>`;
     } else {
@@ -355,10 +355,15 @@ function renderRow(cat, index) {
       } else {
       
       }
-    } catch (err) {
-      console.error('create category error', err);
-    
-    }
+   } catch (err) {
+  console.error('create category error', err);
+
+  const msg =
+    err.response?.data?.message ||
+    'Failed to create category';
+
+  toastr.error(msg);
+}
   });
 
   tbody?.addEventListener('click', async (e) => {
@@ -399,7 +404,7 @@ function renderRow(cat, index) {
    const blockBtn = e.target.closest('.category-block-toggle');
 if (blockBtn) {
   const id = blockBtn.dataset.id;
-  const action = blockBtn.dataset.action; // block | unblock
+  const action = blockBtn.dataset.action; 
 
   const isBlock = action === 'block';
 
@@ -438,6 +443,7 @@ if (blockBtn) {
         icon: 'error',
         title: 'Failed',
         text: res?.data?.message || 'Update failed'
+        
       });
     }
   } catch (err) {

@@ -98,7 +98,7 @@ const login = async (req, res) => {
 const loadLoginPage = (req, res) => {
 
   if (req.session && req.session.isLoggedIn && req.session.userId) {
-    return res.redirect('/user/home');
+    return res.redirect('/user');
   }
 
   return res.render("user/auth/login", {
@@ -647,7 +647,7 @@ const logout = (req, res) => {
   delete req.session.isLoggedIn;
   delete req.session.fullName;
 
-  res.redirect("/user/login");
+  res.redirect("/user");
 };
 
 

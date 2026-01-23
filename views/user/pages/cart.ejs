@@ -5,7 +5,7 @@
 
     <!-- Breadcrumb -->
     <nav class="text-sm text-gray-400 mb-8 flex items-center gap-2">
-      <a href="/" class="hover:text-[#d4af37] transition-colors duration-300">Home</a>
+      <a href="/user" class="hover:text-[#d4af37] transition-colors duration-300">Home</a>
       
       <svg class="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         
@@ -23,6 +23,9 @@
     <h1 class="text-3xl font-bold mb-8 bg-gradient-to-r from-white to-gray-300 bg-clip-text text-transparent">
       Your Shopping Cart
     </h1>
+<!-- <form action="/user/cart/clear" method="POST">
+  <button type="submit">Clear Cart</button>
+</form> -->
 
     <% if (cartEmpty) { %>
       <!-- Empty Cart -->
@@ -279,10 +282,29 @@
               </div>
 
               <!-- Checkout Button -->
-              <a href="/checkout" 
-                 class="block w-full px-6 py-4 rounded-xl bg-gradient-to-r from-[#d4af37] to-[#b8941f] text-black font-bold text-lg hover:shadow-2xl hover:shadow-[#d4af37]/50 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98] text-center">
-                Proceed to Checkout
-              </a>
+           <button
+  id="checkout-btn"
+  onclick="handleCheckout(this)"
+  class="block w-full px-6 py-4 rounded-xl
+         bg-gradient-to-r from-[#d4af37] to-[#b8941f]
+         text-black font-bold text-lg
+         flex items-center justify-center gap-3
+         transition-all disabled:opacity-70 disabled:cursor-not-allowed">
+  
+  <!-- Spinner -->
+  <svg id="checkout-spinner"
+       class="w-5 h-5 animate-spin hidden"
+       fill="none" viewBox="0 0 24 24">
+    <circle class="opacity-25" cx="12" cy="12" r="10"
+            stroke="currentColor" stroke-width="4"></circle>
+    <path class="opacity-75" fill="currentColor"
+          d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+  </svg>
+
+  <span id="checkout-text">Proceed to Checkout</span>
+</button>
+
+
 
               <!-- Continue Shopping -->
               <a href="/user/shop" 

@@ -125,6 +125,31 @@ const loadShop = async (req, res, next) => {
           as: 'variantsFull'
         }
       },
+      {
+  $addFields: {
+    totalStock: {
+      $sum: {
+        $map: {
+          input: '$variantsFull',
+          as: 'v',
+          in: {
+            $cond: [
+              {
+                $and: [
+                  { $ne: ['$$v.isListed', false] },
+                  { $gt: ['$$v.stock', 0] }
+                ]
+              },
+              '$$v.stock',
+              0
+            ]
+          }
+        }
+      }
+    }
+  }
+},
+
 
 
       {
@@ -242,6 +267,7 @@ const loadShop = async (req, res, next) => {
           description: 1,
           images: 1,
           minPrice: 1,
+            totalStock: 1, 
           variantsCount: 1,
           availableColors: 1,
           sampleVariantId: 1,
@@ -348,6 +374,7 @@ const loadShop = async (req, res, next) => {
           images: imgs,
           price: p.minPrice ?? null,
           minPrice: p.minPrice ?? null,
+            totalStock: p.totalStock ?? 0,
           variantsCount: p.variantsCount || 0,
           availableColors: Array.isArray(p.availableColors) ? p.availableColors : [],
           sampleVariantId: p.sampleVariantId || null,

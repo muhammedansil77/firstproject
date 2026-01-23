@@ -93,24 +93,23 @@
     navigate(url);
   };
 
-  // ==================== WISHLIST FUNCTIONS ====================
+
   
-  // Add to/remove from wishlist
+
   window.toggleWishlist = async function(productId, variantId, button) {
     try {
-      console.log('🎯 toggleWishlist called:', { productId, variantId });
+      console.log(' toggleWishlist called:', { productId, variantId });
       
-      // Check if variantId is valid
+
       if (!variantId || variantId === 'null' || variantId === '') {
         alert('Please select a variant first');
         return;
       }
       
-      // Get current state from button
+     
       const isCurrentlyInWishlist = button.classList.contains('bg-red-500/20');
       console.log('Current state:', isCurrentlyInWishlist ? 'IN wishlist' : 'NOT in wishlist');
-      
-      // Show loading state
+    
       const originalHTML = button.innerHTML;
       button.innerHTML = `
         <svg class="w-4 h-4 animate-spin" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,16 +120,16 @@
       `;
       button.disabled = true;
       
-      // Determine endpoint and method
+     
       const endpoint = isCurrentlyInWishlist 
         ? `/user/api/wishlist/remove/${productId}`
         : `/user/api/wishlist/add`;
       
       const method = isCurrentlyInWishlist ? 'DELETE' : 'POST';
       
-      console.log('📤 API call:', method, endpoint);
+      console.log(' API call:', method, endpoint);
       
-      // Make API request
+  
       const response = await fetch(endpoint, {
         method: method,
         headers: {
@@ -142,11 +141,11 @@
           variantId 
         })
       });
-      // 🔐 Not logged in
+    
 if (response.status === 401) {
-  showNotification('Please login to use wishlist ❤️', 'error');
+  showNotification('Please login to use wishlist ', 'error');
 
-  // Optional: redirect after delay
+
   setTimeout(() => {
     window.location.href = '/user/login';
   }, 1500);
@@ -155,9 +154,9 @@ if (response.status === 401) {
 }
 
       
-      console.log('📥 Response status:', response.status);
+      console.log('Response status:', response.status);
       
-      // Parse response
+    
       const result = await response.json();
       console.log('📦 Response data:', result);
       
@@ -165,9 +164,9 @@ if (response.status === 401) {
         throw new Error(result.message || 'Request failed');
       }
       
-      // Update button UI
+      
       if (isCurrentlyInWishlist) {
-        // Remove from wishlist - change to "Save"
+       
         button.classList.remove('bg-red-500/20', 'text-red-400', 'border-red-500/40');
         button.classList.add('bg-gray-900/50', 'text-gray-300', 'border-gray-700');
         button.innerHTML = `
@@ -178,7 +177,7 @@ if (response.status === 401) {
         `;
         button.title = "Add to wishlist";
       } else {
-        // Add to wishlist - change to "Saved"
+      
         button.classList.remove('bg-gray-900/50', 'text-gray-300', 'border-gray-700');
         button.classList.add('bg-red-500/20', 'text-red-400', 'border-red-500/40');
         button.innerHTML = `
@@ -192,31 +191,31 @@ if (response.status === 401) {
       
       button.disabled = false;
       
-      // Show success message
+    
       showNotification(
         result.message || (isCurrentlyInWishlist ? 'Removed from wishlist' : 'Added to wishlist!'), 
         'success'
       );
       
     } catch (error) {
-      console.error('❌ toggleWishlist error:', error);
+      console.error(' toggleWishlist error:', error);
       
-      // Restore button to original state
+    
       button.innerHTML = originalHTML;
       button.disabled = false;
       
-      // Show error message
+     
       showNotification(error.message || 'Failed to update wishlist', 'error');
     }
   };
   
-  // Show notification
+
   window.showNotification = function(message, type = 'info') {
-    // Remove existing notifications
+  
     const existing = document.querySelector('.notification-toast');
     if (existing) existing.remove();
     
-    // Create notification element
+  
     const notification = document.createElement('div');
     notification.className = `notification-toast fixed top-4 right-4 z-50 px-6 py-3 rounded-lg shadow-lg transform transition-all duration-300 translate-x-full ${
       type === 'success' ? 'bg-green-600/90 backdrop-blur-sm' : 
@@ -224,7 +223,7 @@ if (response.status === 401) {
       'bg-blue-600/90 backdrop-blur-sm'
     } text-white border border-white/10`;
     
-    // Add icon based on type
+ 
     let icon = '';
     if (type === 'success') {
       icon = '<svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>';
@@ -246,22 +245,22 @@ if (response.status === 401) {
       </div>
     `;
     
-    // Add to page
+    
     document.body.appendChild(notification);
     
-    // Animate in
+ 
     setTimeout(() => {
       notification.classList.remove('translate-x-full');
     }, 10);
     
-    // Auto remove after 3 seconds
+  
     setTimeout(() => {
       notification.classList.add('translate-x-full');
       setTimeout(() => notification.remove(), 300);
     }, 3000);
   };
   
-  // Update wishlist count in navbar
+
   window.updateWishlistCount = function() {
     const countElement = document.querySelector('.wishlist-count');
     if (countElement) {
@@ -305,13 +304,13 @@ if (response.status === 401) {
     const searchInput = document.getElementById('search-field');
     if (searchInput) searchInput.value = urlParams.get('search') || '';
     
-    // Debug: Check if wishlist function is loaded
-    console.log('✅ toggleWishlist function loaded:', typeof window.toggleWishlist === 'function');
+  
+    console.log('toggleWishlist function loaded:', typeof window.toggleWishlist === 'function');
   });
 
 })();
 
-// Add CSS animations for wishlist
+
 const style = document.createElement('style');
 style.textContent = `
   @keyframes heartBeat {
@@ -330,4 +329,28 @@ style.textContent = `
     to { transform: rotate(360deg); }
   }
 `;
-document.head.appendChild(style);
+document.addEventListener('DOMContentLoaded', () => {
+  const params = new URLSearchParams(window.location.search);
+  const toastType = params.get('toast');
+
+  if (toastType !== 'product_blocked') return;
+
+  const toast = document.getElementById('toast');
+  const msg = document.getElementById('toast-msg');
+
+  if (!toast || !msg) return;
+
+  msg.textContent = "🚫 This product is blocked by admin";
+  toast.classList.remove('hidden');
+
+  setTimeout(() => {
+    toast.classList.add('hidden');
+  }, 3000);
+
+  // ✅ Clean URL after showing toast
+  params.delete('toast');
+  const newUrl =
+    window.location.pathname +
+    (params.toString() ? '?' + params.toString() : '');
+  window.history.replaceState({}, '', newUrl);
+});

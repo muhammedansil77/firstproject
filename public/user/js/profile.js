@@ -1,7 +1,7 @@
   function openEditProfileModal() {
     console.log('Opening edit profile modal');
     
-    // Fill form with current data
+
 document.getElementById('editFullName')
 document.getElementById('editPhone')
 
@@ -34,12 +34,12 @@ function showToast(message, type = 'success') {
   toast.textContent = message;
   container.appendChild(toast);
 
-  // Animate IN
+
   requestAnimationFrame(() => {
     toast.classList.remove('opacity-0', 'translate-y-2');
   });
 
-  // Animate OUT
+
   setTimeout(() => {
     toast.classList.add('opacity-0', 'translate-y-2');
     setTimeout(() => toast.remove(), 500);
@@ -48,7 +48,7 @@ function showToast(message, type = 'success') {
 
 
 
-  // Change Email Modal Functions
+
   function openChangeEmailModal() {
     console.log('Opening change email modal');
     
@@ -68,7 +68,7 @@ function showToast(message, type = 'success') {
     document.body.style.overflow = 'auto';
   }
 
-  // Change Password Modal Functions
+
   function openChangePasswordModal() {
     console.log('Opening change password modal');
     
@@ -86,7 +86,7 @@ function showToast(message, type = 'success') {
     document.body.style.overflow = 'auto';
   }
 
-  // Close modals with Escape key
+
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeEditProfileModal();
@@ -95,7 +95,7 @@ function showToast(message, type = 'success') {
     }
   });
 
-  // Form Submissions
+
   document.getElementById('editProfileForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     
@@ -117,7 +117,7 @@ function showToast(message, type = 'success') {
        showToast('Profile updated successfully!', 'success');
 
         closeEditProfileModal();
-        location.reload(); // Refresh to show updated data
+        location.reload(); 
       } else {
        showToast(result.message || 'Something went wrong', 'error');
 
@@ -128,7 +128,7 @@ function showToast(message, type = 'success') {
     }
   });
 
-  // Email Change Form
+
   let otpMode = false;
 
 document.getElementById("changeEmailForm").addEventListener("submit", async e => {
@@ -182,7 +182,7 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
   const formData = new FormData(e.target);
   const data = Object.fromEntries(formData.entries());
 
-  // Frontend validation
+ 
   if (data.newPassword !== data.confirmPassword) {
     return showToast('Passwords do not match', 'error');
   }
@@ -216,7 +216,7 @@ document.getElementById('changePasswordForm').addEventListener('submit', async (
 });
 
 
-  // Close modal when clicking outside
+
   document.querySelectorAll('[id$="Modal"]').forEach(modal => {
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
@@ -236,7 +236,7 @@ function openImageUpload() {
     if (!file) return;
 
     const formData = new FormData();
-    formData.append('profileImage', file); // ✅ must match multer
+    formData.append('profileImage', file); 
 
     try {
       const res = await fetch('/user/profile/upload-image', {
@@ -252,7 +252,7 @@ function openImageUpload() {
 
       showToast('Profile picture updated successfully!', 'success');
 
-      // Update image instantly without full reload
+      
       const img = document.querySelector('img[alt="Profile"]');
       if (img) {
         img.src = result.profilePicture + '?t=' + Date.now();

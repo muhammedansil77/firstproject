@@ -420,6 +420,8 @@ export const moveToCart = async (req, res) => {
       });
     }
 
+   
+
 
     cart.items.push({
       product: wishlistItem.productId,

@@ -46,3 +46,33 @@ function cancelOrder(orderId) {
 function requestReturn(orderId) {
   window.location.href = `/orders/${orderId}/return`;
 }
+
+function cancelEntireGroup(orderIds) {
+  if (!confirm('This will cancel ALL products in this order. Continue?')) return;
+
+  Promise.all(
+    orderIds.map(orderId =>
+      fetch(`/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: 'User cancelled entire grouped order',
+          reasonCode: 'group_cancel'
+        })
+      }).then(res => res.json())
+    )
+  )
+  .then(results => {
+    const failed = results.find(r => !r.success);
+    if (failed) {
+      alert('Some items could not be cancelled.');
+    } else {
+      alert('Entire order cancelled successfully!');
+      window.location.reload();
+    }
+  })
+  .catch(err => {
+    console.error(err);
+    alert('Error cancelling order');
+  });
+}

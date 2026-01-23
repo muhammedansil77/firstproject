@@ -111,7 +111,7 @@ if (
 
       const newQuantity = cart.items[existingIndex].quantity + Number(quantity);
 
-
+     
       if (newQuantity > variant.stock) {
         return res.status(400).json({
           ok: false,
@@ -121,6 +121,7 @@ if (
 
       cart.items[existingIndex].quantity = newQuantity;
     } else {
+     
 
       cart.items.push({
         product: productId,
@@ -408,6 +409,25 @@ export const removeFromCart = async (req, res) => {
     res.status(500).json({ ok: false, message: "Server error" });
   }
 };
+export const removrAll =async (req,res) =>{
+  try{
+      const userId = req.user._id;
+      let quary ={
+        user:userId,
+        
+      }
+
+      await Cart.findOneAndUpdate(
+       {user:userId},
+       {$set:{items:[]}}
+      )
+
+      res.redirect("/user/cart")
+  }catch(err){
+    console.log(err)
+  }
+
+}
 
 
 export const getCartCount = async (req, res) => {
@@ -425,5 +445,57 @@ export const getCartCount = async (req, res) => {
   } catch (err) {
     console.error("getCartCount error:", err);
     res.json({ ok: true, cartCount: 0 });
+  }
+};
+export const validateCheckout = async (req, res) => {
+  try {
+    const userId = req.user?._id;
+    if (!userId) {
+      return res.status(401).json({
+        ok: false,
+        message: 'Login required'
+      });
+    }
+
+    const cart = await Cart.findOne({ user: userId }).populate('items.variant');
+
+    if (!cart || cart.items.length === 0) {
+      return res.json({
+        ok: false,
+        message: 'Your cart is empty'
+      });
+    }
+
+    const errors = [];
+
+    for (const item of cart.items) {
+      const variant = item.variant;
+
+      if (!variant) {
+        errors.push('Some products are no longer available');
+        continue;
+      }
+
+      if (variant.stock < item.quantity) {
+        errors.push(
+          `${variant.color || 'Product'} stock reduced. Available: ${variant.stock}`
+        );
+      }
+    }
+
+    if (errors.length > 0) {
+      return res.json({
+        ok: false,
+        message: 'Stock changed',
+        errors
+      });
+    }
+
+    // ✅ All good
+    return res.json({ ok: true });
+
+  } catch (err) {
+    console.error('validateCheckout error:', err);
+    res.status(500).json({ ok: false, message: 'Server error' });
   }
 };

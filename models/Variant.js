@@ -3,7 +3,7 @@ import mongoose from 'mongoose';
 
 const VariantSchema = new mongoose.Schema({
   product: { type: mongoose.Schema.Types.ObjectId, ref: 'Product', required: true, index: true },
-  images: { type: [String], default: [] }, // <- now an array of image paths
+  images: { type: [String], default: [] },
   stock: { type: Number, default: 0, index: true, min: 0 },
   color: { type: String, default: null, index: true },
  price: { type: Number, required: true, min: 0 },

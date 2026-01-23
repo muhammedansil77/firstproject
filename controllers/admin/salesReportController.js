@@ -458,6 +458,24 @@ const allOrdersForStats = await Order.find(query)
     });
   }
 };
+function drawTableRow(doc, y, row, widths, options = {}) {
+  let x = 40;
+  const height = options.height || 20;
+
+  row.forEach((cell, i) => {
+    doc
+      .rect(x, y, widths[i], height)
+      .stroke()
+      .fontSize(9)
+      .text(cell, x + 5, y + 6, {
+        width: widths[i] - 10,
+        align: options.align?.[i] || 'left'
+      });
+    x += widths[i];
+  });
+
+  return y + height;
+}
 
 const handleExport = async (req, res, query, exportType) => {
   try {
@@ -491,54 +509,87 @@ const handleExport = async (req, res, query, exportType) => {
       res.setHeader('Content-Disposition', 'attachment; filename=sales-report.csv');
       res.send(csvContent);
       
-    } else if (exportType === 'pdf') {
+ } else if (exportType === 'pdf') {
 
   const doc = new PDFDocument({ margin: 40, size: 'A4' });
-
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', 'attachment; filename=sales-report.pdf');
-
   doc.pipe(res);
 
-
+  // ===== TITLE =====
   doc.fontSize(18).text('Sales Report', { align: 'center' });
-  doc.moveDown();
+  doc.moveDown(0.5);
+  doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`, {
+    align: 'center'
+  });
+  doc.moveDown(1.5);
 
-  doc.fontSize(10).text(`Generated on: ${new Date().toLocaleString()}`);
-  doc.moveDown(2);
+  // ===== TABLE CONFIG =====
+  const tableTop = doc.y;
+  const rowHeight = 22;
+  const colWidths = [80, 70, 110, 60, 60, 65]; // total fits A4
 
-
-  doc.fontSize(11).text(
-    'Order No | Date | Customer | Amount | Payment | Status',
-    { underline: true }
+  // ===== HEADER =====
+  doc.font('Helvetica-Bold');
+  let y = drawTableRow(
+    doc,
+    tableTop,
+    ['Order No', 'Date', 'Customer', 'Amount', 'Payment', 'Status'],
+    colWidths,
+    { height: rowHeight }
   );
-  doc.moveDown();
 
+  doc.font('Helvetica');
 
+  // ===== ROWS =====
   orders.forEach(order => {
-    doc.text(
-      `${order.orderNumber} | ` +
-      `${new Date(order.createdAt).toLocaleDateString()} | ` +
-      `${order.user?.name || 'Guest'} | ` +
-      `₹${order.finalAmount} | ` +
-      `${order.paymentMethod} | ` +
-      `${order.orderStatus}`
+    if (y > doc.page.height - 60) {
+      doc.addPage();
+      y = 40;
+
+      doc.font('Helvetica-Bold');
+      y = drawTableRow(
+        doc,
+        y,
+        ['Order No', 'Date', 'Customer', 'Amount', 'Payment', 'Status'],
+        colWidths,
+        { height: rowHeight }
+      );
+      doc.font('Helvetica');
+    }
+
+    y = drawTableRow(
+      doc,
+      y,
+      [
+        order.orderNumber,
+        new Date(order.createdAt).toLocaleDateString(),
+        order.user?.name || 'Guest',
+        `₹${order.finalAmount}`,
+        order.paymentMethod,
+        order.orderStatus
+      ],
+      colWidths,
+      { height: rowHeight }
     );
   });
 
+  // ===== TOTAL =====
   doc.moveDown(2);
-
-
   const totalRevenue = orders
     .filter(o => o.orderStatus === 'Delivered' && o.paymentStatus === 'Paid')
     .reduce((sum, o) => sum + o.finalAmount, 0);
 
-  doc.fontSize(12).text(`Total Revenue: ₹${totalRevenue}`, {
-    align: 'right'
-  });
+  doc
+    .font('Helvetica-Bold')
+    .fontSize(12)
+    .text(`Total Revenue: ₹${totalRevenue}`, {
+      align: 'right'
+    });
 
   doc.end();
-} else if (exportType === 'excel') {
+}
+ else if (exportType === 'excel') {
     
       res.json({ 
         success: true, 

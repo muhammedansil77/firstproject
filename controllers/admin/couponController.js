@@ -183,6 +183,51 @@ const parsedPerUserLimit =
     ? 1
     : Number(perUserLimit);
 
+    // ===== BACKEND COUPON VALIDATION =====
+const parsedDiscountValue = Number(discountValue);
+const parsedMinPurchase = Number(minPurchaseAmount) || 0;
+const parsedMaxDiscount = maxDiscountAmount ? Number(maxDiscountAmount) : null;
+
+if (parsedMinPurchase < 0) {
+    return res.status(400).json({
+        success: false,
+        error: 'Minimum purchase amount cannot be negative'
+    });
+}
+
+if (discountType === 'percentage') {
+    if (parsedDiscountValue <= 0 || parsedDiscountValue > 100) {
+        return res.status(400).json({
+            success: false,
+            error: 'Percentage discount must be between 1 and 100'
+        });
+    }
+
+    if (parsedMaxDiscount !== null && parsedMaxDiscount <= 0) {
+        return res.status(400).json({
+            success: false,
+            error: 'Max discount amount must be greater than 0'
+        });
+    }
+}
+
+if (discountType === 'fixed') {
+    if (parsedDiscountValue <= 0) {
+        return res.status(400).json({
+            success: false,
+            error: 'Fixed discount amount must be greater than 0'
+        });
+    }
+
+    if (parsedMinPurchase > 0 && parsedDiscountValue > parsedMinPurchase) {
+        return res.status(400).json({
+            success: false,
+            error: 'Fixed discount cannot be greater than minimum purchase amount'
+        });
+    }
+}
+
+
         if (new Date(startDate) >= new Date(endDate)) {
             return res.status(400).json({
                 success: false,
@@ -256,8 +301,9 @@ perUserLimit: parsedPerUserLimit,
                 maxDiscountAmount: maxDiscountAmount || null,
                 startDate,
                 endDate,
-                usageLimit: usageLimit || 0,
-                perUserLimit: perUserLimit || 1,
+                usageLimit: parsedUsageLimit,
+perUserLimit: parsedPerUserLimit,
+
                 isActive
             });
             

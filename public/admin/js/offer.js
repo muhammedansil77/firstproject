@@ -483,6 +483,48 @@ document.getElementById('offerForm').addEventListener('submit', async function(e
     const startDate = new Date(formData.get('startDate'));
     const endDate = new Date(formData.get('endDate'));
     if (endDate <= startDate) errors.push('End date must be after start date');
+    // ===== ADVANCED OFFER VALIDATION =====
+
+const discountType = formData.get('discountType');
+const discountValue = parseFloat(formData.get('discountValue'));
+const minPurchaseAmount = parseFloat(formData.get('minPurchaseAmount')) || 0;
+const maxDiscountAmount = parseFloat(formData.get('maxDiscountAmount')) || 0;
+
+// ❌ Negative min purchase
+if (minPurchaseAmount < 0) {
+  errors.push('Minimum purchase amount cannot be negative');
+}
+
+// ❌ Percentage discount rules
+if (discountType === 'percentage') {
+  if (discountValue <= 0) {
+    errors.push('Percentage discount must be greater than 0');
+  }
+
+  if (discountValue > 100) {
+    errors.push('Percentage discount cannot exceed 100%');
+  }
+
+  if (maxDiscountAmount < 0) {
+    errors.push('Max discount amount cannot be negative');
+  }
+
+  if (maxDiscountAmount > 0 && maxDiscountAmount > minPurchaseAmount) {
+    errors.push('Max discount cannot exceed minimum purchase amount');
+  }
+}
+
+// ❌ Fixed discount rules
+if (discountType === 'fixed') {
+  if (discountValue <= 0) {
+    errors.push('Fixed discount must be greater than 0');
+  }
+
+  if (minPurchaseAmount > 0 && discountValue > minPurchaseAmount) {
+    errors.push('Fixed discount cannot exceed minimum purchase amount');
+  }
+}
+
     
     if (errors.length > 0) {
         errors.forEach(error => showToast(error, 'warning'));

@@ -72,10 +72,12 @@
           <div class="space-y-4" id="addressesContainer">
             <% if (addresses && addresses.length > 0) { %>
               <% addresses.forEach((address, index) => { %>
-                <div 
-                  class="border-2 rounded-xl p-5 cursor-pointer transition-all <%= address.isDefault ? 'border-[#d4af37] bg-[#d4af37]/5' : 'border-[#2a2a2a] hover:border-[#d4af37]/50 hover:bg-[#151515]' %>"
-                  data-address-id="<%= address._id %>"
-                >
+             <div 
+  class="address-card border-2 rounded-xl p-5 cursor-pointer transition-all
+  <%= address.isDefault ? 'border-[#d4af37] bg-[#d4af37]/5 selected' : 'border-[#2a2a2a]' %>"
+  data-address-id="<%= address._id %>"
+>
+
                   <div class="flex justify-between items-center mb-4">
                     <div class="flex items-center gap-3">
                       <input 
@@ -431,6 +433,11 @@
       }))) %>'
     />
     <% } %>
+<button 
+  id="openCouponModal"
+  class="w-full mb-3 border border-[#d4af37]/40 text-[#d4af37] py-2 rounded-lg hover:bg-[#d4af37]/10 transition-all text-sm font-medium">
+  View Available Coupons
+</button>
 
           <!-- Coupon Section -->
 <!-- Coupon Section -->
@@ -783,8 +790,7 @@
       </p>
 
       <div class="flex flex-col gap-3">
-        <button 
-          onclick="closeFailedModal()"
+        <button onclick="retryRazorpayPayment()"
           class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-all"
         >
           Try Again
@@ -797,6 +803,62 @@
           Go to Cart
         </a>
       </div>
+    </div>
+  </div>
+</div>
+<!-- Coupon Modal -->
+<div id="couponModal" class="fixed inset-0 bg-black/60 hidden z-50 flex items-center justify-center p-4">
+  <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] border border-[#2a2a2a] rounded-2xl w-full max-w-md shadow-2xl">
+    
+    <!-- Header -->
+    <div class="flex justify-between items-center p-5 border-b border-[#2a2a2a]">
+      <h3 class="text-lg font-bold text-white">Available Coupons</h3>
+      <button id="closeCouponModal" class="text-gray-400 hover:text-white text-xl">&times;</button>
+    </div>
+
+    <!-- Coupon List -->
+    <div class="p-5 space-y-4 max-h-[60vh] overflow-y-auto">
+
+      <% if (availableCoupons && availableCoupons.length > 0) { %>
+        <% availableCoupons.forEach(coupon => { %>
+          <div class="border border-[#2a2a2a] rounded-xl p-4 hover:border-[#d4af37]/40 transition-all">
+            
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-[#d4af37] font-bold tracking-widest">
+                <%= coupon.code %>
+              </span>
+
+              <button 
+                class="applyCouponFromModal text-xs px-3 py-1 rounded-full bg-[#d4af37] text-black font-semibold hover:opacity-90"
+                data-code="<%= coupon.code %>">
+                Apply
+              </button>
+            </div>
+
+            <p class="text-sm text-gray-400">
+              <%= coupon.name %>
+            </p>
+
+            <p class="text-xs text-green-400 mt-1">
+              <% if (coupon.discountType === 'percentage') { %>
+                <%= coupon.discountValue %>% OFF
+              <% } else { %>
+                ₹<%= coupon.discountValue %> OFF
+              <% } %>
+            </p>
+
+            <% if (coupon.minPurchase) { %>
+              <p class="text-xs text-gray-500 mt-1">
+                Min purchase ₹<%= coupon.minPurchase %>
+              </p>
+            <% } %>
+
+          </div>
+        <% }) %>
+      <% } else { %>
+        <p class="text-gray-400 text-center">No coupons available</p>
+      <% } %>
+
     </div>
   </div>
 </div>

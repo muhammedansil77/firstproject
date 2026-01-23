@@ -130,6 +130,17 @@ export const createCategory = async (req, res) => {
      
       imagePath = `/uploads/categories/${req.file.filename}`;
     }
+      const exists = await Category.findOne({
+      name: { $regex: `^${name.trim()}$`, $options: 'i' },
+      isDeleted: false
+    });
+
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category already exists'
+      });
+    }
 
     const newCat = new Category({
       name: name.trim(),

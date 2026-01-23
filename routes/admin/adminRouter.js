@@ -1,10 +1,14 @@
-const express = require("express");
-const multer = require("multer");
-const adminController = require("../../controllers/admin/adminController");
-const categoryController = require("../../controllers/admin/categoryController");
-const productCtrl = require('../../controllers/admin/productController');
-const adminAuth = require('../../middlewares/user/adminAuth');
-const { upload } = require('../../middlewares/upload');
+import express from "express";
+import multer from "multer";
+
+import * as adminController from "../../controllers/admin/adminController.js";
+
+import * as categoryController from "../../controllers/admin/categoryController.js";
+
+import * as productCtrl from "../../controllers/admin/productController.js";
+import adminAuth from "../../middlewares/user/adminAuth.js";
+import { upload } from "../../middlewares/upload.js";
+
 
 const router = express.Router();
 
@@ -73,4 +77,4 @@ router.get('/category', asyncHandler(categoryController.loadCategoryPage));
 router.get('/category/data', asyncHandler(categoryController.getData));
 // Add asyncHandler to other routes as needed
 
-module.exports = router;
+export default  router;

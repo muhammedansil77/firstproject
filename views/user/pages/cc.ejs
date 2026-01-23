@@ -1,0 +1,38 @@
+
+<body>
+
+  <h2>Delivered Orders (Final Amount between 2000 – 3000)</h2>
+
+  <% if (order.length === 0) { %>
+    <p>No orders found.</p>
+  <% } else { %>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Customer Name</th>
+          <th>Email</th>
+          <th>Phone</th>
+          <th>Final Amount</th>
+          <th>Order Status</th>
+          <th>Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        <% order.forEach((item, index) => { %>
+          <tr>
+            <td><%= index + 1 %></td>
+            <td><%= item.user?.fullName || "N/A" %></td>
+            <td><%= item.user?.email || "N/A" %></td>
+            <td><%= item.user?.phone || "N/A" %></td>
+            <td>₹ <%= item.finalAmount %></td>
+            <td><%= item.orderStatus %></td>
+            <td><%= item.createdAt.toDateString() %></td>
+          </tr>
+        <% }) %>
+      </tbody>
+    </table>
+  <% } %>
+
+</body>
+

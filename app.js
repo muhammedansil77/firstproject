@@ -21,7 +21,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
-db();
 
 const PORT = process.env.PORT || 3000;
 app.use("/",imageRoutes)
@@ -92,7 +91,7 @@ app.get("/favicon.ico", (req, res) => {
 });
 app.use((req, res, next) => {
   console.log(
-    '🔥 ROUTE TRACE →',
+    ' ROUTE TRACE →',
     req.method,
     req.originalUrl
   );
@@ -118,8 +117,6 @@ app.get('/debug/clear-sessions', async (req, res) => {
     res.status(500).json({ success: false, error: err.message });
   }
 });
-
-
 
 
 app.get("/health", (req, res) => {
@@ -166,10 +163,12 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`✅ Server running at http://localhost:${PORT}/user`);
-  console.log(`📡 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`📦 Session Store: MongoDB (via config/session/)`);
-  console.log(`🔒 Session Cookie Secure: ${process.env.NODE_ENV === 'production'}`);
-  console.log(`🔄 Server restarts will NOT logout users (persistent sessions)`);
+app.listen(PORT, "0.0.0.0", () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+db().then(() => {
+  console.log("MongoDB connected");
+}).catch(err => {
+  console.error("MongoDB error:", err.message);
 });

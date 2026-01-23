@@ -1,4 +1,28 @@
 console.log("🔥 cart.js LOADED");
+// ✅ GLOBAL TOAST (usable everywhere)
+window.showNotification = function (message, type = 'info') {
+  const toast = document.createElement('div');
+
+  toast.className = `
+    fixed top-6 right-6 z-50 px-5 py-3 rounded-lg shadow-xl
+    ${type === 'error' ? 'bg-red-600' :
+      type === 'warning' ? 'bg-yellow-600' :
+      'bg-green-600'}
+    text-white
+  `;
+
+  toast.innerHTML = `
+    <div class="flex items-center gap-3">
+      <span>${message}</span>
+      <button onclick="this.parentElement.parentElement.remove()">✖</button>
+    </div>
+  `;
+
+  document.body.appendChild(toast);
+
+  setTimeout(() => toast.remove(), 3000);
+};
+
 
 /* ================= CLICK HANDLER ================= */
 document.addEventListener('click', async (e) => {
@@ -54,7 +78,7 @@ if (removeBtn) {
 
     console.log("Variant ID:", variantId, "Current value:", input.value);
 
-    // Check if out of stock
+  
     const isOutOfStock = cartItem.hasAttribute('data-out-of-stock') || 
                          cartItem.querySelector('.qty-input:disabled');
     
@@ -69,14 +93,20 @@ const max = Math.min(stockMax, MAX_QTY_PER_ITEM);
 
 
     console.log("Current qty:", qty, "Max:", max);
+if (incBtn) {
+  const maxAllowed = Math.min(stockMax, MAX_QTY_PER_ITEM);
 
-  if (incBtn) {
-  if (qty >= MAX_QTY_PER_ITEM) {
-  showToast("Network error. Please try again.", "error");
+  if (qty >= maxAllowed) {
+    showNotification(
+      `Maximum allowed quantity is ${maxAllowed}`,
+      'warning'
+    );
     return;
   }
-  qty = Math.min(max, qty + 1);
+
+  qty = qty + 1;
 }
+
 
 if (decBtn) {
   qty = Math.max(1, qty - 1);
@@ -367,3 +397,53 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
   }
 });
+document.getElementById('checkout-btn')?.addEventListener('click', async (e) => {
+  const btn = e.currentTarget;
+
+  // Prevent double click
+  if (btn.disabled) return;
+
+  // Save original text
+  const originalHTML = btn.innerHTML;
+
+  // Set loading state
+  btn.disabled = true;
+  btn.innerHTML = `
+    <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10"
+              stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor"
+            d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path>
+    </svg>
+    <span>Processing...</span>
+  `;
+  btn.classList.add('flex', 'items-center', 'justify-center', 'gap-3');
+
+  try {
+    const res = await fetch('/user/validate');
+    const data = await res.json();
+
+    if (!data.ok) {
+      showNotification(
+        data.errors?.join(', ') || data.message,
+        'error'
+      );
+
+      // ❌ restore button
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+      return;
+    }
+
+    // ✅ redirect
+    window.location.href = '/checkout';
+
+  } catch (err) {
+    showNotification('Unable to validate checkout', 'error');
+
+    // ❌ restore button
+    btn.disabled = false;
+    btn.innerHTML = originalHTML;
+  }
+});
+

@@ -1,5 +1,5 @@
-// models/Wishlist.js
-const mongoose = require("mongoose");
+
+import mongoose from "mongoose";
 const { Schema } = mongoose;
 
 const wishlistSchema = new mongoose.Schema({
@@ -17,7 +17,7 @@ const wishlistSchema = new mongoose.Schema({
         variantId: {
             type: Schema.Types.ObjectId,
             ref: "Variant",
-            required: false // CHANGE TO FALSE
+            required: false 
         },
         addedOn: {
             type: Date,
@@ -27,4 +27,5 @@ const wishlistSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 const Wishlist = mongoose.model("Wishlist", wishlistSchema);
-module.exports = Wishlist;
+
+export default Wishlist;

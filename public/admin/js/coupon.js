@@ -728,8 +728,48 @@ async function saveCoupon(event) {
         couponData.maxDiscountAmount = couponData.maxDiscountAmount ? parseFloat(couponData.maxDiscountAmount) : null;
         couponData.usageLimit = parseInt(couponData.usageLimit) || 0;
         couponData.perUserLimit = parseInt(couponData.perUserLimit) || 1;
+
         couponData.isActive = document.getElementById('isActive')?.checked || true;
-        
+  // ===== FRONTEND COUPON VALIDATION WITH TOAST =====
+const discountType = couponData.discountType;
+const discountValue = Number(couponData.discountValue);
+const minPurchaseAmount = Number(couponData.minPurchaseAmount) || 0;
+const maxDiscountAmount = couponData.maxDiscountAmount
+    ? Number(couponData.maxDiscountAmount)
+    : null;
+
+// ❌ Min purchase cannot be negative
+if (minPurchaseAmount < 0) {
+    showAlert('Minimum purchase amount cannot be negative', 'danger');
+    return;
+}
+
+// ✅ Percentage coupon validation
+if (discountType === 'percentage') {
+    if (discountValue <= 0 || discountValue > 100) {
+        showAlert('Percentage discount must be between 1 and 100', 'danger');
+        return;
+    }
+
+    if (maxDiscountAmount !== null && maxDiscountAmount <= 0) {
+        showAlert('Max discount amount must be greater than 0', 'danger');
+        return;
+    }
+}
+
+// ✅ Fixed coupon validation
+if (discountType === 'fixed') {
+    if (discountValue <= 0) {
+        showAlert('Fixed discount amount must be greater than 0', 'danger');
+        return;
+    }
+
+    if (minPurchaseAmount > 0 && discountValue > minPurchaseAmount) {
+        showAlert('Discount amount cannot be greater than minimum purchase amount', 'danger');
+        return;
+    }
+}
+
         // Check if bulk mode
         const bulkSection = document.getElementById('bulkSection');
         const isBulkMode = bulkSection && bulkSection.style.display !== 'none';

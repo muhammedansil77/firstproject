@@ -1,6 +1,5 @@
-// refundRequest.js
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Get order details from data attributes or hidden elements
   const orderDataElement = document.getElementById('orderData');
   
   if (!orderDataElement) {
@@ -8,7 +7,6 @@ document.addEventListener('DOMContentLoaded', function() {
     return;
   }
   
-  // Store order details including discount from server
   const orderDetails = {
     id: orderDataElement.dataset.orderId,
     subtotal: parseFloat(orderDataElement.dataset.subtotal) || 0,
@@ -25,12 +23,12 @@ document.addEventListener('DOMContentLoaded', function() {
   let selectedAddressId = null;
   let selectedItems = new Map();
   
-  // Get order ID properly
+
   const orderId = orderDetails.id;
   
   console.log('Order ID:', orderId);
   
-  // Calculate refund amount with proportional discount
+
   function calculateRefundWithDiscount(selectedItemsTotal) {
     console.log('Calculating refund with discount...');
     console.log('Selected items total:', selectedItemsTotal);
@@ -42,21 +40,21 @@ document.addEventListener('DOMContentLoaded', function() {
       return selectedItemsTotal;
     }
     
-    // Calculate what percentage of the original order subtotal is being returned
+
     const returnPercentage = selectedItemsTotal / orderDetails.subtotal;
     console.log('Return percentage:', (returnPercentage * 100).toFixed(2) + '%');
     
-    // Apply the same percentage of discount to the returned amount
+  
     const applicableDiscount = orderDetails.discount * returnPercentage;
     console.log('Applicable discount:', applicableDiscount);
     
-    // Also apply proportional tax and shipping (if returning partial order)
+
     const returnTax = returnPercentage * orderDetails.tax;
     const returnShipping = returnPercentage * orderDetails.shipping;
     console.log('Return tax:', returnTax);
     console.log('Return shipping:', returnShipping);
     
-    // Calculate final refund amount
+
     let refundAmount = selectedItemsTotal - applicableDiscount + returnTax + returnShipping;
     console.log('Refund calculation:', {
       selectedItemsTotal,
@@ -66,25 +64,25 @@ document.addEventListener('DOMContentLoaded', function() {
       equals: refundAmount
     });
     
-    // Ensure non-negative
+
     refundAmount = Math.max(0, refundAmount);
     console.log('Final refund amount:', refundAmount);
     
     return refundAmount;
   }
   
-  // Toggle item selection
+
   function toggleItemSelection(itemElement, index) {
     console.log('Toggling item selection:', index);
     
-    // Toggle selected class
+
     itemElement.classList.toggle('selected');
     
-    // Show/hide selection indicator
+  
     const indicator = itemElement.querySelector('.selected-indicator');
     indicator.classList.toggle('hidden');
     
-    // Add/remove selected border
+ 
     if (itemElement.classList.contains('selected')) {
       itemElement.classList.add('border-[#d4af37]', 'bg-[#d4af37]/5');
       itemElement.classList.remove('border-[#2a2a2a]');
@@ -93,7 +91,7 @@ document.addEventListener('DOMContentLoaded', function() {
       itemElement.classList.add('border-[#2a2a2a]');
     }
     
-    // Store or remove item data
+   
     if (itemElement.classList.contains('selected')) {
       selectedItems.set(index, {
         price: parseFloat(itemElement.dataset.price) || 0,
@@ -108,18 +106,18 @@ document.addEventListener('DOMContentLoaded', function() {
     
     console.log('Selected items:', selectedItems);
     
-    // Update refund summary
+   
     updateRefundAmount();
   }
   
-  // Update refund amount based on selected items (WITH DISCOUNT)
+ 
   function updateRefundAmount() {
     console.log('=== UPDATING REFUND AMOUNT ===');
     
     const selectedItemsCount = selectedItems.size;
     let totalItemsAmount = 0;
     
-    // Calculate total from selected items (without discount)
+    
     selectedItems.forEach(item => {
       totalItemsAmount += item.total;
     });
@@ -128,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('Total items amount (before discount):', totalItemsAmount);
     console.log('Original order discount:', orderDetails.discount);
     
-    // Calculate final refund amount WITH discount
+   
     let finalRefundAmount = totalItemsAmount;
     
     if (orderDetails.discount > 0 && totalItemsAmount > 0 && orderDetails.subtotal > 0) {
@@ -140,11 +138,11 @@ document.addEventListener('DOMContentLoaded', function() {
       console.log('Final refund amount (no discount):', finalRefundAmount);
     }
     
-    // Round to 2 decimal places
+  
     finalRefundAmount = Math.round(finalRefundAmount * 100) / 100;
     console.log('Rounded refund amount:', finalRefundAmount);
     
-    // Update the UI
+
     const selectedItemsCountEl = document.getElementById('selectedItemsCount');
     const itemsValueEl = document.getElementById('itemsValue');
     const estimatedRefundEl = document.getElementById('estimatedRefund');
@@ -154,11 +152,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (itemsValueEl) itemsValueEl.textContent = `₹${totalItemsAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     if (estimatedRefundEl) estimatedRefundEl.textContent = `₹${finalRefundAmount.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`;
     
-    // Enable/disable submit button
+  
     if (submitBtn) {
       submitBtn.disabled = selectedItemsCount === 0;
       
-      // Update button text with refund amount
+     
       if (selectedItemsCount > 0) {
         submitBtn.innerHTML = `
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -176,7 +174,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     }
     
-    // Update hidden field for refund amount
+  
     let refundAmountInput = document.querySelector('input[name="refundAmount"]');
     if (!refundAmountInput) {
       refundAmountInput = document.createElement('input');
@@ -196,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('=== REFUND AMOUNT UPDATE COMPLETE ===\n');
   }
   
-  // Toggle custom reason for primary refund
+ 
   function toggleCustomReason() {
     const selectedReason = document.querySelector('input[name="reasonCode"]:checked');
     const customReasonContainer = document.getElementById('customReasonContainer');
@@ -213,13 +211,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Select address
+
   function selectAddress(addressId) {
     selectedAddressId = addressId;
     console.log('Selected address:', addressId);
   }
   
-  // Show notification
+
   function showNotification(message, type = 'info') {
     const notification = document.createElement('div');
     notification.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transform transition-all duration-300 ${
@@ -258,7 +256,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 5000);
   }
   
-  // Get selected items data
+
   function getSelectedItemsData() {
     const items = [];
     
@@ -277,7 +275,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return items;
   }
   
-  // Validate form
+
   function validateForm() {
     console.log('Validating form...');
     
@@ -317,7 +315,7 @@ document.addEventListener('DOMContentLoaded', function() {
     return true;
   }
   
-  // Submit refund request
+  
   async function submitRefundRequest() {
     console.log('=== SUBMIT REFUND REQUEST STARTED ===');
     console.log('Using order ID:', orderId);
@@ -333,7 +331,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const originalText = submitBtn.innerHTML;
     
-    // Show loading
+    
     submitBtn.innerHTML = `
       <svg class="w-5 h-5 animate-spin text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
@@ -350,7 +348,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const refundMethod = document.querySelector('select[name="refundMethod"]').value;
       const refundAmount = parseFloat(document.querySelector('input[name="refundAmount"]')?.value || 0);
       
-      // Get selected items
+ 
       const items = getSelectedItemsData();
       
       console.log('Form data:', {
@@ -369,7 +367,7 @@ document.addEventListener('DOMContentLoaded', function() {
         throw new Error('No items selected for return');
       }
       
-      // Prepare payload
+   
       const payload = {
         orderId: orderId,
         reasonCode: reasonCode,
@@ -383,7 +381,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       console.log('Submitting payload:', payload);
       
-      // Send request
+   
       const response = await fetch('/api/refunds/request', {
         method: 'POST',
         headers: {
@@ -397,14 +395,14 @@ document.addEventListener('DOMContentLoaded', function() {
       const result = await response.json();
       console.log('Response data:', result);
       
-      // Reset button
+   
       submitBtn.innerHTML = originalText;
       submitBtn.disabled = false;
       
       if (result.success) {
         showNotification('Refund request submitted successfully!', 'success');
         
-        // Redirect to order details after 2 seconds
+       
         setTimeout(() => {
           window.location.href = `/orders/${orderId}`;
         }, 2000);
@@ -414,7 +412,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (error) {
       console.error('Error submitting refund request:', error);
       
-      // Reset button
+   
       if (submitBtn) {
         submitBtn.innerHTML = originalText;
         submitBtn.disabled = false;
@@ -424,48 +422,47 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  // Initialize on page load
+
   console.log('Refund page loaded');
   console.log('Order ID on load:', orderId);
   console.log('Order details with discount:', orderDetails);
   
-  // Show discount information in console
+ 
   if (orderDetails.discount > 0) {
-    console.log('⚠️ Original order had discount of ₹' + orderDetails.discount.toFixed(2));
+    console.log(' Original order had discount of ₹' + orderDetails.discount.toFixed(2));
     console.log('Coupon code:', orderDetails.couponCode);
   }
   
-  // Initialize refund amount
+
   updateRefundAmount();
   
-  // Add click handlers to all items
+ 
   document.querySelectorAll('.selectable-item').forEach((item, index) => {
     item.addEventListener('click', function() {
       toggleItemSelection(this, index);
     });
   });
   
-  // Auto-select first address if none selected
+
   const firstAddressRadio = document.querySelector('input[name="returnAddress"]');
   if (firstAddressRadio) {
     selectAddress(firstAddressRadio.value);
   }
-  
-  // Add event listeners for address selection
+
   document.querySelectorAll('input[name="returnAddress"]').forEach(radio => {
     radio.addEventListener('change', function() {
       selectAddress(this.value);
     });
   });
   
-  // Add event listener for reason code changes
+ 
   document.querySelectorAll('input[name="reasonCode"]').forEach(radio => {
     radio.addEventListener('change', toggleCustomReason);
   });
   
-  // Initialize custom reason field
+
   toggleCustomReason();
   
-  // Make submitRefundRequest globally available
+  
   window.submitRefundRequest = submitRefundRequest;
 });
