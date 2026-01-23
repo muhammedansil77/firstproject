@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const Admin = require('./models/Admin');
 
-const DB = process.env.MONGODB_URL || 'mongodb://127.0.0.1:27017/firstproject';
+const DB = process.env.MONGODB_URL;
 
 (async () => {
   try {

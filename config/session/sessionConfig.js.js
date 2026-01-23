@@ -11,7 +11,8 @@ export const createSessionConfig = () => {
     resave: false,
     saveUninitialized: false,
     store: MongoStore.create({
-      mongoUrl: process.env.MONGODB_URI || 'mongodb://localhost:27017/ecommerce_db',
+    mongoUrl: process.env.MONGODB_URL,
+
       collectionName: 'sessions',
       ttl: 24 * 60 * 60, 
       autoRemove: 'native',
