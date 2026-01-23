@@ -163,12 +163,16 @@ app.use((err, req, res, next) => {
   });
 });
 
-app.listen(PORT, "0.0.0.0", () => {
-  console.log(`Server running on port ${PORT}`);
-});
+const startServer = async () => {
+  try {
+    await db(); // ⬅️ WAIT for MongoDB
+    app.listen(PORT, "0.0.0.0", () => {
+      console.log(`🚀 Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error("❌ MongoDB connection failed:", err);
+    process.exit(1);
+  }
+};
 
-db().then(() => {
-  console.log("MongoDB connected");
-}).catch(err => {
-  console.error("MongoDB error:", err.message);
-});
+startServer();

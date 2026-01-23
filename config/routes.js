@@ -4,7 +4,8 @@ import { hardBlock } from "../middlewares/user/hardBlock.js";
 import  loadCategories from "../middlewares/user/loadCategries.js";
 import { setAuthLocals } from "../middlewares/user/setAuthLocals.js";
 import adminAuthPkg from "../middlewares/user/adminAuth.js";
-const adminAuth = adminAuthPkg.default || adminAuthPkg;
+import adminAuth from "../middlewares/user/adminAuth.js";
+
 import { protectRoute } from "../middlewares/user/authMiddleware.js";
 
 
