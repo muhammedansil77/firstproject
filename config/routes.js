@@ -100,42 +100,42 @@ const protectedUserMiddlewares = [
 
 
 
-  app.use("/user", (req, res) => {
-    return res.status(404).render("error/404", {
-      isLoggedIn: req.session?.isLoggedIn || false,
-      isAdmin: false,
-      layout: false
-    });
-  });
+  // app.use("/user", (req, res) => {
+  //   return res.status(404).render("error/404", {
+  //     isLoggedIn: req.session?.isLoggedIn || false,
+  //     isAdmin: false,
+  //     layout: false
+  //   });
+  // });
 
 
-  app.use("/admin", (req, res) => {
-    res.status(404).render("error/admin-404", {
-      layout: false
-    });
-  });
-  app.use((err, req, res, next) => {
-    console.error("🔥 GLOBAL ERROR:", err);
+  // app.use("/admin", (req, res) => {
+  //   res.status(404).render("error/admin-404", {
+  //     layout: false
+  //   });
+  // });
+  // app.use((err, req, res, next) => {
+  //   console.error("🔥 GLOBAL ERROR:", err);
 
-    if (res.headersSent) {
-      return next(err);
-    }
+  //   if (res.headersSent) {
+  //     return next(err);
+  //   }
 
-    // API request → JSON
-    if (req.xhr || req.headers.accept?.includes("application/json")) {
-      return res.status(500).json({
-        success: false,
-        message: "Something went wrong. Please try again later."
-      });
-    }
+  //   // API request → JSON
+  //   if (req.xhr || req.headers.accept?.includes("application/json")) {
+  //     return res.status(500).json({
+  //       success: false,
+  //       message: "Something went wrong. Please try again later."
+  //     });
+  //   }
 
-    // Page request → Render error page
-    res.status(500).render("error/500", {
-      isLoggedIn: req.session?.isLoggedIn || false,
-      isAdmin: req.session?.adminLoggedIn || false,
-      layout: false
-    });
-  });
+  //   // Page request → Render error page
+  //   res.status(500).render("error/500", {
+  //     isLoggedIn: req.session?.isLoggedIn || false,
+  //     isAdmin: req.session?.adminLoggedIn || false,
+  //     layout: false
+  //   });
+  // });
 
 
 

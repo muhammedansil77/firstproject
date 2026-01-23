@@ -1,19 +1,16 @@
-// config/db.js
-import mongoose from "mongoose";
-import dotenv from "dotenv";
-dotenv.config();
-
-mongoose.set("bufferCommands", false);
-mongoose.set("strictQuery", false);
+import mongoose from 'mongoose';
 
 const connectDB = async () => {
   try {
-    console.log("Connecting to MongoDB...");
+    if (!process.env.MONGODB_URL) {
+      throw new Error('MONGODB_URL is not defined');
+    }
+
     await mongoose.connect(process.env.MONGODB_URL);
-    console.log("MongoDB Atlas connected successfully");
+    console.log('✅ MongoDB connected');
   } catch (error) {
-    console.error("MongoDB connection error:", error.message);
-    throw error;
+    console.error('❌ MongoDB connection error:', error.message);
+    process.exit(1);
   }
 };
 
