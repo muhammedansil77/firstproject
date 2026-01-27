@@ -6,13 +6,12 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/userSchema.js';
 
 const getCallbackURL = () => {
-    const url = process.env.NODE_ENV === 'production'
-        ? process.env.GOOGLE_CALLBACK_URL_PROD
-        : (process.env.GOOGLE_CALLBACK_URL_DEV || "http://localhost:3000/auth/google/callback");
-
-    console.log("🚀 Google callback URL being used:", url);
-    return url;
+    if (process.env.NODE_ENV === 'production') {
+        return process.env.GOOGLE_CALLBACK_URL_PROD;
+    }
+    return process.env.GOOGLE_CALLBACK_URL_DEV;
 };
+
 
 
 if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
