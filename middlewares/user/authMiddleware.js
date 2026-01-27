@@ -35,24 +35,45 @@ export const attachUser = async (req, res, next) => {
 
 export const protectRoute = (req, res, next) => {
 
+  // ✅ Public routes (NO login required)
+  const publicRoutes = [
+    '/',
+    '/user',
+    '/user/login',
+    '/user/signup',
+    '/user/verify-otp',
+    '/user/forgot-password',
+    '/user/reset-password',
+    '/products',
+    '/product'
+  ];
 
+  if (publicRoutes.some(route => req.path === route || req.path.startsWith(route + '/'))) {
+    return next();
+  }
+
+  // ✅ Allow admin routes to be handled separately
   if (req.originalUrl.startsWith('/admin')) {
     return next();
   }
 
+  // ✅ Logged-in users allowed
   if (req.session?.isLoggedIn && req.session?.userId) {
     return next();
   }
 
-   if (req.xhr || req.headers.accept?.includes('application/json')) {
+  // ❌ Not logged in → redirect to login
+  if (req.xhr || req.headers.accept?.includes('application/json')) {
     return res.status(401).json({
       ok: false,
       code: 'AUTH_REQUIRED',
       message: 'Please login to continue'
     });
   }
-  return res.redirect("/user/login");
+
+  return res.redirect('/user/login');
 };
+
 
 
 

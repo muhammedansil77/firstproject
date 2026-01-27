@@ -353,18 +353,21 @@
     }
   }
   function handleGuestWishlist() {
+  if (typeof showNotification === 'function') {
     showNotification('Please login to view your wishlist ❤️', 'error');
-    setTimeout(() => {
-      window.location.href = '/user/login';
-    }, 1200);
   }
+  // ❌ NO redirect
+  return;
+}
 
-  function handleGuestCart() {
+function handleGuestCart() {
+  if (typeof showNotification === 'function') {
     showNotification('Please login to view your cart 🛒', 'error');
-    setTimeout(() => {
-      window.location.href = '/user/login';
-    }, 1200);
   }
+  // ❌ NO redirect
+  return;
+}
+
 
   function closeUserDropdown() {
     dropdownOpen = false;

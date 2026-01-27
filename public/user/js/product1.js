@@ -242,10 +242,19 @@ async function actionAddToCart(redirect = false) {
 
     resetButton(btn);
 
-    if (err.response?.status === 401) {
-      window.location.href =
-        '/user/login?returnTo=' + encodeURIComponent(location.pathname);
-    } else {
+ if (err.response?.status === 401) {
+  // 🔔 Just show toast
+  if (typeof showNotification === 'function') {
+    showNotification('Please login to add items to your cart 🛒', 'error');
+  } else {
+    showToast('Please login to add items to your cart 🛒', 'error');
+  }
+
+  resetButton(btn); // re-enable button
+  return; // ⛔ stay on same page
+}
+
+ else {
       showError(err.response?.data?.message || "Server error");
     }
   }

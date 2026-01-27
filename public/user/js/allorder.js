@@ -47,32 +47,130 @@ function requestReturn(orderId) {
   window.location.href = `/orders/${orderId}/return`;
 }
 
-function cancelEntireGroup(orderIds) {
-  if (!confirm('This will cancel ALL products in this order. Continue?')) return;
+async function cancelEntireGroup(orderIds) {
+  if (!Array.isArray(orderIds) || orderIds.length === 0) return;
 
-  Promise.all(
-    orderIds.map(orderId =>
-      fetch(`/orders/${orderId}/cancel`, {
+  const { value: formData } = await Swal.fire({
+    title: 'Cancel Order',
+    icon: 'warning',
+    html: `
+      <div class="text-left space-y-4">
+
+        <p class="text-sm text-gray-400">
+          Please tell us why you want to cancel this order.
+        </p>
+
+        <div>
+          <label class="block text-sm font-medium mb-1 text-gray-300">
+            Cancellation Reason
+          </label>
+          <select id="cancel-reason"
+            class="w-full px-3 py-2 rounded-lg bg-[#0f0f0f]
+                   border border-[#2a2a2a] text-white focus:outline-none
+                   focus:border-[#d4af37]">
+            <option value="">Select a reason</option>
+            <option value="changed_mind">Changed my mind</option>
+            <option value="ordered_by_mistake">Ordered by mistake</option>
+            <option value="found_cheaper">Found cheaper elsewhere</option>
+            <option value="delivery_delay">Delivery taking too long</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+
+        <div id="cancel-note-wrapper" class="hidden">
+          <label class="block text-sm font-medium mb-1 text-gray-300">
+            Additional Details
+          </label>
+          <textarea id="cancel-note"
+            class="w-full px-3 py-2 rounded-lg bg-[#0f0f0f]
+                   border border-[#2a2a2a] text-white focus:outline-none
+                   focus:border-[#d4af37]"
+            rows="3"
+            placeholder="Please specify your reason..."></textarea>
+        </div>
+
+      </div>
+    `,
+    showCancelButton: true,
+    confirmButtonText: 'Cancel Order',
+    cancelButtonText: 'Keep Order',
+    confirmButtonColor: '#d4af37',
+    cancelButtonColor: '#374151',
+    reverseButtons: true,
+    focusConfirm: false,
+
+    didOpen: () => {
+      const reasonSelect = document.getElementById('cancel-reason');
+      const noteWrapper = document.getElementById('cancel-note-wrapper');
+
+      reasonSelect.addEventListener('change', () => {
+        noteWrapper.classList.toggle('hidden', reasonSelect.value !== 'other');
+      });
+    },
+
+    preConfirm: () => {
+      const reasonCode = document.getElementById('cancel-reason').value;
+      const note = document.getElementById('cancel-note').value.trim();
+
+      if (!reasonCode) {
+        Swal.showValidationMessage('Please select a cancellation reason');
+        return false;
+      }
+
+      const reasonTextMap = {
+        changed_mind: 'Changed my mind',
+        ordered_by_mistake: 'Ordered by mistake',
+        found_cheaper: 'Found cheaper elsewhere',
+        delivery_delay: 'Delivery taking too long',
+        other: note || 'Other'
+      };
+
+      return {
+        reasonCode,
+        reason: reasonTextMap[reasonCode]
+      };
+    }
+  });
+
+  if (!formData) return;
+
+  try {
+    let success = 0;
+    let failed = 0;
+
+    for (const orderId of orderIds) {
+      const res = await fetch(`/orders/${orderId}/cancel`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reason: 'User cancelled entire grouped order',
-          reasonCode: 'group_cancel'
-        })
-      }).then(res => res.json())
-    )
-  )
-  .then(results => {
-    const failed = results.find(r => !r.success);
-    if (failed) {
-      alert('Some items could not be cancelled.');
-    } else {
-      alert('Entire order cancelled successfully!');
-      window.location.reload();
+        body: JSON.stringify(formData)
+      });
+
+      const data = await res.json();
+      res.ok && data.success ? success++ : failed++;
     }
-  })
-  .catch(err => {
+
+    if (success > 0) {
+      await Swal.fire({
+        icon: 'success',
+        title: 'Order Cancelled',
+        text: `${success} order(s) cancelled successfully`,
+        confirmButtonColor: '#d4af37'
+      });
+      window.location.reload();
+    } else {
+      Swal.fire({
+        icon: 'error',
+        title: 'Cancellation Failed',
+        text: 'Unable to cancel the order(s)'
+      });
+    }
+
+  } catch (err) {
     console.error(err);
-    alert('Error cancelling order');
-  });
+    Swal.fire({
+      icon: 'error',
+      title: 'Error',
+      text: 'Something went wrong. Please try again later.'
+    });
+  }
 }

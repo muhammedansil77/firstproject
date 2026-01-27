@@ -46,7 +46,7 @@ const protectedUserMiddlewares = [
   attachUser,
   hardBlock,
   loadCategories,
-  protectRoute
+  // protectRoute
 ];
 
 
@@ -94,7 +94,7 @@ const protectedUserMiddlewares = [
     if (req.session?.isLoggedIn) {
       return res.redirect("/user");
     }
-    res.redirect("/user/login");
+    res.redirect("/user/");
   });
 
 

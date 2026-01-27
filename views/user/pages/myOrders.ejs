@@ -227,6 +227,26 @@
                 <h4 class="font-bold text-white text-lg">
                   <%= item.product?.name || 'Product' %>
                 </h4>
+                <!-- ORDER STATUS BADGE -->
+<%
+  const statusColorMap = {
+    Placed: 'bg-yellow-500/15 text-yellow-400 border-yellow-400/40',
+    Confirmed: 'bg-blue-500/15 text-blue-400 border-blue-400/40',
+    Shipped: 'bg-purple-500/15 text-purple-400 border-purple-400/40',
+    Delivered: 'bg-green-500/15 text-green-400 border-green-400/40',
+    Cancelled: 'bg-red-500/15 text-red-400 border-red-400/40'
+  };
+
+  const statusClass =
+    statusColorMap[order.orderStatus] ||
+    'bg-gray-500/15 text-gray-400 border-gray-400/40';
+%>
+
+<span
+  class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold border <%= statusClass %>">
+  <%= order.orderStatus %>
+</span>
+
 
                 <% if (item.variant) { %>
                   <p class="text-sm text-gray-400">

@@ -5,15 +5,6 @@ import passport from 'passport';
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import User from '../models/userSchema.js';
 
-
-console.log("🔧 Checking environment variables in passport.js:");
-console.log("   GOOGLE_CLIENT_ID:", process.env.GOOGLE_CLIENT_ID || "❌ NOT FOUND");
-console.log("   GOOGLE_CLIENT_SECRET:", process.env.GOOGLE_CLIENT_SECRET ? "✓ Set" : "❌ NOT FOUND");
-console.log("   NODE_ENV:", process.env.NODE_ENV || "development");
-
-
-
-
 const getCallbackURL = () => {
     const url = process.env.NODE_ENV === 'production'
         ? process.env.GOOGLE_CALLBACK_URL_PROD
