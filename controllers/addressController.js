@@ -9,7 +9,7 @@ export const addAddress = async (req, res) => {
       userId: req.session.userId,
       fullName: req.body.fullName,
       phone: req.body.phone,
-      alternatePhone: req.body.alternatePhone || null,
+      alternatePhone: req.body.alternatePhone || "",
       addressLine1: req.body.addressLine1,
       addressLine2: req.body.addressLine2,
       city: req.body.city,
@@ -35,7 +35,7 @@ export const editAddress = async (req, res) => {
       {
         fullName: req.body.fullName,
         phone: req.body.phone,
-        alternatePhone: req.body.alternatePhone || null,
+        alternatePhone: req.body.alternatePhone || "",
         addressLine1: req.body.addressLine1,
         addressLine2: req.body.addressLine2,
         city: req.body.city,
@@ -53,6 +53,30 @@ export const editAddress = async (req, res) => {
     res.redirect("/user/address");
   }
 };
+export const setDefaultAddress = async (req, res) => {
+  try {
+    const userId = req.session.userId;
+    const addressId = req.params.id;
+
+    // clear all defaults
+    await Address.updateMany(
+      { userId },
+      { $set: { isDefault: false } }
+    );
+
+    // set selected default
+    await Address.updateOne(
+      { _id: addressId, userId },
+      { $set: { isDefault: true } }
+    );
+
+    res.redirect("/user/address");
+  } catch (err) {
+    console.error(err);
+    res.redirect("/user/address");
+  }
+};
+
 
 
 export const deleteAddress = async (req, res) => {

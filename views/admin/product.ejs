@@ -18,9 +18,10 @@
         <button id="reloadBtn" class="btn btn-outline-secondary px-4">
           <i class="bi bi-arrow-clockwise me-2"></i>Reload
         </button>
-        <button class="btn btn-success px-4" data-bs-toggle="modal" data-bs-target="#addProductModal" style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); border: none;">
-          <i class="bi bi-plus-circle me-2"></i>Add Product
-        </button>
+       <a href="/admin/products/create" class="btn btn-success">
+  <i class="bi bi-plus-circle me-1"></i>Add Product
+</a>
+
       </div>
     </div>
   </div>
@@ -134,9 +135,12 @@
               </td>
               <td class="px-4 text-center">
                 <div class="d-flex gap-2 justify-content-center">
-                  <button class="btn btn-sm btn-outline-primary editBtn px-3" data-id="<%= product._id %>" style="border-radius: 8px;">
-                    <i class="bi bi-pencil me-1"></i>Edit
-                  </button>
+           <a href="/admin/product/${product._id}/edit"
+   class="btn btn-sm btn-outline-primary px-3">
+  <i class="bi bi-pencil me-1"></i>Edit
+</a>
+
+
                   <!-- <button class="btn btn-sm btn-outline-danger deleteBtn px-3" data-id="<%= product._id %>" style="border-radius: 8px;">
                     <i class="bi bi-trash me-1"></i>Delete
                   </button> -->

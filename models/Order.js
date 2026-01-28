@@ -18,20 +18,38 @@ const orderSchema = new mongoose.Schema(
     },
 
     items: [
-      {
-        product: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Product"
-        },
-        variant: {
-          type: mongoose.Schema.Types.ObjectId,
-          ref: "Variant"
-        },
-        quantity: Number,
-        price: Number,      // price per item
-        total: Number       // price × quantity
-      }
-    ],
+  {
+    orderItemId: {
+      type: String,
+      required: true
+    },
+
+    product: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Product"
+    },
+
+    variant: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Variant"
+    },
+
+    quantity: Number,
+    price: Number,
+    total: Number,
+
+    itemStatus: {
+      type: String,
+      enum: ["Placed", "Shipped", "Delivered", "Cancelled", "Returned"],
+      default: "Placed"
+    },
+
+    cancelledAt: Date,
+    returnReason: String
+  }
+]
+
+,
 
     subtotal: Number,
     tax: Number,
@@ -43,7 +61,7 @@ const orderSchema = new mongoose.Schema(
       required: true
     },
 
-    // COUPON FIELDS - ADD THESE
+  
     coupon: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Coupon"

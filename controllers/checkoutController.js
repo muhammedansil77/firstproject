@@ -1222,6 +1222,15 @@ if (
 
 let remainingCouponDiscount = totalCouponDiscount;
 
+let paymentStatus;
+
+if (paymentMethod === 'COD') {
+  paymentStatus = 'Pending';
+} else if (paymentMethod === 'Razorpay' || paymentMethod === 'Wallet') {
+  paymentStatus = 'Paid';
+} else {
+  paymentStatus = 'Pending';
+}
 
 
 
@@ -1323,27 +1332,30 @@ if (remainingCouponDiscount > 0 && eligibleSubtotal > 0) {
 
 
       const order = await Order.create({
-        user: userId,
-        address: orderAddress,
-        items: [{
-          product: cartItem.product._id,
-          variant: variant._id,
-          quantity: cartItem.quantity,
-          price: finalPrice,
-          total: itemTotal
-        }],
-        subtotal: subtotal,
-        tax: tax,
-        discount: discount,
-        shipping: shipping,
-        finalAmount: finalAmount,
-        paymentMethod: paymentMethod,
-        paymentStatus:
-  paymentMethod === 'COD' ? 'Pending' : 'Paid',
+  user: userId,
+  address: orderAddress,
 
-        orderStatus: "Placed",
-        coupon: couponUsed
-      });
+  items: [{
+    orderItemId: new mongoose.Types.ObjectId().toString(),
+    product: cartItem.product._id,
+    variant: variant._id,
+    quantity: cartItem.quantity,
+    price: finalPrice,
+    total: itemTotal,
+    itemStatus: "Placed"
+  }],
+
+  subtotal,
+  tax,
+  discount,
+  shipping,
+  finalAmount,
+  paymentMethod,
+  paymentStatus,
+  orderStatus: "Placed",
+  coupon: couponUsed
+});
+
 
 
       const orderNumber = `ORD-${order._id.toString().slice(-8).toUpperCase()}`;
@@ -1795,7 +1807,13 @@ export const cancelUserOrder = async (req, res) => {
     }
 
 
-    order.orderStatus = 'Cancelled';
+   order.orderStatus = 'Cancelled';
+
+order.items.forEach(item => {
+  item.itemStatus = 'Cancelled';
+  item.cancelledAt = new Date();
+});
+
     order.cancelledAt = new Date();
     order.cancellationReason = reason;
     order.cancellationReasonCode = reasonCode;
@@ -2072,22 +2090,39 @@ export const submitRefundRequest = async (req, res) => {
     const itemsWithIds = [];
 
     for (const item of items) {
-      const orderItem = order.items.find(orderItem =>
-        orderItem.product &&
-        orderItem.product._id.toString() === item.product
-      );
+    const orderItem = order.items.find(orderItem =>
+  orderItem.product?._id.toString() === item.product &&
+  (
+    !item.variant ||
+    orderItem.variant?._id?.toString() === item.variant
+  )
+);
+
+
+
       if (orderItem) {
         const itemSubtotal = orderItem.price * item.quantity;
         totalReturnSubtotal += itemSubtotal;
 
-        itemsWithIds.push({
-          product: orderItem.product._id,
-          variant: orderItem.variant?._id || null,
-          quantity: parseInt(item.quantity),
-          price: orderItem.price,
-          total: itemSubtotal,
-          reason: item.reason || 'general'
-        });
+       itemsWithIds.push({
+  product: orderItem.product?._id || null,
+  productName: orderItem.product?.name || 'Product',
+  productImage:
+    orderItem.variant?.images?.[0] ||
+    orderItem.product?.images?.[0] ||
+    null,
+
+  variant: orderItem.variant?._id || null,
+  variantColor: orderItem.variant?.color || null,
+  variantSize: orderItem.variant?.size || null,
+
+  quantity: parseInt(item.quantity),
+  price: orderItem.price,
+  total: itemSubtotal,
+  reason: item.reason || 'general'
+});
+
+
       }
     }
     let refundAmount = 0;

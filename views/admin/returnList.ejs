@@ -254,17 +254,19 @@
                                         </div>
                                     <% } %>
                                 </td>
-                                <td>
-                                    <div class="fw-bold text-dark">
-                                        <%= item.product?.name || 'Product N/A' %>
-                                    </div>
-                                    <% if (item.variant?.color || item.variant?.size) { %>
-                                        <small class="text-muted">
-                                            <%= item.variant?.color || '' %> 
-                                            <%= item.variant?.size ? 'Size: ' + item.variant.size : '' %>
-                                        </small>
-                                    <% } %>
-                                </td>
+                               <td>
+  <div class="fw-bold text-dark">
+    <%= item.productName || item.product?.name || 'Product' %>
+  </div>
+
+  <% if (item.variantColor || item.variantSize) { %>
+    <small class="text-muted">
+      <%= item.variantColor || '' %>
+      <%= item.variantSize ? ' Size: ' + item.variantSize : '' %>
+    </small>
+  <% } %>
+</td>
+
                                 <td>
                                     <div class="fw-bold text-dark">
                                         <%= returnReq.reason || 'No reason provided' %>

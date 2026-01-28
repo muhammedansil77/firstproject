@@ -5,7 +5,8 @@ import {
   editAddress,
   deleteAddress,
   showUploadPage,
-  uploadImage
+  uploadImage,
+  setDefaultAddress
 } from "../controllers/addressController.js";
 import { upload } from "../middlewares/upload.js";
 import authMiddle from "../middlewares/user/authMiddleware.js";
@@ -23,6 +24,8 @@ router.post("/add", addAddress);
 router.post("/edit/:id", editAddress);
 router.post("/delete/:id", deleteAddress);
 router.get("/upload-image", showUploadPage);
+router.post("/set-default/:id", setDefaultAddress);
+
 router.post("/upload-image", upload.single("image"), uploadImage);
 
 

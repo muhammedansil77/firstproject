@@ -79,20 +79,30 @@ refundBreakdown: {
     default: false
   },
 
-  items: [{
-    product: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Product'
-    },
-    variant: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: 'Variant'
-    },
-    quantity: Number,
-    price: Number,
-    total: Number,
-    reason: String
-  }],
+items: [{
+  product: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Product'
+  },
+
+  productName: String,      // ✅ ADD
+  productImage: String,     // ✅ ADD
+
+  variant: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Variant'
+  },
+
+  variantColor: String,     // ✅ ADD
+  variantSize: String,      // ✅ ADD
+
+  quantity: Number,
+  price: Number,
+  total: Number,
+  reason: String
+}]
+
+,
 
   approvedAt: Date,
   pickupScheduledAt: Date,

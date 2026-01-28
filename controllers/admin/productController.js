@@ -267,263 +267,228 @@ export const getProduct = async (req, res) => {
     });
   }
 };
+export const renderCreateProductPage = async (req, res) => {
+  try {
+    const categories = await Category.find({}).sort({ name: 1 }).lean();
+     let product = null;
+
+  // 👇 THIS IS THE KEY
+  if (req.params.id) {
+    product = await Product.findById(req.params.id)
+      .populate('variants')
+      .lean();
+  }
+
+    return res.render('admin/create', {
+      layout: 'admin/layouts/main',
+      title: 'Add Product',
+      categories,
+         product,
+      pageJS: 'product-create.js',
+      // optional (reuse existing)
+    });
+
+  } catch (err) {
+    console.error('renderCreateProductPage error:', err);
+
+    return res.status(500).render('admin/error', {
+      layout: 'admin/layouts/main',
+      title: 'Error',
+      message: 'Failed to load create product page'
+    });
+  }
+};
+export const renderEditProductPage = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+      .populate('category')
+      .populate('variants')
+      .lean();
+
+    if (!product) return res.status(404).render('admin/404');
+
+    const categories = await Category.find({
+      active: true,
+      isDeleted: false
+    })
+    .sort({ name: 1 })
+    .lean();
+
+    res.render('admin/edit', {
+      title: 'Edit Product',
+      product,
+      categories,
+      pageJS: 'product-edit.js'
+    });
+
+  } catch (err) {
+    console.error('renderEditProductPage error:', err);
+    res.status(500).send('Server error');
+  }
+};
+
+
+
 
 
 export const createProduct = async (req, res) => {
-  
-  function safeUnlinkRel(relPath) {
-    try {
-      if (!relPath) return;
-      const p = path.join(process.cwd(), 'public', String(relPath));
-      if (fs.existsSync(p)) fs.unlinkSync(p);
-    } catch (e) {
-      console.warn('safeUnlinkRel error', e && e.message);
-    }
-  }
-
   try {
-    console.log('createProduct: entry - req.body keys:', Object.keys(req.body || {}));
+    const { name, description, category } = req.body;
 
-   
-    const allFilesFlat = Array.isArray(req.files) ? req.files : (req.files ? Object.values(req.files).flat() : []);
-    console.log('createProduct: total uploaded file count:', allFilesFlat.length, 'files:', allFilesFlat.map(f => f.fieldname));
-
-    const { name, description, category } = req.body || {};
-    if (!name || !name.trim()) return res.status(400).json({ success: false, message: 'Name required' });
-
-  
-    const productFiles = allFilesFlat.filter(f => ['productImages', 'productImages[]','images','images[]'].includes(f.fieldname));
-    const variantFiles = allFilesFlat.filter(f => (f.fieldname || '').match(/^variants\[(\d+)\]\[image\](?:\[\])?$/));
-
-
-    const variantFilesMap = {};
-    for (const f of variantFiles) {
-      const m = f.fieldname.match(/^variants\[(\d+)\]\[image\](?:\[\])?$/);
-      if (!m) continue;
-      const idx = String(m[1]);
-      variantFilesMap[idx] = variantFilesMap[idx] || [];
-      variantFilesMap[idx].push(f);
-    }
-    console.log('createProduct: variantFilesMap keys=', Object.keys(variantFilesMap));
-
-  
-    let variantsPayload = [];
-    if (req.body.variants) {
-      try { variantsPayload = (typeof req.body.variants === 'string') ? JSON.parse(req.body.variants) : req.body.variants; }
-      catch (e) { variantsPayload = []; }
-    }
-    console.log('createProduct: variantsPayload length=', (variantsPayload && variantsPayload.length) ? variantsPayload.length : 0);
-
-  
-    const variantMap = {};
-    for (const k of Object.keys(req.body || {})) {
-      const m = k.match(/^variants\[(\d+)\]\[(color|stock|price|salePrice|isListed|image)\]$/);
-      if (m) {
-        const idx = String(m[1]), field = m[2];
-        variantMap[idx] = variantMap[idx] || {};
-        variantMap[idx][field] = req.body[k];
-      }
-    }
-    console.log('createProduct: variantMap keys=', Object.keys(variantMap));
-
-  
-const indicesSet = new Set();
-
-
-Object.keys(variantFilesMap).forEach(k => indicesSet.add(String(k)));
-
-
-Object.keys(variantMap).forEach(k => indicesSet.add(String(k)));
-
-
-if (Array.isArray(variantsPayload)) {
-  for (let i = 0; i < variantsPayload.length; i++) {
-    if (indicesSet.has(String(i))) indicesSet.add(String(i));
-  }
-}
-
-const variantIndices = Array.from(indicesSet).sort((a,b)=>Number(a)-Number(b));
-console.log('SAFE variantIndices:', variantIndices);
-
-
-
-    const savedVariantPathsMap = {};
-    const tempSavedFilesForCleanup = []; 
-
-   
-    async function processFilesForVariant(idx) {
-  const uploadedFiles = variantFilesMap[idx] || [];
-  const saved = [];
-  for (const f of uploadedFiles) {
-    const savedPath = await processVariantImage(f);
-    if (savedPath) {
-      saved.push(savedPath);
-    }
-  }
-  return saved;
-}
-
-
-    
-    let savedProductFilenames = [];
-    if (productFiles.length > 0) {
-      try {
-       const saved = await processProductImages(productFiles);
-savedProductFilenames = saved;
-        savedProductFilenames.forEach(p => tempSavedFilesForCleanup.push(p));
-        console.log('createProduct: savedProductFilenames=', savedProductFilenames);
-      } catch (e) {
-        console.warn('createProduct: processProductImages failed - continuing without them:', e && e.message);
-      }
+    /* ===============================
+       PRODUCT VALIDATION
+    =============================== */
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        errors: { name: 'Product name is required' }
+      });
     }
 
+    const exists = await Product.findOne({
+      name: new RegExp(`^${escapeRegex(name.trim())}$`, 'i'),
+      isDeleted: false
+    });
 
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        errors: { name: 'Product with this name already exists' }
+      });
+    }
+
+    const variantsInput = req.body.variants || {};
+
+    const variantIndices = Object.keys(variantsInput);
+
+    if (!variantIndices.length) {
+      return res.status(400).json({
+        success: false,
+        errors: {
+          variants: { _form: 'At least one variant is required' }
+        }
+      });
+    }
+
+    /* ===============================
+       VARIANT VALIDATION (NO DB WRITE)
+    =============================== */
     for (const idx of variantIndices) {
-      const savedPaths = [];
+      const v = variantsInput[idx];
 
+      if (!v.color || !v.color.trim()) {
+        return res.status(400).json({
+          success: false,
+          errors: { variants: { [idx]: { color: 'Color is required' } } }
+        });
+      }
 
-      const processed = await processFilesForVariant(idx);
-      processed.forEach(p => savedPaths.push(p));
+      const stock = Number(v.stock);
+      if (!Number.isFinite(stock) || stock < 0) {
+        return res.status(400).json({
+          success: false,
+          errors: { variants: { [idx]: { stock: 'Stock cannot be negative' } } }
+        });
+      }
 
-     
-      const payloadEntry = (Array.isArray(variantsPayload) && typeof variantsPayload[Number(idx)] !== 'undefined') ? variantsPayload[Number(idx)] : null;
-      const mapEntry = variantMap[idx] || {};
-      const mergedEntry = Object.assign({}, mapEntry, payloadEntry || {});
+      const price = Number(v.price);
+      if (!Number.isFinite(price) || price <= 0) {
+        return res.status(400).json({
+          success: false,
+          errors: { variants: { [idx]: { price: 'Price must be greater than 0' } } }
+        });
+      }
+    }
+const allFiles = Array.isArray(req.files)
+  ? req.files
+  : Object.values(req.files || {}).flat();
 
-      if (mergedEntry.image) {
-        if (Array.isArray(mergedEntry.image)) {
-          mergedEntry.image.forEach(im => {
-            if (!im) return;
-            const s = String(im).trim();
-            if (/^https?:\/\//i.test(s)) savedPaths.push(s);
-            else savedPaths.push(s.replace(/^\/+/, '').replace(/\\/g, '/'));
-          });
-        } else if (typeof mergedEntry.image === 'string' && mergedEntry.image) {
-          const s = mergedEntry.image.trim();
-          if (/^https?:\/\//i.test(s)) savedPaths.push(s);
-          else savedPaths.push(s.replace(/^\/+/, '').replace(/\\/g, '/'));
+const variantFilesMap = {};
+
+for (const file of allFiles) {
+  const match = file.fieldname.match(/^variants\[(\d+)\]\[image\]/);
+  if (!match) continue;
+
+  const idx = match[1];
+  variantFilesMap[idx] = variantFilesMap[idx] || [];
+  variantFilesMap[idx].push(file);
+}
+for (const idx of variantIndices) {
+  const files = variantFilesMap[idx] || [];
+
+  if (files.length < 3) {
+    return res.status(400).json({
+      success: false,
+      errors: {
+        variants: {
+          [idx]: { images: 'Minimum 3 images required' }
         }
       }
-
-      if (!savedPaths.length && savedProductFilenames.length) {
-        const start = Math.max(0, Number(idx));
-        for (let j = 0; j < 3 && (start + j) < savedProductFilenames.length; j++) savedPaths.push(savedProductFilenames[start + j]);
-      }
-
-      savedVariantPathsMap[idx] = savedPaths;
-      console.log(`createProduct: prepared savedVariantPathsMap[${idx}] length=${savedPaths.length}`);
-    }
-
-   
-    for (const idx of variantIndices) {
-      const arr = savedVariantPathsMap[idx] || [];
-      if (!arr.length) {
-   
-        tempSavedFilesForCleanup.forEach(p => safeUnlinkRel(p));
-        return res.status(400).json({ success: false, message: `No images provided for variant ${idx}. Each variant must have at least 3 images.`, got: arr });
-      }
-      if (arr.length < 3) {
-        tempSavedFilesForCleanup.forEach(p => safeUnlinkRel(p));
-        return res.status(400).json({ success: false, message: `Variant ${idx} needs at least 3 images. Provided ${arr.length}.`, got: arr });
-      }
-    }
+    });
+  }
+}
 
 
-    let categoryForSave = null;
-    if (category) {
-      if (mongoose.Types.ObjectId.isValid(category)) categoryForSave = new mongoose.Types.ObjectId(category);
-      else {
-        try {
-          const catDoc = await Category.findOne({ name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' } }, { _id:1 }).lean();
-          if (catDoc && catDoc._id) categoryForSave = catDoc._id;
-        } catch (e) { console.warn('createProduct: category lookup failed', e && e.message); }
-      }
-    }
-
-    const prod = await Product.create({
+    /* ===============================
+       CREATE PRODUCT
+    =============================== */
+    const product = await Product.create({
       name: name.trim(),
       description: description || '',
-      category: categoryForSave,
-      images: savedProductFilenames
+      category: category || null
     });
-    console.log('createProduct: created product', prod._id?.toString());
 
-  
-    const createdVariantIds = [];
-    for (const idx of variantIndices) {
-      try {
-        const payloadEntry = (Array.isArray(variantsPayload) && typeof variantsPayload[Number(idx)] !== 'undefined') ? variantsPayload[Number(idx)] : null;
-        const mapEntry = variantMap[idx] || {};
-        const v = Object.assign({}, mapEntry, payloadEntry || {});
+    /* ===============================
+       CREATE VARIANTS
+    =============================== */
+  const createdVariantIds = [];
 
-            const imgs = savedVariantPathsMap[idx] || [];
-        const stockNum = (typeof v.stock !== 'undefined' && v.stock !== null && v.stock !== '') ? Number(v.stock) : 0;
-        const priceNum = (typeof v.price !== 'undefined' && v.price !== null && v.price !== '') ? Number(v.price) : null;
-        const salePriceNum = (typeof v.salePrice !== 'undefined' && v.salePrice !== null && v.salePrice !== '') ? Number(v.salePrice) : null;
-        const colorVal = (typeof v.color !== 'undefined' && v.color !== null && String(v.color).trim() !== '') ? v.color : null;
+for (const idx of variantIndices) {
+  const v = variantsInput[idx];
+  const files = variantFilesMap[idx] || [];
 
-        const humanIdx = Number(idx) + 1;
+  const imagePaths = [];
+  for (const file of files) {
+    const savedPath = await processVariantImage(file); // your existing helper
+    if (savedPath) imagePaths.push(savedPath);
+  }
 
-        if (Number.isFinite(stockNum) && stockNum < 0) {
-          tempSavedFilesForCleanup.forEach(p => safeUnlinkRel(p));
-          return res.status(400).json({
-            success: false,
-            message: `Variant ${humanIdx}: stock cannot be negative`
-          });
-        }
+  const variant = await Variant.create({
+    product: product._id,
+    color: v.color.trim(),
+    stock: Number(v.stock),
+    price: Number(v.price),
+    salePrice: v.salePrice ? Number(v.salePrice) : null,
+    images: imagePaths, // ✅ NOW IMAGES ARE SAVED
+    isListed: true
+  });
 
-        if (Number.isFinite(priceNum) && priceNum < 0) {
-          tempSavedFilesForCleanup.forEach(p => safeUnlinkRel(p));
-          return res.status(400).json({
-            success: false,
-            message: `Variant ${humanIdx}: price cannot be negative`
-          });
-        }
+  createdVariantIds.push(variant._id);
+}
 
 
-        let isListedFlag = false;
-        if (typeof v.isListed !== 'undefined') {
-          const raw = v.isListed;
-          if (raw === true || raw === 'true' || raw === '1' || raw === 1) isListedFlag = true;
-        } else {
-          isListedFlag = (Number.isFinite(priceNum) && priceNum !== null && (Number.isFinite(stockNum) ? stockNum > 0 : false));
-        }
+    /* ===============================
+       LINK VARIANTS TO PRODUCT
+    =============================== */
+    await Product.updateOne(
+      { _id: product._id },
+      { $set: { variants: createdVariantIds } }
+    );
 
-        const created = await Variant.create({
-          product: prod._id,
-          images: imgs,
-          stock: Number.isFinite(stockNum) ? stockNum : 0,
-          color: colorVal,
-          price: Number.isFinite(priceNum) ? priceNum : null,
-          salePrice: Number.isFinite(salePriceNum) ? salePriceNum : null,
-          isListed: !!isListedFlag
-        });
-
-        createdVariantIds.push(created._id);
-      } catch (e) {
-        console.error('createProduct: failed creating variant idx', idx, e && e.message);
-      
-        try { if (createdVariantIds.length) await Variant.deleteMany({ _id: { $in: createdVariantIds } }); } catch(e){/*ignore*/}
-        try { await Product.deleteOne({ _id: prod._id }); } catch(e){/*ignore*/}
-        tempSavedFilesForCleanup.forEach(p => safeUnlinkRel(p));
-        return res.status(500).json({ success:false, message: 'Server error creating variants', error: String(e) });
-      }
-    }
-
-
-    if (createdVariantIds.length) {
-      await Product.updateOne({ _id: prod._id }, { $set: { variants: createdVariantIds } });
-    }
-
-    const saved = await Product.findById(prod._id).populate('variants').lean();
-    console.log('createProduct: done - saved product variants count=', (saved.variants || []).length);
-    return res.json({ success: true, product: saved });
+    return res.json({
+      success: true,
+      message: 'Product created successfully'
+    });
 
   } catch (err) {
-    console.error('createProduct error:', err && (err.stack || err));
-    return res.status(500).json({ success:false, message:'Server error during product create', error: String(err) });
+    console.error('createProduct error:', err);
+    return res.status(500).json({
+      success: false,
+      message: 'Server error while creating product'
+    });
   }
 };
+
 
 export const deleteProductImage = async (req, res) => {
   try {
@@ -577,9 +542,49 @@ export const deleteProductImage = async (req, res) => {
   }
 };
 
+export const deleteVariant = async (req, res) => {
+  try {
+    const variantId = req.params.id;
+
+    const variant = await Variant.findById(variantId);
+    if (!variant) {
+      return res.json({ success: true }); // already deleted
+    }
+
+ 
+    for (const img of variant.images) {
+      const publicId = getCloudinaryPublicId(img);
+      if (publicId) {
+        await cloudinary.uploader.destroy(publicId);
+      }
+    }
+
+    // 🔥 remove variant reference from product
+    await Product.findByIdAndUpdate(
+      variant.product,
+      { $pull: { variants: variant._id } }
+    );
+
+    // 🔥 delete variant
+    await Variant.findByIdAndDelete(variantId);
+
+    res.json({ success: true });
+
+  } catch (err) {
+    console.error('Delete variant error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to delete variant'
+    });
+  }
+};
 
 export async function patchProduct(req, res) {
   try {
+
+    
+    console.log('REQ BODY KEYS:', Object.keys(req.body));
+console.log('REQ FILES:', req.files?.map(f => f.fieldname));
     const productId = req.params.id;
     if (!productId) {
       return res.status(400).json({ success: false, message: 'Product id required' });
@@ -589,6 +594,14 @@ export async function patchProduct(req, res) {
     if (!product) {
       return res.status(404).json({ success: false, message: 'Product not found' });
     }
+    // ✅ PRODUCT NAME VALIDATION
+if (!req.body.name || !req.body.name.trim()) {
+  return res.status(400).json({
+    success: false,
+    message: 'Product name is required'
+  });
+}
+
 
   
     const { name, description, category } = req.body;
@@ -601,18 +614,29 @@ export async function patchProduct(req, res) {
       product.description = description;
     }
 
-    if (category) {
-      if (mongoose.Types.ObjectId.isValid(category)) {
-        product.category = category;
-      } else {
-        const cat = await Category.findOne({
-          name: new RegExp(`^${escapeRegex(category)}$`, 'i')
-        });
-        if (cat) {
-          product.category = cat._id;
-        }
-      }
-    }
+  // ✅ CATEGORY VALIDATION
+if (!category) {
+  return res.status(400).json({
+    success: false,
+    message: 'Category is required'
+  });
+}
+
+const categoryDoc = await Category.findOne({
+  _id: category,
+  active: true,
+  isDeleted: false
+});
+
+if (!categoryDoc) {
+  return res.status(400).json({
+    success: false,
+    message: 'Invalid or inactive category'
+  });
+}
+
+product.category = categoryDoc._id;
+
 
 
     const allFilesFlat = Array.isArray(req.files) ? req.files : (req.files ? Object.values(req.files).flat() : []);
@@ -638,92 +662,131 @@ if (saved && saved[0]) {
    
     await product.save();
 
-  
-    const variantsToUpdate = [];
-    
-    if (req.body.variants) {
-      try {
-        const variantsArray = typeof req.body.variants === 'string' 
-          ? JSON.parse(req.body.variants) 
-          : req.body.variants;
-        
-        if (Array.isArray(variantsArray)) {
-          variantsToUpdate.push(...variantsArray);
-        }
-      } catch (e) {
-        console.warn('Failed to parse variants array:', e.message);
-      }
-    }
+  /* ===============================
+   NORMALIZE VARIANTS INPUT
+=============================== */
+let variantsInput = {};
 
-  
-    const variantFilesMap = {};
-    allFilesFlat.forEach(file => {
-    const match = file.fieldname.match(/^variants\[(\d+)\]\[image\](?:\[\])?$/);
+if (req.body.variants && typeof req.body.variants === 'object') {
+  // ✅ THIS IS YOUR CASE (EDIT)
+  variantsInput = req.body.variants;
+} else {
+  // fallback (flat keys)
+  for (const key in req.body) {
+    const m = key.match(/^variants\[(\d+)\]\[(.+)\]$/);
+    if (!m) continue;
 
-      if (match) {
-        const idx = match[1];
-        variantFilesMap[idx] = variantFilesMap[idx] || [];
-        variantFilesMap[idx].push(file);
-      }
-    });
+    const idx = m[1];
+    const field = m[2];
 
- 
-   for (let i = 0; i < variantsToUpdate.length; i++) {
-  const variantData = variantsToUpdate[i];
+    variantsInput[idx] = variantsInput[idx] || {};
+    variantsInput[idx][field] = req.body[key];
+  }
+}
+
+/* ===============================
+   MAP VARIANT FILES
+=============================== */
+const variantFilesMap = {};
+
+allFilesFlat.forEach(file => {
+  const m = file.fieldname.match(/^variants\[(\d+)\]\[image\]/);
+  if (!m) return;
+
+  const idx = m[1];
+  variantFilesMap[idx] = variantFilesMap[idx] || [];
+  variantFilesMap[idx].push(file);
+});
+
+/* ===============================
+   CREATE / UPDATE VARIANTS
+=============================== */
+for (const idx of Object.keys(variantsInput)) {
+  const v = variantsInput[idx];
   let variant;
+const humanIndex = Number(idx) + 1;
 
+// ✅ COLOR
+if (!v.color || !v.color.trim()) {
+  return res.status(400).json({
+    success: false,
+    message: `Variant ${humanIndex}: Color is required`
+  });
+}
 
-  if (!variantData._id) {
+// ✅ STOCK
+const stock = Number(v.stock);
+if (!Number.isInteger(stock) || stock < 0) {
+  return res.status(400).json({
+    success: false,
+    message: `Variant ${humanIndex}: Stock must be 0 or more`
+  });
+}
+
+// ✅ PRICE
+const price = Number(v.price);
+if (isNaN(price) || price <= 0) {
+  return res.status(400).json({
+    success: false,
+    message: `Variant ${humanIndex}: Price must be greater than 0`
+  });
+}
+
+  // EXISTING VARIANT
+  if (v._id && mongoose.Types.ObjectId.isValid(v._id)) {
+    variant = await Variant.findById(v._id);
+    if (!variant) continue;
+  }
+  // NEW VARIANT
+  else {
     variant = new Variant({
       product: productId,
-      color: variantData.color?.trim(),
-      stock: Number(variantData.stock) || 0,
-      price: Number(variantData.price) || 0,
-      salePrice: variantData.salePrice ? Number(variantData.salePrice) : null,
-      isListed: true,
       images: []
     });
 
-    await variant.save();
-    product.variants.push(variant._id);
+    if (!product.variants.includes(variant._id)) {
+      product.variants.push(variant._id);
+    }
   }
 
- 
-  else {
-    variant = await Variant.findById(variantData._id);
-    if (!variant) continue;
-
-    variant.color = variantData.color?.trim();
-    variant.stock = Number(variantData.stock) || 0;
-    variant.price = Number(variantData.price) || 0;
-    variant.salePrice = variantData.salePrice ? Number(variantData.salePrice) : null;
-    variant.isListed = true;
-  }
+variant.color = v.color.trim();
+variant.stock = stock;
+variant.price = price;
+variant.salePrice = v.salePrice ? Number(v.salePrice) : null;
+variant.isListed = stock > 0;
 
 
+  // ADD IMAGES
+  const files = variantFilesMap[idx] || [];
+  // ✅ IMAGE COUNT VALIDATION (MIN 3)
+const existingImages = variant.images.length;
+const newImages = files.length;
 
-  const files = variantFilesMap[i] || [];
+if (existingImages + newImages < 3) {
+  return res.status(400).json({
+    success: false,
+    message: `Variant ${humanIndex}: Minimum 3 images required`
+  });
+}
+
   for (const file of files) {
     const saved = await processVariantImage(file);
     if (saved) variant.images.push(saved);
   }
 
-  // 🗑 HANDLE DELETED IMAGES
-  if (variantData.deletedImages) {
-    let deletedImages = [];
-    try {
-      deletedImages = JSON.parse(variantData.deletedImages);
-    } catch {}
-
-    for (const imgUrl of deletedImages) {
-      variant.images = variant.images.filter(img => img !== imgUrl);
-      const publicId = getCloudinaryPublicId(imgUrl);
-      if (publicId) await cloudinary.uploader.destroy(publicId);
-    }
-  }
-
   await variant.save();
 }
+
+// save product once
+await product.save();
+
+
+
+  
+   
+
+ 
+ 
 
  
     const updated = await Product.findById(productId)

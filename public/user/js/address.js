@@ -72,7 +72,7 @@ function openEditModal(address) {
     { id: 'e_state', value: address.state || '' },
     { id: 'e_postalCode', value: address.postalCode || '' },
     { id: 'e_country', value: address.country || '' },
-    { id: 'e_alternatePhone', value: address.alternatePhone || '' }
+   
   ];
 
   fields.forEach(field => {
@@ -119,9 +119,14 @@ function openEditModal(address) {
       separateDialCode: true,
       utilsScript: 'https://cdn.jsdelivr.net/npm/intl-tel-input@19.2.16/build/js/utils.js'
     });
-    if (address.alternatePhone) {
-      itiEditAlternate.setNumber(address.alternatePhone);
-    }
+   if (address.alternatePhone) {
+  const alt = address.alternatePhone.toString().trim();
+
+  itiEditAlternate.setNumber(
+    alt.startsWith('+') ? alt : `+91${alt}`
+  );
+}
+
   }
 
   modal.classList.remove('hidden');
@@ -231,6 +236,25 @@ function validatePhoneNumbers(iti1, iti2) {
 
   return true;
 }
+document.addEventListener("DOMContentLoaded", function () {
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get("edit");
+
+  if (!editId) return;
+  if (!window.ADDRESSES || !Array.isArray(window.ADDRESSES)) return;
+
+  const address = window.ADDRESSES.find(a => a._id === editId);
+
+  if (address) {
+    // Small delay ensures intlTelInput + DOM are ready
+    setTimeout(() => {
+      openEditModal(address);
+    }, 100);
+
+    // Optional: clean URL after opening modal
+    history.replaceState({}, "", "/user/address");
+  }
+});
 
 /* =========================================================
    FORM SUBMIT VALIDATION (ADD + EDIT) - FIXED
@@ -305,12 +329,13 @@ document.addEventListener('submit', function (e) {
   }
 });
 
-/* =========================================================
-   REAL-TIME VALIDATION
-========================================================= */
+
 document.addEventListener('DOMContentLoaded', function() {
-  // Real-time validation for input fields
-  const inputs = document.querySelectorAll('input[name="fullName"], input[name="city"], input[name="postalCode"], input[name="state"]');
+
+ const inputs = document.querySelectorAll(
+  'input[name="fullName"], input[name="city"], input[name="postalCode"], select[name="state"]'
+);
+
   
   inputs.forEach(input => {
     // Add input event for postal code to allow only numbers
@@ -324,7 +349,8 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Add input event for name, city, state to allow only letters and spaces
-    if (['fullName', 'city', 'state'].includes(input.name)) {
+  if (['fullName', 'city'].includes(input.name)) {
+
       input.addEventListener('input', function() {
         this.value = this.value.replace(/[^a-zA-Z\s]/g, '');
       });

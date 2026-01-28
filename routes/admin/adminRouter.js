@@ -52,6 +52,8 @@ router.get("/product/data", productCtrl.listProducts); // List products (for dat
 
 // ✅ ADD THIS ROUTE - Get single product for editing
 router.get("/product/:id", productCtrl.getProduct);
+router.get('/products/create', productCtrl.renderCreateProductPage);
+router.get('/product/:id/edit', productCtrl.renderEditProductPage);
 
 // Create product with file upload
 router.post("/product", uploadFields, productCtrl.createProduct);
@@ -61,6 +63,11 @@ router.patch("/product/:id", upload.any(), productCtrl.patchProduct);
 
 // Delete product image
 router.delete('/product/:productId/image', productCtrl.deleteProductImage);
+router.delete(
+  '/product/variant/:id',
+  
+  productCtrl.deleteVariant
+);
 
 // Product status management
 router.post('/product/:id/block', productCtrl.blockProduct);

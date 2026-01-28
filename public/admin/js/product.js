@@ -307,12 +307,11 @@ function updatePreviewIndices(variantIdx) {
     tdActions.className = 'px-4 text-center';
     tdActions.innerHTML = `
       <div class="d-flex gap-2 justify-content-center">
-        <button class="btn btn-sm btn-outline-primary editBtn px-3" 
-                data-id="${product._id}" 
-                style="border-radius: 8px;"
-                ${product.status === 'blocked' ? 'disabled' : ''}>
-          <i class="bi bi-pencil me-1"></i>Edit
-        </button>
+         <a href="/admin/product/${product._id}/edit"
+       class="btn btn-sm btn-outline-primary px-3"
+       style="border-radius: 8px;">
+      <i class="bi bi-pencil me-1"></i>Edit
+    </a>
         <button class="btn btn-sm btn-${product.status === 'active' ? 'outline-warning' : 'outline-success'} toggleStatusBtn px-3" 
                 data-id="${product._id}" 
                 data-status="${product.status || 'active'}"
@@ -855,12 +854,12 @@ function addVariantRow(container, variantData) {
 
     if (productTableBody) {
       productTableBody.addEventListener('click', async function (ev) {
-        const editBtn = ev.target.closest('.editBtn');
-        if (editBtn) {
-          const id = editBtn.dataset.id; 
-          await openEditModal(id);
-          return;
-        }
+        // const editBtn = ev.target.closest('.editBtn');
+        // if (editBtn) {
+        //   const id = editBtn.dataset.id; 
+        //   await openEditModal(id);
+        //   return;
+        // }
         
         const deleteBtn = ev.target.closest('.deleteBtn');
         if (deleteBtn) {

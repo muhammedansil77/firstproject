@@ -1,0 +1,209 @@
+<div class="admin-content-page px-4 py-4" style="background:#f8f9fa; min-height:100vh;">
+  <div class="container" style="max-width:1200px;">
+
+    <!-- Header -->
+    <div class="bg-white rounded-3 shadow-sm p-4 mb-4 d-flex justify-content-between">
+      <div>
+        <h2 class="fw-bold mb-1">Edit Product</h2>
+        <p class="text-muted small mb-0">Update product & variants</p>
+      </div>
+      <a href="/admin/product" class="btn btn-outline-secondary">Back</a>
+    </div>
+<!-- Toast Container -->
+<div class="toast-container position-fixed top-0 end-0 p-3" style="z-index:1100">
+  <div id="appToast" class="toast align-items-center text-bg-danger border-0" role="alert">
+    <div class="d-flex">
+      <div class="toast-body" id="toastMessage">
+        Error
+      </div>
+      <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+    </div>
+  </div>
+</div>
+
+    <form id="editProductForm"
+      data-id="<%= product._id %>"
+      enctype="multipart/form-data"
+      novalidate>
+
+
+      <!-- Product Info -->
+      <div class="bg-white rounded-3 shadow-sm p-4 mb-4">
+        <h6 class="fw-bold mb-3">Basic Information</h6>
+
+        <div class="row g-3">
+          <!-- In Product Info section -->
+<div class="col-md-6">
+  <label class="form-label">Product Name <span class="text-danger">*</span></label>
+  <input name="name" value="<%= product.name %>" class="form-control product-name" required>
+  <div class="invalid-feedback error-name"></div>
+</div>
+
+<div class="col-md-6">
+  <label class="form-label">Category <span class="text-danger">*</span></label>
+  <select name="category" class="form-select product-category" required>
+    <option value="">-- Select Category --</option>
+    <% categories.forEach(c => { %>
+      <option value="<%= c._id %>"
+        <%= String(c._id) === String(product.category?._id || product.category) ? 'selected' : '' %>>
+        <%= c.name %>
+      </option>
+    <% }) %>
+  </select>
+  <div class="invalid-feedback error-category"></div>
+</div>
+
+          <div class="col-12">
+            <label class="form-label">Description</label>
+            <textarea name="description" class="form-control" rows="3"><%= product.description %></textarea>
+          </div>
+        </div>
+      </div>
+
+      <!-- Variants -->
+      <div class="bg-white rounded-3 shadow-sm p-4">
+        <div class="d-flex justify-content-between mb-3">
+          <h6 class="fw-bold mb-0">Variants</h6>
+          <button type="button" id="addVariantBtn" class="btn btn-sm btn-outline-primary">
+            Add Variant
+          </button>
+        </div>
+       
+
+        <div id="variantsContainer">
+
+          <% product.variants.forEach((v, i) => { %>
+          <div class="card mb-3 variant-row" data-existing="1" data-index="<%= i %>">
+            <div class="card-body">
+              <input type="hidden" name="variants[<%= i %>][_id]" value="<%= v._id %>">
+
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label>Images</label>
+                  <div class="d-flex gap-2 flex-wrap mb-2">
+                    <% v.images.forEach(img => { %>
+                      <div class="position-relative">
+                        <img src="<%= img %>" width="70" height="70" style="object-fit:cover">
+                        <button type="button"
+                          class="btn btn-danger btn-sm position-absolute top-0 end-0 delete-image"
+                          data-img="<%= img %>"
+                          data-variant="<%= v._id %>">×</button>
+                      </div>
+                    <% }) %>
+                  </div>
+
+               <input type="file"
+       class="form-control variant-image-input"
+       data-index="<%= i %>"
+       accept="image/*">
+
+<div class="variant-image-preview mt-2 d-flex gap-2 flex-wrap"></div>
+<small class="text-danger error-images"></small>
+
+                </div>
+
+                <div class="col-md-6">
+                <!-- In existing variants section -->
+<label>Color <span class="text-danger">*</span></label>
+<input class="form-control variant-color" name="variants[<%= i %>][color]" value="<%= v.color %>" required>
+<div class="invalid-feedback error-color"></div>
+
+<label>Stock <span class="text-danger">*</span></label>
+<input type="number" 
+  class="form-control variant-stock"
+  name="variants[<%= i %>][stock]"
+  value="<%= v.stock %>"
+ 
+  >
+<div class="invalid-feedback error-stock"></div>
+
+<label class="mt-2">Price ($) <span class="text-danger">*</span></label>
+<input type="number" 
+  class="form-control variant-price"
+  name="variants[<%= i %>][price]"
+  value="<%= v.price %>"
+ 
+  >
+<div class="invalid-feedback error-price"></div>
+
+                </div>
+              </div>
+            </div>
+          </div>
+          <% }) %>
+
+        </div>
+      </div>
+
+      <div class="text-end mt-4">
+       <button type="submit" class="btn btn-success px-5" id="updateBtn">
+  <span class="btn-text">Update Product</span>
+  <span class="spinner-border spinner-border-sm d-none ms-2" role="status"></span>
+</button>
+
+      </div>
+    </form>
+
+  </div>
+</div>
+
+<!-- NEW VARIANT TEMPLATE -->
+<template id="newVariantTpl">
+  <div class="card mb-3 variant-row">
+    <div class="card-body">
+          <div class="d-flex justify-content-end mb-2">
+      
+      </div>
+      <div class="row g-3">
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Images (3+)</label>
+
+          <!-- ✅ MUST MATCH JS -->
+          <input type="file"
+                 class="form-control variant-image-input"
+                 accept="image/*">
+
+          <!-- ✅ REQUIRED FOR CROPPER PREVIEW -->
+          <div class="variant-image-preview mt-2 d-flex gap-2 flex-wrap"></div>
+        </div>
+
+        <div class="col-md-6">
+          <label class="form-label fw-semibold">Color</label>
+          <input class="form-control variant-color" >
+          <div class="invalid-feedback error-color"></div>
+
+          <label class="form-label fw-semibold mt-2">Stock</label>
+          <input type="number"  class="form-control variant-stock" >
+        <div class="invalid-feedback error-stock"></div>
+
+          <label class="form-label fw-semibold mt-2">Price</label>
+          <input type="number"  class="form-control variant-price" >
+          <div class="invalid-feedback error-price"></div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</template>
+
+<!-- Cropper Modal -->
+<div class="modal fade" id="cropperModal" tabindex="-1">
+  <div class="modal-dialog modal-lg modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Crop Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body text-center">
+        <img id="cropperImage" style="max-width:100%;">
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button class="btn btn-primary" id="applyCropBtn">Apply Crop</button>
+      </div>
+    </div>
+  </div>
+</div>

@@ -413,6 +413,12 @@ export const getReturnDetail = async (req, res) => {
     
  const item = returnReq.items?.[0] || {};
 
+const productName =
+  item.product?.name ||
+  item.productName ||
+  'Product';
+
+
 const rawImage =
   item.variant?.images?.[0] ||
   item.product?.images?.[0] ||
