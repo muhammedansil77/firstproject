@@ -20,77 +20,51 @@ if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
    
 }
 
-passport.use(new GoogleStrategy({
-    clientID: process.env.GOOGLE_CLIENT_ID,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: getCallbackURL(),
-    passReqToCallback: true
-}, async (req, accessToken, refreshToken, profile, done) => {
-    try {
-        console.log("📧 Google Profile Email:", profile.emails?.[0]?.value);
-        console.log("🆔 Google ID:", profile.id);
+passport.use(
+  new GoogleStrategy(
+    {
+      clientID: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
 
-    
+      // 🔥 FORCE THE CALLBACK (NO ENV LOGIC)
+      callbackURL: "https://luxeandtime.anzil.online/auth/google/callback",
+
+      passReqToCallback: true
+    },
+    async (req, accessToken, refreshToken, profile, done) => {
+      try {
         let user = await User.findOne({ googleId: profile.id });
 
         if (user) {
-            user.lastLogin = new Date();
-            user.googleProfile = profile._json;
-
-            if (profile.photos && profile.photos[0]) {
-                user.profilePicture = profile.photos[0].value;
-            }
-
-            await user.save();
-            return done(null, user);
+          user.lastLogin = new Date();
+          await user.save();
+          return done(null, user);
         }
 
-        
         const email = profile.emails?.[0]?.value;
-        if (email) {
-            user = await User.findOne({ email: email.toLowerCase() });
 
-            if (user) {
-                
-                user.googleId = profile.id;
-                user.googleProfile = profile._json;
-                user.isVerified = true;
-                user.verifiedAt = new Date();
-                user.lastLogin = new Date();
+        user = await User.findOne({ email });
 
-                if (profile.photos && profile.photos[0]) {
-                    user.profilePicture = profile.photos[0].value;
-                }
-
-                if (!user.fullName || user.fullName.trim() === '') {
-                    user.fullName = profile.displayName;
-                }
-
-                await user.save();
-                return done(null, user);
-            }
+        if (user) {
+          user.googleId = profile.id;
+          await user.save();
+          return done(null, user);
         }
 
-
-        const newUser = new User({
-            googleId: profile.id,
-            email: email ? email.toLowerCase() : null,
-            fullName: profile.displayName,
-            profilePicture: profile.photos && profile.photos[0] ? profile.photos[0].value : null,
-            googleProfile: profile._json,
-            isVerified: true,
-            verifiedAt: new Date(),
-            lastLogin: new Date()
+        const newUser = await User.create({
+          googleId: profile.id,
+          email,
+          fullName: profile.displayName,
+          isVerified: true
         });
 
-        await newUser.save();
-        console.log(" New Google user created:", newUser.email);
         return done(null, newUser);
-
-    } catch (error) {
-        console.error(' Google authentication error:', error);
-        return done(error, null);
+      } catch (err) {
+        return done(err, null);
+      }
     }
-}));
+  )
+);
+
 
 export default passport;
