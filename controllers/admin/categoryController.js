@@ -169,30 +169,62 @@ export const updateCategory = async (req, res) => {
     const { id } = req.params;
     const { name, description } = req.body;
 
-    if (!name || !String(name).trim() || String(name).trim().length < 2) {
-      return res.status(400).json({ success: false, message: 'Name must be at least 2 characters.' });
+   
+    if (!name || name.trim().length < 2) {
+      return res.status(400).json({
+        success: false,
+        message: 'Name must be at least 2 characters'
+      });
     }
 
+  
     const category = await Category.findById(id);
     if (!category) {
-      return res.status(404).json({ success: false, message: 'Category not found.' });
+      return res.status(404).json({
+        success: false,
+        message: 'Category not found'
+      });
     }
 
-    category.name = String(name).trim();
-    category.description = description ? String(description).trim() : '';
 
+    const exists = await Category.findOne({
+      _id: { $ne: id },
+      name: { $regex: `^${name.trim()}$`, $options: 'i' },
+      isDeleted: false
+    });
+
+    if (exists) {
+      return res.status(400).json({
+        success: false,
+        message: 'Category already exists'
+      });
+    }
+
+  
+    category.name = name.trim();
+    category.description = description ? description.trim() : '';
 
     if (req.file) {
       category.imagePath = `/uploads/categories/${req.file.filename}`;
     }
 
+    
     await category.save();
-    res.json({ success: true, message: 'Category updated', category });
+
+    res.json({
+      success: true,
+      message: 'Category updated successfully',
+      category
+    });
   } catch (err) {
     console.error('updateCategory error:', err);
-    res.status(500).json({ success: false, message: 'Server error' });
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
   }
 };
+
 
 export const blockCategory = async (req, res) => {
   try {
