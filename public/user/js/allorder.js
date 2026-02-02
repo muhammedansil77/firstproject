@@ -46,6 +46,53 @@ function cancelOrder(orderId) {
 function requestReturn(orderId) {
   window.location.href = `/orders/${orderId}/return`;
 }
+async function retryPayment(orderId, addressId) {
+  try {
+    const res = await fetch('/orders/retry-payment', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ orderId })
+    });
+
+    const data = await res.json();
+    if (!data.success) {
+      alert(data.message || 'Retry failed');
+      return;
+    }
+
+    const options = {
+      key: data.data.key_id,
+      amount: data.data.amount,
+      currency: data.data.currency,
+      order_id: data.data.razorpayOrderId,
+      name: 'Your Store',
+      description: 'Retry Payment',
+
+      handler: async function (response) {
+        await fetch('/verify-razorpay-payment', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            razorpay_order_id: response.razorpay_order_id,
+            razorpay_payment_id: response.razorpay_payment_id,
+            razorpay_signature: response.razorpay_signature,
+            addressId: addressId,          // ✅ ADD THIS
+            fromPayment: true              // ✅ IMPORTANT
+          })
+        });
+
+        window.location.reload();
+      }
+    };
+
+    const rzp = new Razorpay(options);
+    rzp.open();
+
+  } catch (err) {
+    console.error(err);
+    alert('Retry payment error');
+  }
+}
 
 async function cancelEntireGroup(orderIds) {
   if (!Array.isArray(orderIds) || orderIds.length === 0) return;

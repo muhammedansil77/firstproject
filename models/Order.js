@@ -40,7 +40,7 @@ const orderSchema = new mongoose.Schema(
 
     itemStatus: {
       type: String,
-      enum: ["Placed", "Shipped", "Delivered", "Cancelled", "Returned"],
+      enum: ["Pending Payment","Placed", "Shipped", "Delivered", "Cancelled", "Returned"],
       default: "Placed"
     },
 
@@ -101,11 +101,20 @@ const orderSchema = new mongoose.Schema(
       default: "Pending"
     },
 
-    orderStatus: {
-      type: String,
-      enum: ["Placed", "Confirmed", "Shipped", "OutForDelivery", "Delivered", "Cancelled"],
-      default: "Placed"
-    },
+   orderStatus: {
+  type: String,
+  enum: [
+    "Pending Payment",
+    "Placed",
+    "Confirmed",
+    "Shipped",
+    "OutForDelivery",
+    "Delivered",
+    "Cancelled"
+  ],
+  default: "Pending Payment"
+}
+,
 
     // RAZORPAY PAYMENT FIELDS
     razorpayOrderId: {

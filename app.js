@@ -51,7 +51,7 @@ app.use((req, res, next) => {
 });
 
 app.use(express.static(path.join(__dirname, "public")));
-app.use(cookieParser());
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -60,7 +60,7 @@ if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
-
+app.use(cookieParser());
 initSession(app);
 
 app.use(passport.initialize());

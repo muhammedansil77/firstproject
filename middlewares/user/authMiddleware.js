@@ -111,7 +111,7 @@ export const preventCacheForAuth = (req, res, next) => {
 
 
   if (isAdminAuthPage && req.session?.adminLoggedIn && req.session?.adminId) {
-    return res.redirect('/admin/dashboard');
+    return res.redirect('/admin/reports/dash');
   }
 
   next();

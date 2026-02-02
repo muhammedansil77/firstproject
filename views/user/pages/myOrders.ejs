@@ -246,6 +246,21 @@
   class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold border <%= statusClass %>">
   <%= order.orderStatus %>
 </span>
+<% if (
+  order.paymentMethod === 'Razorpay' &&
+  order.paymentStatus === 'Failed'
+) { %>
+  <span
+    class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold
+           bg-red-500/15 text-red-400 border border-red-400/40">
+    Payment Failed
+  </span>
+
+  <p class="text-xs text-red-400 mt-1">
+    Payment was unsuccessful. Please retry to confirm your order.
+  </p>
+<% } %>
+
 
 
                 <% if (item.variant) { %>
@@ -265,13 +280,29 @@
               </div>
 
               <!-- ACTION -->
-              <div>
-                <a href="/orders/<%= order._id %>"
-                   class="px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#b8941f]
-                          text-black rounded-lg font-semibold">
-                  View Order Details
-                </a>
-              </div>
+         <!-- ACTION -->
+<div class="flex flex-col gap-2">
+
+  <a href="/orders/<%= order._id %>"
+     class="px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#b8941f]
+            text-black rounded-lg font-semibold text-center">
+    View Order Details
+  </a>
+
+  <% if (
+    order.paymentMethod === 'Razorpay' &&
+    order.paymentStatus === 'Failed' &&
+    order.orderStatus === 'Pending Payment'
+  ) { %>
+    <button
+      onclick="retryPayment('<%= order._id %>')"
+      class="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition">
+      Retry Payment
+    </button>
+  <% } %>
+
+</div>
+
 
             </div>
           </div>

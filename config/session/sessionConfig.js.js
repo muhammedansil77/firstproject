@@ -10,7 +10,6 @@ export const createSessionConfig = () => {
     secret: process.env.SESSION_SECRET || 'your-secret-key-change-this-in-production',
     resave: false,
     saveUninitialized: false,
-     proxy: true,
     store: MongoStore.create({
     mongoUrl: process.env.MONGODB_URL,
 
@@ -29,10 +28,10 @@ export const createSessionConfig = () => {
   };
 
 
-  // if (process.env.NODE_ENV !== 'production') {
-  //   sessionConfig.cookie.secure = false;
-  //   sessionConfig.cookie.sameSite = 'lax';
-  // }
+  if (process.env.NODE_ENV !== 'production') {
+    sessionConfig.cookie.secure = false;
+    sessionConfig.cookie.sameSite = 'lax';
+  }
 
   return sessionConfig;
 };

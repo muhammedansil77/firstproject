@@ -97,9 +97,10 @@ export const getSalesReportPage = async (req, res) => {
 
 
     const query = {
-      createdAt: { $gte: start, $lte: end }
+      createdAt: { $gte: start, $lte: end },
+     
     };
-
+//  orderStatus:{$ne:""}
     if (paymentMethod && paymentMethod !== 'all') {
       query.paymentMethod = paymentMethod;
     }

@@ -2,6 +2,8 @@
 import express from "express";
 const router = express.Router();
 
+import {retryRazorpayPayment} from "../controllers/orderController.js"
+
 import {
   loadCheckout,
   getAddress,      // Make sure this is imported
@@ -22,7 +24,8 @@ import {
   createRazorpayOrder,
   applyCoupon,
   removeCoupon,
-  loadUserInvoice 
+  loadUserInvoice ,
+  markPaymentFailed
 
 
 
@@ -57,7 +60,10 @@ router.post("/place-order", placeOrder);
 
 router.get("/order-success/:orderId", loadOrderSuccess);
 router.get("/orders/:orderId", loadOrderDetails);
+router.post("/orders/payment-failed", markPaymentFailed);
 router.post("/orders/:orderId/cancel", cancelUserOrder);
+router.post('/orders/retry-payment', retryRazorpayPayment);
+
 router.get("/orders/:orderId/refund", loadRefundRequest);
 router.post("/api/refunds/request", submitRefundRequest);
 router.get("/refunds", getUserRefunds);

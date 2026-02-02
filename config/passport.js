@@ -27,7 +27,7 @@ passport.use(
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
 
       // 🔥 FORCE THE CALLBACK (NO ENV LOGIC)
-      callbackURL: "https://luxeandtime.anzil.online/auth/google/callback",
+      callbackURL: getCallbackURL(),
 
       passReqToCallback: true
     },

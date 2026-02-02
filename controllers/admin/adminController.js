@@ -1,5 +1,6 @@
 import User from "../../models/userSchema.js";
 import userController from "../userController.js";
+import Order from "../../models/Order.js";
 
 const { loadLoginPage } = userController;
 import Admin from "../../models/Admin.js";
@@ -77,6 +78,12 @@ const loadUsers = async (req, res) => {
     console.log('[DEBUG] Base filter:', filter);
    
 
+    const orr = await Order.aggregate([{
+      $group:{
+        _id:"$user",count:{$sum:1}
+      }
+    }])
+  console.log(orr)
     if (search) {
       const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
       const regex = new RegExp(escaped, 'i');
@@ -171,9 +178,9 @@ const loadUsers = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('❌ loadUsers error:', error);
-    console.error('📝 Error message:', error.message);
-    console.error('🔍 Error stack:', error.stack);
+    console.error(' loadUsers error:', error);
+    console.error(' Error message:', error.message);
+    console.error(' Error stack:', error.stack);
     
     return res.status(500).send(`
       <!DOCTYPE html>

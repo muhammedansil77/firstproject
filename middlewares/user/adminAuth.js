@@ -64,7 +64,7 @@ const adminAuth = (req, res, next) => {
       return next();
     }
 
-    console.log(`❌ ADMIN AUTH FAILED: ${req.method} ${req.originalUrl}`);
+    console.log(` ADMIN AUTH FAILED: ${req.method} ${req.originalUrl}`);
 
     const isAjax =
       req.xhr ||

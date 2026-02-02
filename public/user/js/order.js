@@ -239,7 +239,8 @@ lastRazorpayOrderData = orderData;
 
         
         const orderResponse = await axios.post('/create-razorpay-order', {
-            amount: finalAmount
+          
+             addressId: orderData.addressId 
         });
         
         if (!orderResponse.data.success) {
@@ -247,6 +248,7 @@ lastRazorpayOrderData = orderData;
         }
         
         const razorpayOrder = orderResponse.data.data;
+        lastRazorpayOrderData.internalOrderId = razorpayOrder.internalOrderId;
         
         console.log(' Razorpay order created:', razorpayOrder.id);
 
@@ -315,18 +317,26 @@ lastRazorpayOrderData = orderData;
             theme: {
                 color: '#d4af37'
             },
-            modal: {
-                ondismiss: function() {
-                    console.log('⚠️ Razorpay modal dismissed');
-                  showFailedModal('Payment was cancelled. Please try again.');
-             
-                    const placeOrderBtn = document.getElementById('placeOrderBtn');
-                    if (placeOrderBtn) {
-                        placeOrderBtn.disabled = false;
-                        placeOrderBtn.innerHTML = 'Place Order';
-                    }
-                }
-            },
+           modal: {
+  ondismiss: async function () {
+    console.log('⚠️ Razorpay modal dismissed');
+
+    if (lastRazorpayOrderData?.internalOrderId) {
+      await axios.post('/orders/payment-failed', {
+        orderId: lastRazorpayOrderData.internalOrderId
+      });
+    }
+
+    showFailedModal('Payment was cancelled. Please try again.');
+
+    const placeOrderBtn = document.getElementById('placeOrderBtn');
+    if (placeOrderBtn) {
+      placeOrderBtn.disabled = false;
+      placeOrderBtn.innerHTML = 'Place Order';
+    }
+  }
+}
+,
             notes: {
                 order_type: 'E-commerce purchase'
             }
@@ -338,18 +348,24 @@ lastRazorpayOrderData = orderData;
         rzp.open();
         
       
-        rzp.on('payment.failed', function(response) {
-            console.error(' Razorpay payment failed:', response.error);
-           showFailedModal(`Payment failed: ${response.error.description}`);
+       rzp.on('payment.failed', async function (response) {
+  console.error(' Razorpay payment failed:', response.error);
 
-            
-          
-            const placeOrderBtn = document.getElementById('placeOrderBtn');
-            if (placeOrderBtn) {
-                placeOrderBtn.disabled = false;
-                placeOrderBtn.innerHTML = 'Place Order';
-            }
-        });
+  if (lastRazorpayOrderData?.internalOrderId) {
+    await axios.post('/orders/payment-failed', {
+      orderId: lastRazorpayOrderData.internalOrderId
+    });
+  }
+
+  showFailedModal(`Payment failed: ${response.error.description}`);
+
+  const placeOrderBtn = document.getElementById('placeOrderBtn');
+  if (placeOrderBtn) {
+    placeOrderBtn.disabled = false;
+    placeOrderBtn.innerHTML = 'Place Order';
+  }
+});
+
         
     } catch (error) {
         console.error('Razorpay setup error:', error);
