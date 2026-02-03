@@ -1,7 +1,7 @@
 import User from "../../models/userSchema.js";
 import userController from "../userController.js";
 import Order from "../../models/Order.js";
-
+import { getUsersWithFilters } from "../../services/userServices.js";
 const { loadLoginPage } = userController;
 import Admin from "../../models/Admin.js";
 import bcrypt from "bcrypt";
@@ -58,142 +58,29 @@ const login = async (req, res) => {
     return res.redirect('/admin/login?error=' + encodeURIComponent('Server error'));
   }
 };
-const loadUsers = async (req, res) => {
+ const loadUsers = async (req, res) => {
   try {
-    console.log('[DEBUG] loadUsers called with query:', req.query);
+    const data = await getUsersWithFilters(req.query);
 
-    const page = Math.max(1, parseInt(req.query.page || '1', 10));
-    const perPage = parseInt(req.query.perPage || '11', 10);
-    const search = (req.query.search || '').trim();
-    const status = (req.query.status || 'all').toLowerCase();
-    const from = req.query.from ? req.query.from.trim() : null;
-    const to = req.query.to ? req.query.to.trim() : null;
-    
-  
-    const sort = (req.query.sort || 'latest').toLowerCase();
-
-    console.log('[DEBUG] Parsed parameters:', { page, perPage, search, status, from, to, sort });
-
-    const filter = { isAdmin: false };
-    console.log('[DEBUG] Base filter:', filter);
-   
-
-    const orr = await Order.aggregate([{
-      $group:{
-        _id:"$user",count:{$sum:1}
-      }
-    }])
-  console.log(orr)
-    if (search) {
-      const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-      const regex = new RegExp(escaped, 'i');
-      filter.$or = [
-        { fullName: regex },
-        { email: regex },
-        { phone: regex || '' }
-      ];
-     
-    }
-
-
-    if (status === 'verified') {
-      filter.isVerified = true;
-    } else if (status === 'unverified') {
-      filter.isVerified = false;
-    } else if (status === 'blocked') {
-      filter.isBlocked = true;
-    } else if (status === 'active') {
-      filter.isBlocked = false;
-    }
-    console.log('[DEBUG] After status filter:', filter);
-
-   
-    const totalUsers = await User.countDocuments(filter);
-    console.log('[DEBUG] Total users found:', totalUsers);
-    
-    const totalPages = Math.max(1, Math.ceil(totalUsers / perPage));
-    const skip = (page - 1) * perPage;
-    
-    console.log('[DEBUG] Pagination:', { totalPages, skip, perPage });
-
-    
-    let sortOrder = {};
-    switch(sort) {
-      case 'a-z':
-        sortOrder = { fullName: 1 }; 
-      
-        break;
-      case 'z-a':
-        sortOrder = { fullName: -1 }; 
-       
-        break;
-      case 'oldest':
-        sortOrder = { createdAt: 1 };
-     
-        break;
-      case 'latest':
-      default:
-        sortOrder = { createdAt: -1 }; 
-      
-        break;
-    }
-
-    console.log('[DEBUG] Final sort order:', sortOrder);
-
-    const users = await User.find(filter)
-      .select('fullName email isVerified isBlocked createdAt phone')
-      .sort(sortOrder)
-      .skip(skip)
-      .limit(perPage)
-      .lean();
-
-    console.log('[DEBUG] Users fetched:', users.length);
-    
-  
-    if (users.length > 0) {
-      console.log('[DEBUG] First 3 users (for sorting verification):');
-      users.slice(0, 3).forEach((user, index) => {
-        console.log(`  ${index + 1}. ${user.fullName} - ${user.email} - ${user.createdAt}`);
-      });
-    }
-
-    return res.render('admin/users', {
-      title: 'Users',
-      users,
-      current: 'users',
-      pagination: {
-        totalUsers,
-        totalPages,
-        perPage,
-        page,
-        hasPrev: page > 1,
-        hasNext: page < totalPages,
-        prevPage: page > 1 ? page - 1 : null,
-        nextPage: page < totalPages ? page + 1 : null
+    return res.render("admin/users", {
+      title: "Users",
+      users: data.users,
+      pagination: data.pagination,
+      filters: {
+        search: req.query.search || "",
+        status: req.query.status || "all",
+        sort: req.query.sort || "latest"
       },
-      filters: { search, status, from, to, sort }, 
+      current: "users",
       success: req.query.success,
       error: req.query.error,
-      pageJS: 'user.js'
+      pageJS: "user.js"
     });
 
   } catch (error) {
-    console.error(' loadUsers error:', error);
-    console.error(' Error message:', error.message);
-    console.error(' Error stack:', error.stack);
-    
-    return res.status(500).send(`
-      <!DOCTYPE html>
-      <html>
-      <head><title>Server Error</title></head>
-      <body style="background:#1f1b12; color:#fff; padding:40px; font-family:monospace;">
-        <h1 style="color:#ff8b8b;">⚠️ Server Error</h1>
-        <p style="color:#d6c28a;">Failed to load users. Please try again.</p>
-        <pre style="background:#211c11; padding:20px; border-radius:8px; color:#c6ba93;">${error.message}</pre>
-        <a href="/admin/users" style="color:#c6ba93; text-decoration:none;">← Go back to Users</a>
-      </body>
-      </html>
-    `);
+    console.error("loadUsers error:", error);
+
+    return res.status(500).send("Internal Server Error");
   }
 };
 const blockUnblockUser = async (req, res) => {
