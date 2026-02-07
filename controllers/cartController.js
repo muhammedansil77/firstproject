@@ -457,7 +457,10 @@ export const validateCheckout = async (req, res) => {
       });
     }
    const product = await Product.find()
-    const cart = await Cart.findOne({ user: userId }).populate('items.variant');
+    const cart = await Cart.findOne({ user: userId })
+    .populate('items.variant')
+    .populate("items.product");
+    
 
     if (!cart || cart.items.length === 0) {
       return res.json({
@@ -470,17 +473,17 @@ export const validateCheckout = async (req, res) => {
 
     for (const item of cart.items) {
       const variant = item.variant;
+         const product = item.product;
 
       if (!variant) {
         errors.push('Some products are no longer available');
         continue;
       }
 
-     if(product.status==="blocked"){
-       errors.push(
-         "block the that"
-        );
-     }
+       if (product.status === "blocked" || product.isDeleted === true) {
+        errors.push(`${product.name} is currently unavailable`);
+        continue;
+      }
 
       if (variant.stock < item.quantity) {
         errors.push(
@@ -497,7 +500,7 @@ export const validateCheckout = async (req, res) => {
       });
     }
 
-    // ✅ All good
+  
     return res.json({ ok: true });
 
   } catch (err) {

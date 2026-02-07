@@ -1213,7 +1213,10 @@ export const placeOrder = async (req, res) => {
         message: "Cart empty"
       });
     }
-
+  // .populate({
+  //   path: "items.product",
+  //   populate: { path: "category" }
+  // })
   
     if (validateOnly === true) {
       for (const item of cart.items) {
