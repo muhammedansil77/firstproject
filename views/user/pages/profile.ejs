@@ -444,8 +444,22 @@
                  class="w-full px-4 py-3 bg-[#0b0b0b]/50 border border-[#2a2a2a] rounded-lg text-white placeholder-gray-500 
                         focus:border-[#d4af37] focus:outline-none transition duration-300">
           <p class="text-xs text-gray-500 mt-2">Enter the verification code sent to your new email</p>
+            <p id="otpTimer" class="text-xs text-gray-500 mt-2">
+    Resend OTP in <span id="timer">60</span>
+  </p>
+
+  <button
+    type="button"
+    id="resendOtpBtn"
+    onclick="resendOtp()"
+    disabled
+    class="text-sm text-[#d4af37] mt-2 disabled:opacity-50"
+  >
+    Resend OTP
+  </button>
         </div>
       </div>
+      
 
       <div class="flex justify-end gap-3 mt-8 pt-6 border-t border-[#2a2a2a]">
         <button type="button" 

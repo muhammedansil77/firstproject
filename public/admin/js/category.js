@@ -15,7 +15,9 @@
   const UNBLOCK_ENDPOINT= id => `/admin/category/${id}/unblock`;
   const DELETE_ENDPOINT = id => `/admin/category/${id}`; 
 
- 
+ const statusFilter = document.getElementById('statusFilter');
+const sortFilter = document.getElementById('sortFilter');
+
   const tbody = $id('categoryList');
   const addForm = $id('addForm');
   const imageInput = $id('imageInput');
@@ -223,12 +225,14 @@ function renderRow(cat, index) {
 
     try {
       const res = await axios.get(LIST_ENDPOINT, {
-        params: {
-          page: currentPage,
-          limit: pageSize,
-          search: currentSearch,
-          status: currentStatus
-        }
+      params: {
+  page: currentPage,
+  limit: pageSize,
+  search: currentSearch,
+  status: currentStatus,
+  sort: sortFilter?.value || 'latest'
+}
+
       });
 
       const data = res && res.data ? res.data : res;
@@ -472,6 +476,14 @@ if (blockBtn) {
   });
 
 
+statusFilter?.addEventListener('change', () => {
+  currentStatus = statusFilter.value;
+  load({ page: 1, status: currentStatus });
+});
+
+sortFilter?.addEventListener('change', () => {
+  load({ page: 1 });
+});
 
  
   editForm?.addEventListener('submit', async (e) => {

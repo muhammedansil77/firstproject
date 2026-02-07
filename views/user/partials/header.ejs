@@ -73,6 +73,14 @@
                  a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318
                  a4.5 4.5 0 00-6.364 0z"/>
           </svg>
+          <% if (wishlistCount > 0) { %>
+  <span class="absolute -top-1 -right-1 bg-[#d4af37] text-black text-[10px] font-bold 
+               w-5 h-5 flex items-center justify-center rounded-full shadow-lg animate-pulse-gold">
+    <%= wishlistCount > 99 ? "99+" : wishlistCount %>
+  </span>
+<% } %>
+
+          
         </div>
       </a>
 
@@ -122,6 +130,13 @@
                  m0 0a2 2 0 100 4
                  m-8 2a2 2 0 11-4 0"/>
           </svg>
+          <% if (cartCount > 0) { %>
+  <span class="absolute -top-1 -right-1 bg-[#d4af37] text-black text-[10px] font-bold 
+               w-5 h-5 flex items-center justify-center rounded-full shadow-lg animate-pulse-gold">
+    <%= cartCount > 99 ? "99+" : cartCount %>
+  </span>
+<% } %>
+
         </div>
       </a>
 

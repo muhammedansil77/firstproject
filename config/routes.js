@@ -5,6 +5,8 @@ import  loadCategories from "../middlewares/user/loadCategries.js";
 import { setAuthLocals } from "../middlewares/user/setAuthLocals.js";
 import adminAuthPkg from "../middlewares/user/adminAuth.js";
 import adminAuth from "../middlewares/user/adminAuth.js";
+import { setHeaderCounts } from "../middlewares/user/setHeaderCounds.js";
+
 
 import { protectRoute } from "../middlewares/user/authMiddleware.js";
 
@@ -39,13 +41,15 @@ export const configureRoutes = (app) => {
 
  const publicUserMiddlewares = [
   attachUser,
-  loadCategories
+  loadCategories,
+  setHeaderCounts
 ];
 
 const protectedUserMiddlewares = [
   attachUser,
   hardBlock,
   loadCategories,
+  setHeaderCounts
   // protectRoute
 ];
 
@@ -58,7 +62,7 @@ const protectedUserMiddlewares = [
 
   app.use("/user/address", ...publicUserMiddlewares, addressRoutes);
   app.use("/user", ...publicUserMiddlewares, profileRouter);
-  app.use("/", checkourPage);
+  app.use("/",setHeaderCounts, checkourPage);
   app.use("/user", ...protectedUserMiddlewares, walletRoute);
   app.use("/user",protectedUserMiddlewares, refferalRoutes)
   app.use("/user",protectedUserMiddlewares, wishlistRoutes)

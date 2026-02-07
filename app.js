@@ -11,6 +11,8 @@ import multer from 'multer';
 import db from "./config/db.js";
 import imageRoutes from "./routes/image.routes.js";
 import flash from 'connect-flash';
+import { setHeaderCounts } from "./middlewares/user/setHeaderCounds.js";
+
 
 import { initSession, sessionHelpers } from "./config/session/index.js";
 
@@ -62,6 +64,8 @@ if (process.env.NODE_ENV === 'production') {
 
 app.use(cookieParser());
 initSession(app);
+
+
 
 app.use(passport.initialize());
 

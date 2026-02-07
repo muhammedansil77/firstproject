@@ -444,6 +444,7 @@ const loadShop = async (req, res, next) => {
       layout: 'user/layouts/main',
       pageTitle: 'Shop',
       query: req.query,
+      cartCount: res.locals.cartCount,
       products,
       brands: [],
       categories,

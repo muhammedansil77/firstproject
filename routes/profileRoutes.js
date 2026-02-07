@@ -62,5 +62,7 @@ router.post('/profile/change-password', userProfileController.changePassword);
 
 
 router.post('/profile/update-settings', userProfileController.updateAccountSettings);
+router.post("/profile/email/resend-otp", userProfileController.resendEmailOtp);
+
 
 export default router;

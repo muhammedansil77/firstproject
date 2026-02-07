@@ -456,7 +456,7 @@ export const validateCheckout = async (req, res) => {
         message: 'Login required'
       });
     }
-
+   const product = await Product.find()
     const cart = await Cart.findOne({ user: userId }).populate('items.variant');
 
     if (!cart || cart.items.length === 0) {
@@ -475,6 +475,12 @@ export const validateCheckout = async (req, res) => {
         errors.push('Some products are no longer available');
         continue;
       }
+
+     if(product.status==="blocked"){
+       errors.push(
+         "block the that"
+        );
+     }
 
       if (variant.stock < item.quantity) {
         errors.push(

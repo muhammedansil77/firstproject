@@ -115,8 +115,19 @@
         </div>
 
         <div class="col-md-6">
-          <label class="form-label fw-semibold">Color *</label>
-          <input class="form-control variant-color" required />
+        <label class="form-label fw-semibold">Color *</label>
+<select class="form-select variant-color" required>
+  <option value="">-- Select Color --</option>
+  <option value="Black">Black</option>
+  <option value="White">White</option>
+  <option value="Blue">Blue</option>
+  <option value="Red">Red</option>
+  <option value="Green">Green</option>
+  <option value="Silver">Silver</option>
+  <option value="Gold">Gold</option>
+  <option value="Brown">Brown</option>
+</select>
+
 
           <label class="form-label fw-semibold mt-3">Stock *</label>
           <input type="number" min="0" class="form-control variant-stock" required />

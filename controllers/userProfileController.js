@@ -204,6 +204,28 @@ export const changePassword = async (req, res) => {
   }
 };
 
+export const resendEmailOtp = async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+
+    if (!user.pendingEmail) {
+      return res.json({ success: false, message: "No pending email change" });
+    }
+
+    const otp = crypto.randomInt(100000, 999999).toString();
+
+    user.emailChangeOtp = otp;
+    user.emailChangeOtpExpiry = Date.now() + 10 * 60 * 1000;
+
+    await user.save();
+    await sendOtpEmail(user.pendingEmail, otp);
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ success: false, message: "Resend failed" });
+  }
+};
 
 export const updateAccountSettings = async (req, res) => {
   try {
