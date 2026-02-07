@@ -4,6 +4,9 @@ import bcrypt from 'bcrypt';
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 import { sendOtpEmail } from "../helpers/mail.js";
+import { CloudinaryService } from "../middlewares/upload.js"
+import sharp from "sharp";
+
 
 
 export const loadProfile = async (req, res) => {
@@ -88,33 +91,44 @@ export const uploadProfileImage = async (req, res) => {
     if (!req.file) {
       return res.status(400).json({
         success: false,
-        message: 'No image uploaded'
+        message: "No image uploaded"
       });
     }
 
-    const imagePath = `/uploads/${req.file.filename}`;
+   
+    const processedBuffer = await sharp(req.file.buffer)
+      .resize(500, 500, { fit: "cover" })
+      .jpeg({ quality: 85 })
+      .toBuffer();
 
+  
+    const imageUrl = await CloudinaryService.uploadImageUrl(processedBuffer, {
+      folder: "profile_pictures",
+      public_id: `profile-${userId}-${Date.now()}`,
+      resource_type: "image"
+    });
+
+  
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { profilePicture: imagePath },
+      { profilePicture: imageUrl },
       { new: true }
-    ).select('-password');
+    ).select("-password");
 
-    res.json({
+    return res.json({
       success: true,
-      message: 'Profile image updated',
-      profilePicture: imagePath
+      message: "Profile picture updated successfully",
+      profilePicture: updatedUser.profilePicture
     });
 
   } catch (error) {
-    console.error('Image upload error:', error);
-    res.status(500).json({
+    console.error("Profile upload error:", error);
+    return res.status(500).json({
       success: false,
-      message: 'Error uploading image'
+      message: "Error uploading profile picture"
     });
   }
 };
-
 
 
 export const initiateEmailChange = async (req, res) => {

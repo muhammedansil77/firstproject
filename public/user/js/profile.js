@@ -34,6 +34,22 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => toast.remove(), 500);
     }, 4000);
   }
+function showLoader(text = "Processing...") {
+  const loader = document.getElementById("globalLoader");
+  if (!loader) return;
+
+  loader.classList.remove("hidden");
+
+  const p = loader.querySelector("p");
+  if (p) p.innerText = text;
+}
+
+function hideLoader() {
+  const loader = document.getElementById("globalLoader");
+  if (!loader) return;
+
+  loader.classList.add("hidden");
+}
 
 
 function startOtpTimer() {
@@ -66,6 +82,10 @@ function startOtpTimer() {
     document.getElementById("editProfileModal")?.classList.remove("hidden");
     document.body.style.overflow = "hidden";
   };
+  window.openImageUpload = () => {
+  document.getElementById("profileImageInput").click();
+};
+
 
   window.closeEditProfileModal = () => {
     document.getElementById("editProfileModal")?.classList.add("hidden");
@@ -122,64 +142,109 @@ function startOtpTimer() {
   };
 
 
-  document.getElementById("editProfileForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
+ document.getElementById("editProfileForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
 
-    const data = Object.fromEntries(new FormData(e.target).entries());
+  const data = Object.fromEntries(new FormData(e.target).entries());
 
-    const res = await fetch("/user/profile/update", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+  showLoader("Updating Profile...");
 
-    const result = await res.json();
+  const res = await fetch("/user/profile/update", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
+  });
 
-    if (!result.success) {
-      return showToast(result.message || "Update failed", "error");
-    }
+  const result = await res.json();
 
-    showToast("Profile updated successfully");
-    window.closeEditProfileModal();
+  hideLoader();
+
+  if (!result.success) {
+    return showToast(result.message || "Update failed", "error");
+  }
+
+  showToast("Profile updated successfully");
+  window.closeEditProfileModal();
+
+  setTimeout(() => {
     location.reload();
+  }, 1000);
+});
+
+
+
+ document.getElementById("changeEmailForm")?.addEventListener("submit", async (e) => {
+  e.preventDefault();
+
+  const data = Object.fromEntries(new FormData(e.target).entries());
+
+  const url = otpMode
+    ? "/user/profile/email/verify-change"
+    : "/user/profile/email/initiate-change";
+
+  showLoader(otpMode ? "Verifying OTP..." : "Sending OTP...");
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data)
   });
 
+  const result = await res.json();
 
-  document.getElementById("changeEmailForm")?.addEventListener("submit", async (e) => {
-    e.preventDefault();
+  hideLoader();
 
-    const data = Object.fromEntries(new FormData(e.target).entries());
+  if (!result.success) {
+    return showToast(result.message || "Error", "error");
+  }
 
-    const url = otpMode
-      ? "/user/profile/email/verify-change"
-      : "/user/profile/email/initiate-change";
+  if (!otpMode) {
+    otpMode = true;
+    document.getElementById("otpSection").classList.remove("hidden");
+    document.getElementById("emailSubmitBtn").textContent = "Verify OTP";
+    showToast("OTP sent to email");
+    setTimeout(startOtpTimer, 100);
+    return;
+  }
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data)
-    });
+  showToast("Email updated successfully");
+  window.closeChangeEmailModal();
+  otpMode = false;
 
-    const result = await res.json();
+  setTimeout(() => {
+    location.reload();
+  }, 1200);
+});
 
-    if (!result.success) {
-      return showToast(result.message || "Error", "error");
-    }
+document.getElementById("profileImageInput")?.addEventListener("change", async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
 
-    if (!otpMode) {
-      otpMode = true;
-      document.getElementById("otpSection").classList.remove("hidden");
-      document.getElementById("emailSubmitBtn").textContent = "Verify OTP";
-      showToast("OTP sent to email");
+  const formData = new FormData();
+  formData.append("profileImage", file);
 
-      setTimeout(startOtpTimer, 100);
-      return;
-    }
+  showLoader("Uploading Image...");
 
-    showToast("Email updated successfully");
-    window.closeChangeEmailModal();
-    otpMode = false;
+  const res = await fetch("/user/profile/upload-image", {
+    method: "POST",
+    body: formData
   });
+
+  const result = await res.json();
+
+  hideLoader();
+
+  if (!result.success) {
+    return showToast(result.message || "Upload failed", "error");
+  }
+
+  showToast("Profile picture updated!");
+
+  setTimeout(() => {
+    location.reload();
+  }, 800);
+});
+
 
 
   document.getElementById("changePasswordForm")?.addEventListener("submit", async (e) => {

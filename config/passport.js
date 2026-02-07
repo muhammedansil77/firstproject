@@ -26,7 +26,7 @@ passport.use(
       clientID: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
 
-      // 🔥 FORCE THE CALLBACK (NO ENV LOGIC)
+    
       callbackURL: getCallbackURL(),
 
       passReqToCallback: true

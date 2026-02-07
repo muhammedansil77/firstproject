@@ -16,7 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function showBackendErrorsAsToast(errors) {
   if (!errors) return;
 
-  // Product-level errors
+ 
   if (errors.name) {
     showToast(errors.name, 'danger');
     return;
@@ -27,13 +27,13 @@ function showBackendErrorsAsToast(errors) {
     return;
   }
 
-  // Variant form-level error
+ 
   if (errors.variants?._form) {
     showToast(errors.variants._form, 'danger');
     return;
   }
 
-  // Variant field errors
+
   if (errors.variants) {
     for (const idx in errors.variants) {
       const vErr = errors.variants[idx];
@@ -86,9 +86,6 @@ function setLoading(isLoading) {
     return;
   }
 
-  /* ===============================
-     SAFE BOOTSTRAP MODAL INIT
-  =============================== */
   const cropperModalEl = document.getElementById('cropperModal');
   const cropperImage = document.getElementById('cropperImage');
   const applyCropBtn = document.getElementById('applyCropBtn');
@@ -135,15 +132,9 @@ if (rotateRightBtn) rotateRightBtn.onclick = () => cropper && cropper.rotate(90)
     });
   }
 
-  /* ===============================
-     VARIANT STATE
-  =============================== */
   let variantIndex = 0;
-  const variantImages = {}; // { idx: [Blob, Blob, Blob] }
+  const variantImages = {}; 
 
-  /* ===============================
-     ADD VARIANT
-  =============================== */
   addVariantBtn.addEventListener('click', () => {
     const clone = tpl.content.cloneNode(true);
     const row = clone.querySelector('.variant-row');

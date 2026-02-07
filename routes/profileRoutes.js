@@ -1,9 +1,9 @@
 import express from 'express';
-import multer from 'multer';
-import path from 'path';
+
 
 import * as userProfileController from '../controllers/userProfileController.js';
 import authMiddle from "../middlewares/user/authMiddleware.js";
+import { upload } from "../middlewares/upload.js"; 
 
 const router = express.Router();
 router.use(authMiddle.preventCacheForAuth);
@@ -12,27 +12,8 @@ router.use(authMiddle.preventBackToAuth);
 router.use(authMiddle.protectRoute); 
 
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'public/uploads/');
-  },
-  filename: (req, file, cb) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, 'profile-' + uniqueSuffix + path.extname(file.originalname));
-  }
-});
 
-const upload = multer({
-  storage: storage,
-  limits: { fileSize: 5 * 1024 * 1024 }, 
-  fileFilter: (req, file, cb) => {
-    if (file.mimetype && file.mimetype.startsWith('image/')) {
-      cb(null, true);
-    } else {
-      cb(new Error('Only image files are allowed'));
-    }
-  }
-});
+
 
 
 
@@ -45,8 +26,8 @@ router.post('/profile/update', userProfileController.updateProfile);
 
 
 router.post(
-  '/profile/upload-image',
-  upload.single('profileImage'),  
+  "/profile/upload-image",
+  upload.single("profileImage"),
   userProfileController.uploadProfileImage
 );
 
