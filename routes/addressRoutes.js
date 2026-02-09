@@ -17,7 +17,7 @@ const router = express.Router();
 router.use(authMiddle.preventCacheForAuth);
 router.use(authMiddle.attachUser);
 router.use(authMiddle.preventBackToAuth);
-router.use(authMiddle.protectRoute); // ✅ 
+router.use(authMiddle.protectRoute);
 
 router.get("/", loadAddresses);
 router.post("/add", addAddress);

@@ -258,7 +258,7 @@ const allOrdersForStats = await Order.find(query)
   },
   { $unwind: '$items' },
 
-  // GROUP BY product + order (avoid duplicates inside same order)
+ 
   {
     $group: {
       _id: {
@@ -270,7 +270,7 @@ const allOrdersForStats = await Order.find(query)
     }
   },
 
-  // GROUP BY product
+
   {
     $group: {
       _id: '$_id.product',
@@ -299,7 +299,6 @@ const allOrdersForStats = await Order.find(query)
     }
   },
 
-  // 🔑 SORT BY NUMBER OF ORDERS
   { $sort: { orderCount: -1 } },
   { $limit: 10 }
 ]);
@@ -325,7 +324,7 @@ const allOrdersForStats = await Order.find(query)
   },
   { $unwind: '$product' },
 
-  // group by category + order
+ 
   {
     $group: {
       _id: {
@@ -337,7 +336,7 @@ const allOrdersForStats = await Order.find(query)
     }
   },
 
-  // group by category
+
   {
     $group: {
       _id: '$_id.category',
@@ -552,12 +551,12 @@ const handleExport = async (req, res, query, exportType) => {
   });
   doc.moveDown(1.5);
 
-  // ===== TABLE CONFIG =====
+
   const tableTop = doc.y;
   const rowHeight = 22;
-  const colWidths = [80, 70, 110, 60, 60, 65]; // total fits A4
+  const colWidths = [80, 70, 110, 60, 60, 65]; 
 
-  // ===== HEADER =====
+ 
   doc.font('Helvetica-Bold');
   let y = drawTableRow(
     doc,
@@ -569,7 +568,7 @@ const handleExport = async (req, res, query, exportType) => {
 
   doc.font('Helvetica');
 
-  // ===== ROWS =====
+
   orders.forEach(order => {
     if (y > doc.page.height - 60) {
       doc.addPage();
@@ -602,7 +601,7 @@ const handleExport = async (req, res, query, exportType) => {
     );
   });
 
-  // ===== TOTAL =====
+
   doc.moveDown(2);
   const totalRevenue = orders
     .filter(o => o.orderStatus === 'Delivered' && o.paymentStatus === 'Paid')

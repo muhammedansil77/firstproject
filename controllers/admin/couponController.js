@@ -183,7 +183,7 @@ const parsedPerUserLimit =
     ? 1
     : Number(perUserLimit);
 
-    // ===== BACKEND COUPON VALIDATION =====
+   
 const parsedDiscountValue = Number(discountValue);
 const parsedMinPurchase = Number(minPurchaseAmount) || 0;
 const parsedMaxDiscount = maxDiscountAmount ? Number(maxDiscountAmount) : null;

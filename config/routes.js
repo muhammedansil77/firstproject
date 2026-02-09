@@ -50,7 +50,7 @@ const protectedUserMiddlewares = [
   hardBlock,
   loadCategories,
   setHeaderCounts
-  // protectRoute
+ 
 ];
 
 

@@ -1,4 +1,4 @@
-// routes/checkoutRoutes.js
+
 import express from "express";
 const router = express.Router();
 
@@ -6,7 +6,7 @@ import {retryRazorpayPayment} from "../controllers/orderController.js"
 
 import {
   loadCheckout,
-  getAddress,      // Make sure this is imported
+  getAddress,      
   createAddress,
   updateAddress,
   deleteAddress,

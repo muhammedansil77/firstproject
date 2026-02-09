@@ -281,8 +281,8 @@
                 <div class="modal-body">
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label required">Offer Title</label>
-                            <input type="text" name="title" class="form-control" placeholder="Summer Sale, Diwali Special" required>
+                            <label class="form-label ">Offer Title</label>
+                            <input type="text" name="title" class="form-control" placeholder="Summer Sale, Diwali Special" >
                         </div>
                         <div class="col-md-6 mb-3">
                             <label class="form-label">Description</label>
@@ -291,11 +291,11 @@
                     </div>
 
                     <div class="mb-3">
-                        <label class="form-label required">Offer Type</label>
+                        <label class="form-label ">Offer Type</label>
                         <div class="row">
                             <div class="col-md-6 mb-2">
                                 <div class="form-check card border-2" style="cursor: pointer;">
-                                    <input class="form-check-input" type="radio" name="type" id="typeProduct" value="product" required onclick="toggleTargetSelection('product')">
+                                    <input class="form-check-input" type="radio" name="type" id="typeProduct" value="product"  onclick="toggleTargetSelection('product')">
                                     <label class="form-check-label p-3" for="typeProduct">
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
@@ -313,7 +313,7 @@
                             </div>
                             <div class="col-md-6 mb-2">
                                 <div class="form-check card border-2" style="cursor: pointer;">
-                                    <input class="form-check-input" type="radio" name="type" id="typeCategory" value="category" required onclick="toggleTargetSelection('category')">
+                                    <input class="form-check-input" type="radio" name="type" id="typeCategory" value="category"  onclick="toggleTargetSelection('category')">
                                     <label class="form-check-label p-3" for="typeCategory">
                                         <div class="d-flex align-items-center">
                                             <div class="me-3">
@@ -334,7 +334,7 @@
 
                     <!-- Search and Select Container -->
                     <div class="mb-3" id="targetSection" style="display: none;">
-                        <label class="form-label required">Select Target</label>
+                        <label class="form-label ">Select Target</label>
                         
                         <!-- Product Search and Select -->
                         <div id="productSearchContainer" style="display: none;">
@@ -386,17 +386,17 @@
                     <!-- Rest of your form fields remain the same -->
                     <div class="row mb-3">
                         <div class="col-md-4">
-                            <label class="form-label required">Discount Type</label>
-                            <select name="discountType" class="form-select" required onchange="toggleDiscountFields()">
+                            <label class="form-label ">Discount Type</label>
+                            <select name="discountType" class="form-select"  onchange="toggleDiscountFields()">
                                 <option value="">Select type</option>
                                 <option value="percentage">Percentage (%)</option>
                                 <!-- <option value="fixed">Fixed Amount (₹)</option> -->
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label required">Discount Value</label>
+                            <label class="form-label ">Discount Value</label>
                             <div class="input-group">
-                                <input type="number" name="discountValue" class="form-control" step="0.01" min="0" placeholder="e.g., 20" required>
+                                <input type="number" name="discountValue" class="form-control" step="0.01" min="0" placeholder="e.g., 20" >
                                 <span class="input-group-text" id="discountSuffix"></span>
                             </div>
                         </div>
@@ -409,12 +409,12 @@
 
                     <div class="row mb-3">
                         <div class="col-md-6">
-                            <label class="form-label required">Start Date</label>
-                            <input type="datetime-local" name="startDate" class="form-control" required>
+                            <label class="form-label ">Start Date</label>
+                            <input type="datetime-local" name="startDate" class="form-control" >
                         </div>
                         <div class="col-md-6">
-                            <label class="form-label required">End Date</label>
-                            <input type="datetime-local" name="endDate" class="form-control" required>
+                            <label class="form-label ">End Date</label>
+                            <input type="datetime-local" name="endDate" class="form-control" >
                         </div>
                     </div>
 
