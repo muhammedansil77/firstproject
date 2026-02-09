@@ -77,6 +77,10 @@ export const getData = async (req, res) => {
     }
     
     const totalItems = await Category.countDocuments(filter).catch(() => 0);
+
+    // let cat = await Category.updateOne({
+    //   name:
+    // })
     
     let categories = await Category.find(filter)
       .sort(sortOrder) 
