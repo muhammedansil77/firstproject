@@ -1,5 +1,7 @@
 import dotenv from "dotenv";
 dotenv.config();
+const USER_SESSION_MAX_AGE = parseInt(process.env.USER_SESSION_MAX_AGE) || 86400000;
+const ADMIN_SESSION_MAX_AGE = parseInt(process.env.ADMIN_SESSION_MAX_AGE) || 28800000;
 
 
 export const sessionHelpers = {
@@ -16,7 +18,7 @@ export const sessionHelpers = {
     }
     
   
-    req.session.cookie.maxAge = 24 * 60 * 60 * 1000; // 24 hours
+       req.session.cookie.maxAge = USER_SESSION_MAX_AGE; // 24 hours
     
     return req.session;
   },
@@ -34,7 +36,7 @@ export const sessionHelpers = {
     }
     
  
-    req.session.cookie.maxAge = 8 * 60 * 60 * 1000; // 8 hours
+     req.session.cookie.maxAge = ADMIN_SESSION_MAX_AGE; // 8 hours
     
     return req.session;
   },

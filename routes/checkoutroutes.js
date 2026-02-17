@@ -12,27 +12,29 @@ import {
   deleteAddress,
   placeOrder,
   loadOrderSuccess,
-  loadOrderDetails,
-  loadMyOrders,
-  cancelUserOrder,
-   loadRefundRequest,
-   submitRefundRequest,
-   getUserRefunds,
-   checkRefundStatus,  
-  getRefundDetails,
+  
   verifyRazorpayPayment  ,
   createRazorpayOrder,
   applyCoupon,
   removeCoupon,
-  loadUserInvoice ,
+
   markPaymentFailed
 
 
 
 } from "../controllers/checkoutController.js";
+import {loadOrderDetails,
+  loadMyOrders,
+  cancelUserOrder,
+     loadRefundRequest,
+       submitRefundRequest,
+          getUserRefunds,
+            loadUserInvoice ,
+               checkRefundStatus,  
+                 getRefundDetails,
+} from  "../controllers/orderController.js";
 import authMiddle from "../middlewares/user/authMiddleware.js";
-import Product from "../models/Product.js"; 
-import User from "../models/userSchema.js"; 
+
 
 
 router.use(authMiddle.preventCacheForAuth);
