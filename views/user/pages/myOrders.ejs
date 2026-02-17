@@ -194,124 +194,107 @@
     </div>
 
     <!-- PRODUCTS -->
-    <div class="divide-y divide-[#2a2a2a]">
+  <!-- PRODUCTS -->
+<div class="divide-y divide-[#2a2a2a]">
+  <% group.orders.forEach(order => { %>
+    <% if (order.items && order.items.length > 0) { %>
+      <% order.items.forEach(item => { %>
+        <!-- Show each item in the order -->
+        <div class="p-6 hover:bg-[#0f0f0f]/50 transition-colors">
+          <div class="flex flex-col md:flex-row gap-6">
+            <!-- IMAGE -->
+            <div class="w-32 h-32 rounded-xl overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
+              <%
+                const image = item.imageSrc || 
+                  (item.variant?.images && item.variant.images.length > 0 
+                    ? item.variant.images[0] 
+                    : '/uploads/placeholder.png');
+              %>
+              <img
+                src="<%= image.startsWith('http') || image.startsWith('/') ? image : '/' + image %>"
+                alt="<%= item.product?.name || 'Product' %>"
+                class="w-full h-full object-cover"
+                onerror="this.onerror=null; this.src='/uploads/placeholder.png';"
+              >
+            </div>
 
-      <% group.orders.forEach(order => { %>
-        <% if (order.items && order.items.length > 0) { %>
-          <% order.items.forEach(item => { %>
+            <!-- INFO -->
+            <div class="flex-1">
+              <h4 class="font-bold text-white text-lg">
+                <%= item.product?.name || 'Product' %>
+              </h4>
+              
+              <!-- ORDER STATUS BADGE (show for first item only or all items?) -->
+              <% if (order.items.indexOf(item) === 0) { %>
+                <%
+                  const statusColorMap = {
+                    Placed: 'bg-yellow-500/15 text-yellow-400 border-yellow-400/40',
+                    Confirmed: 'bg-blue-500/15 text-blue-400 border-blue-400/40',
+                    Shipped: 'bg-purple-500/15 text-purple-400 border-purple-400/40',
+                    Delivered: 'bg-green-500/15 text-green-400 border-green-400/40',
+                    Cancelled: 'bg-red-500/15 text-red-400 border-red-400/40'
+                  };
+                  const statusClass = statusColorMap[order.orderStatus] || 'bg-gray-500/15 text-gray-400 border-gray-400/40';
+                %>
+                <span class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold border <%= statusClass %>">
+                  <%= order.orderStatus %>
+                </span>
+              <% } %>
 
-          <div class="p-6 hover:bg-[#0f0f0f]/50 transition-colors">
-            <div class="flex flex-col md:flex-row gap-6">
+              <% if (item.variant) { %>
+                <p class="text-sm text-gray-400 mt-2">
+                  Color: <%= item.variant.color || '-' %> | 
+                  Size: <%= item.variant.size || '-' %>
+                </p>
+              <% } %>
 
-              <!-- IMAGE -->
-              <!-- IMAGE (FROM VARIANT) -->
-<div class="w-32 h-32 rounded-xl overflow-hidden bg-[#1a1a1a] flex items-center justify-center">
-  <%
-    const image =
-      item.variant?.images && item.variant.images.length > 0
-        ? item.variant.images[0]
-        : '/uploads/placeholder.png';
-  %>
+              <p class="text-sm text-gray-400">
+                Quantity: <%= item.quantity %>
+              </p>
 
-  <img
-    src="<%= image.startsWith('http') || image.startsWith('/') ? image : '/' + image %>"
-    alt="<%= item.product?.name || 'Product' %>"
-    class="w-full h-full object-cover"
-    onerror="this.onerror=null; this.src='/uploads/placeholder.png';"
-  >
-</div>
-
-
-              <!-- INFO -->
-              <div class="flex-1">
-                <h4 class="font-bold text-white text-lg">
-                  <%= item.product?.name || 'Product' %>
-                </h4>
-                <!-- ORDER STATUS BADGE -->
-<%
-  const statusColorMap = {
-    Placed: 'bg-yellow-500/15 text-yellow-400 border-yellow-400/40',
-    Confirmed: 'bg-blue-500/15 text-blue-400 border-blue-400/40',
-    Shipped: 'bg-purple-500/15 text-purple-400 border-purple-400/40',
-    Delivered: 'bg-green-500/15 text-green-400 border-green-400/40',
-    Cancelled: 'bg-red-500/15 text-red-400 border-red-400/40'
-  };
-
-  const statusClass =
-    statusColorMap[order.orderStatus] ||
-    'bg-gray-500/15 text-gray-400 border-gray-400/40';
-%>
-
-<span
-  class="inline-block mt-1 px-3 py-1 rounded-full text-xs font-semibold border <%= statusClass %>">
-  <%= order.orderStatus %>
-</span>
-<% if (
-  order.paymentMethod === 'Razorpay' &&
-  order.paymentStatus === 'Failed'
-) { %>
-  <span
-    class="inline-block mt-2 px-3 py-1 rounded-full text-xs font-semibold
-           bg-red-500/15 text-red-400 border border-red-400/40">
-    Payment Failed
-  </span>
-
-  <p class="text-xs text-red-400 mt-1">
-    Payment was unsuccessful. Please retry to confirm your order.
-  </p>
-<% } %>
-
-
-
-                <% if (item.variant) { %>
-                  <p class="text-sm text-gray-400">
-                    Color: <%= item.variant.color || '-' %> |
-                    Size: <%= item.variant.size || '-' %>
-                  </p>
+              <div class="mt-2 flex items-center gap-3">
+                <span class="text-[#d4af37] font-bold">
+                  ₹<%= (item.total || 0).toLocaleString('en-IN') %>
+                </span>
+                <% if (item.price) { %>
+                  <span class="text-sm text-gray-500 line-through">
+                    ₹<%= (item.price * item.quantity).toLocaleString('en-IN') %>
+                  </span>
                 <% } %>
-
-                <p class="text-sm text-gray-400">
-                  Quantity: <%= item.quantity %>
-                </p>
-
-                <p class="mt-2 text-[#d4af37] font-bold">
-                  ₹<%= item.total.toLocaleString('en-IN') %>
-                </p>
               </div>
+            </div>
 
-              <!-- ACTION -->
-         <!-- ACTION -->
-<div class="flex flex-col gap-2">
-
-  <a href="/orders/<%= order._id %>"
+            <!-- ACTION BUTTONS -->
+            <div class="flex flex-col gap-2 min-w-[140px]">
+              <a href="/orders/<%= order._id %>?itemId=<%= item.orderItemId || item._id %>"
      class="px-4 py-2 bg-gradient-to-r from-[#d4af37] to-[#b8941f]
-            text-black rounded-lg font-semibold text-center">
-    View Order Details
+            text-black rounded-lg font-semibold text-center text-sm">
+    View Details
   </a>
 
-  <% if (
-    order.paymentMethod === 'Razorpay' &&
-    order.paymentStatus === 'Failed' &&
-    order.orderStatus === 'Pending Payment'
-  ) { %>
-    <button
-      onclick="retryPayment('<%= order._id %>')"
-      class="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition">
-      Retry Payment
-    </button>
-  <% } %>
-
-</div>
-
-
+              <% if (
+                order.paymentMethod === 'Razorpay' &&
+                order.paymentStatus === 'Failed' &&
+                order.orderStatus === 'Pending Payment'
+              ) { %>
+                <button
+                  onclick="retryPayment('<%= order._id %>')"
+                  class="px-4 py-2 bg-yellow-500 text-black rounded-lg font-semibold hover:bg-yellow-400 transition text-sm">
+                  Retry Payment
+                </button>
+              <% } %>
             </div>
           </div>
-
-          <% }) %>
-        <% } %>
-      <% }) %>
-
-    </div>
+        </div>
+      <% }); %>
+    <% } else { %>
+      <!-- Fallback for orders with no items -->
+      <div class="p-6 text-center text-gray-400">
+        No items found in this order
+      </div>
+    <% } %>
+  <% }); %>
+</div>
 
   <!-- FOOTER -->
 <div class="p-6 border-t border-[#2a2a2a] bg-[#0f0f0f] flex justify-between items-center">

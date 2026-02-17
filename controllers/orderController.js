@@ -202,12 +202,13 @@ export const loadOrderDetails = async (req, res) => {
   try {
     const userId = req.session.userId;
     const orderId = req.params.orderId;
-
+    const itemId = req.query.itemId; // Get itemId from query parameter
 
     if (!userId) {
       req.flash("error", "Please login to view order");
       return res.redirect("/login");
     }
+    
     const user = await User.findById(userId).select("fullName email");
 
     const order = await Order.findById(orderId)
@@ -218,7 +219,7 @@ export const loadOrderDetails = async (req, res) => {
       })
       .populate({
         path: "items.variant",
-        select: "size color images stock",
+        select: "size color images stock price salePrice",
         match: { _id: { $exists: true } }
       });
 
@@ -232,10 +233,89 @@ export const loadOrderDetails = async (req, res) => {
       return res.redirect("/orders");
     }
 
-    const item = order.items[0] || {};
-    const product = item.product || {};
-    const variant = item.variant || {};
+    // Find the specific item if itemId is provided
+    let selectedItem = null;
+    let otherItems = [];
+    
+    if (itemId) {
+      // Find the specific item by orderItemId or index
+      selectedItem = order.items.find(item => 
+        item.orderItemId === itemId || 
+        item._id?.toString() === itemId
+      );
+      
+      // Get all other items (for "Other items in this order" section)
+      otherItems = order.items.filter(item => 
+        item.orderItemId !== itemId && 
+        item._id?.toString() !== itemId
+      );
+    } else {
+      // If no itemId, default to first item (backward compatibility)
+      selectedItem = order.items[0] || null;
+      otherItems = order.items.slice(1);
+    }
 
+    if (!selectedItem) {
+      req.flash("error", "Item not found in this order");
+      return res.redirect("/orders");
+    }
+
+    // Format the selected item
+    const product = selectedItem.product || {};
+    const variant = selectedItem.variant || {};
+    
+    const imageSrc = resolveImage(
+      variant?.images?.[0] || product?.images?.[0]
+    );
+
+    const formattedSelectedItem = {
+      product: {
+        _id: product._id,
+        name: product.name || "Product",
+        images: product.images || [],
+        description: product.description || "",
+        slug: product.slug || "",
+        category: product.category || ""
+      },
+      variant: {
+        _id: variant._id,
+        size: variant.size,
+        color: variant.color,
+        images: variant.images || [],
+        stock: variant.stock || 0,
+        price: variant.price,
+        salePrice: variant.salePrice
+      },
+      quantity: selectedItem.quantity || 1,
+      price: selectedItem.price || 0,
+      total: selectedItem.total || 0,
+      imageSrc: imageSrc,
+      itemStatus: selectedItem.itemStatus || order.orderStatus,
+      orderItemId: selectedItem.orderItemId || selectedItem._id
+    };
+
+    // Format other items (for the sidebar)
+    const formattedOtherItems = otherItems.map(item => {
+      const prod = item.product || {};
+      const varit = item.variant || {};
+      return {
+        _id: item._id,
+        orderItemId: item.orderItemId,
+        product: {
+          name: prod.name || "Product",
+          image: resolveImage(varit?.images?.[0] || prod?.images?.[0])
+        },
+        variant: {
+          size: varit.size,
+          color: varit.color
+        },
+        quantity: item.quantity,
+        price: item.price,
+        total: item.total
+      };
+    });
+
+    // Get refund information
     const refund = await RefundRequest.findOne({
       order: orderId,
       user: userId
@@ -243,24 +323,24 @@ export const loadOrderDetails = async (req, res) => {
 
     let refundData = null;
     if (refund) {
-      const { _id, refundAmount, status } = refund
       refundData = {
-        _id,
+        _id: refund._id,
         refundId: `REF-${refund._id.toString().slice(-8).toUpperCase()}`,
-        status,
+        status: refund.status,
         reason: refund.reason || refund.reasonCode,
-        refundAmount,
+        refundAmount: refund.refundAmount,
         refundMethod: refund.refundMethod,
         requestedAt: refund.createdAt,
         estimatedCompletion: refund.estimatedCompletion,
-        ...(refund.approvedAt && { approvedAt: refund.approvedAt }),
-        ...(refund.pickupScheduledAt && { pickup_scheduledAt: refund.pickupScheduledAt }),
-        ...(refund.pickedUpAt && { picked_upAt: refund.pickedUpAt }),
-        ...(refund.refundInitiatedAt && { refund_initiatedAt: refund.refundInitiatedAt }),
-        ...(refund.refundCompletedAt && { refund_completedAt: refund.refundCompletedAt })
+        approvedAt: refund.approvedAt,
+        pickupScheduledAt: refund.pickupScheduledAt,
+        pickedUpAt: refund.pickedUpAt,
+        refundInitiatedAt: refund.refundInitiatedAt,
+        refundCompletedAt: refund.refundCompletedAt
       };
     }
 
+    // Format address
     let displayAddress = {};
     if (order.address && typeof order.address === 'object') {
       displayAddress = {
@@ -274,55 +354,46 @@ export const loadOrderDetails = async (req, res) => {
         country: order.address.country || "India"
       };
     }
-    const imageSrc = resolveImage(
-      variant?.images?.[0] || product?.images?.[0]
-    );
 
+    // Create safe order object with selected item
     const safeOrder = {
       ...order.toObject(),
       orderNumber: order.orderNumber || `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
       address: displayAddress,
-
-      item: {
-        product: {
-          _id: product._id,
-          name: product.name || "Product",
-          images: product.images || [],
-          description: product.description || "",
-          slug: product.slug || "",
-          category: product.category || ""
-        },
-        variant: {
-          _id: variant._id,
-          size: variant.size,
-          color: variant.color,
-          images: variant.images || [],
-          stock: variant.stock || 0
-        },
-        quantity: item.quantity || 1,
-        price: item.price || 0,
-        total: item.total || 0,
-        imageSrc: imageSrc
-      },
-
-      items: [{
-        product: product,
-        variant: variant,
-        quantity: item.quantity || 1,
-        price: item.price || 0,
-        total: item.total || 0
-      }]
+      
+      // Main selected item
+      item: formattedSelectedItem,
+      
+      // Other items in this order
+      otherItems: formattedOtherItems,
+      otherItemsCount: otherItems.length,
+      
+      // Order totals
+      subtotal: order.subtotal || 0,
+      tax: order.tax || 0,
+      discount: order.discount || 0,
+      shipping: order.shipping || 0,
+      finalAmount: order.finalAmount || 0,
+      
+      // Item-specific totals? You might want to show only this item's contribution
+      itemSubtotal: formattedSelectedItem.total,
+      itemTax: (formattedSelectedItem.total * 0.1), // Calculate tax for this item
+      itemDiscount: order.discount ? (formattedSelectedItem.total / order.subtotal) * order.discount : 0,
+      itemShipping: order.shipping ? (formattedSelectedItem.total / order.subtotal) * order.shipping : 0,
+      itemFinalAmount: formattedSelectedItem.total + (formattedSelectedItem.total * 0.1) - 
+                       (order.discount ? (formattedSelectedItem.total / order.subtotal) * order.discount : 0) +
+                       (order.shipping ? (formattedSelectedItem.total / order.subtotal) * order.shipping : 0)
     };
-
-
 
     res.render("user/pages/orderDetails", {
       order: safeOrder,
       refund: refundData,
       userName: user.fullName,
       userEmail: user.email,
-      pageJs: "success.js"
+      pageJs: "success.js",
+      selectedItemId: itemId || selectedItem._id
     });
+    
   } catch (error) {
     console.error("Order Details Error:", error);
     req.flash("error", "Error loading order details");
@@ -356,28 +427,24 @@ export const loadMyOrders = async (req, res) => {
       ];
     }
 
-
     let sortOption = { createdAt: -1 };
     if (sort === 'oldest') sortOption = { createdAt: 1 };
     if (sort === 'highest') sortOption = { finalAmount: -1 };
     if (sort === 'lowest') sortOption = { finalAmount: 1 };
 
-
     const totalOrdersCount = await Order.countDocuments(query);
     const totalPages = Math.ceil(totalOrdersCount / limit);
-
-
     const skip = (currentPage - 1) * limit;
 
     const orders = await Order.find(query)
       .populate({
         path: "items.product",
-        select: "name slug description",
+        select: "name slug description images",
         match: { _id: { $exists: true } }
       })
       .populate({
         path: "items.variant",
-        select: "size color images",
+        select: "size color images price salePrice",
         match: { _id: { $exists: true } }
       })
       .sort(sortOption)
@@ -385,44 +452,17 @@ export const loadMyOrders = async (req, res) => {
       .limit(limit)
       .lean();
 
-  const groupedOrders = {};
-
-orders.forEach(order => {
-  const key = new Date(order.createdAt).toISOString().slice(0, 16); // same minute
-
-  if (!groupedOrders[key]) {
-    groupedOrders[key] = {
-      createdAt: order.createdAt,
-      orders: [],
-      totalAmount: 0
-    };
-  }
-
-  groupedOrders[key].orders.push(order);
-  groupedOrders[key].totalAmount += order.finalAmount;
-});
-
-const groupedOrderList = Object.values(groupedOrders);
-
+    // Format orders properly - show ALL items, not just the first one
     const formattedOrders = orders.map(order => {
-
-      const item = order.items[0] || {};
-      const variant = item.variant || {};
-      const product = item.product || { name: "Product" };
-
-
-      const variantImage = resolveImage(variant?.images?.[0]);
-
-
-      const itemPrice = item.price || 0;
-      const itemTotal = item.total || 0;
-      const quantity = item.quantity || 1;
-
-      return {
-        ...order,
-        orderNumber: order.orderNumber || `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
-
-        item: {
+      // Format each item in the order
+      const formattedItems = order.items.map(item => {
+        const variant = item.variant || {};
+        const product = item.product || { name: "Product" };
+        
+        const variantImage = resolveImage(variant?.images?.[0] || product?.images?.[0]);
+        
+        return {
+          ...item,
           product: {
             _id: product._id,
             name: product.name,
@@ -435,20 +475,35 @@ const groupedOrderList = Object.values(groupedOrders);
             color: variant.color,
             images: variant.images || []
           },
-          quantity: quantity,
-          price: itemPrice,
-          total: itemTotal
-        },
+          imageSrc: variantImage
+        };
+      });
 
-        items: [{
-          product: product,
-          variant: variant,
-          quantity: quantity,
-          price: itemPrice,
-          total: itemTotal
-        }]
+      return {
+        ...order,
+        orderNumber: order.orderNumber || `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
+        items: formattedItems, // Now contains ALL items, not just first one
+        itemCount: order.items.length,
+        // Keep first item for backward compatibility if needed
+        firstItem: formattedItems[0] || null
       };
     });
+
+    const groupedOrders = {};
+    formattedOrders.forEach(order => {
+      const key = new Date(order.createdAt).toISOString().slice(0, 16);
+      if (!groupedOrders[key]) {
+        groupedOrders[key] = {
+          createdAt: order.createdAt,
+          orders: [],
+          totalAmount: 0
+        };
+      }
+      groupedOrders[key].orders.push(order);
+      groupedOrders[key].totalAmount += order.finalAmount;
+    });
+
+    const groupedOrderList = Object.values(groupedOrders);
 
     const statusCounts = {
       Placed: await Order.countDocuments({ user: userId, orderStatus: 'Placed' }),
@@ -461,7 +516,7 @@ const groupedOrderList = Object.values(groupedOrders);
     res.render("user/pages/myOrders", {
       orders: formattedOrders,
       totalOrders: totalOrdersCount,
-        groupedOrders: groupedOrderList,
+      groupedOrders: groupedOrderList,
       page: currentPage,
       totalPages: totalPages,
       statusFilter: status || null,
@@ -482,126 +537,205 @@ export const cancelUserOrder = async (req, res) => {
   try {
     const userId = req.session.userId;
     const orderId = req.params.orderId;
-    const { reason, reasonCode } = req.body;
+    const { reason, reasonCode, itemId } = req.body; // Add itemId
 
     if (!userId) {
-      console.log('User not logged in');
       return res.status(401).json({
         success: false,
         message: "Please login to cancel order"
       });
     }
 
-
     const order = await Order.findById(orderId);
 
     if (!order) {
-      console.log('Order not found');
       return res.status(404).json({
         success: false,
         message: "Order not found"
       });
     }
 
-
     if (order.user.toString() !== userId) {
-      console.log('User does not own this order');
       return res.status(403).json({
         success: false,
         message: "You are not authorized to cancel this order"
       });
     }
-   if (order.refundStatus === 'Refunded') {
+
+    // Check if refund already processed
+    if (order.refundStatus === 'Refunded') {
       return res.status(400).json({ message: "Order already refunded" });
     }
 
-    const allowedStatuses = ['Placed', 'Confirmed'];
-    if (!allowedStatuses.includes(order.orderStatus)) {
-      return res.status(400).json({
-        success: false,
-        message: `Cannot cancel order with status: ${order.orderStatus}`
-      });
-    }
+    // If itemId is provided, cancel only that item
+    if (itemId) {
+      // Find the specific item
+      const itemIndex = order.items.findIndex(
+        item => item._id.toString() === itemId || item.orderItemId === itemId
+      );
 
+      if (itemIndex === -1) {
+        return res.status(404).json({
+          success: false,
+          message: "Item not found in order"
+        });
+      }
 
-   order.orderStatus = 'Cancelled';
+      const item = order.items[itemIndex];
 
-order.items.forEach(item => {
-  item.itemStatus = 'Cancelled';
-  item.cancelledAt = new Date();
-});
+      // Check if item can be cancelled
+      const allowedStatuses = ['Placed', 'Confirmed'];
+      const itemStatus = item.itemStatus || order.orderStatus;
+      
+      if (!allowedStatuses.includes(itemStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot cancel item with status: ${itemStatus}`
+        });
+      }
 
-    order.cancelledAt = new Date();
-    order.cancellationReason = reason;
-    order.cancellationReasonCode = reasonCode;
+      // Mark this specific item as cancelled
+      item.itemStatus = 'Cancelled';
+      item.cancelledAt = new Date();
+      item.cancellationReason = reason;
+      item.cancellationReasonCode = reasonCode;
 
-
-    order.statusHistory = order.statusHistory || [];
-    order.statusHistory.push({
-      status: 'Cancelled',
-      changedAt: new Date(),
-      notes: `Cancelled by user. Reason: ${reason}`,
-      changedBy: userId
-    });
-
-
-
-    if (order.paymentMethod === 'COD') {
-      order.paymentStatus = 'Refunded';
-    }
-
-
-    if (
-      (order.paymentMethod === 'Wallet' || order.paymentMethod === 'Razorpay') &&
-      order.paymentStatus === 'Paid'
-    ) {
-   const refundAmount = Math.max(order.subtotal - order.discount, 0);
-
-const wallet = await Wallet.findOne({ user: order.user });
-
-if (!wallet) {
-  throw new Error("Wallet not found");
-}
-
-wallet.balance += refundAmount;
-
-wallet.transactions.push({
-  amount: refundAmount,
-  type: "credit",
-  description: `Refund for order ${order.orderNumber} (excluding tax & shipping)`,
-  status: "success",
-  payment_method: "wallet",
-  createdAt: new Date()
-});
-
-await wallet.save();
-
-
-      order.paymentStatus = "Refunded";
-
-
-    }
-
-
-    for (const item of order.items) {
+      // Restore stock for this item
       await Variant.findByIdAndUpdate(
         item.variant,
         { $inc: { stock: item.quantity } }
       );
+
+      // Recalculate order totals (remove this item's contribution)
+      const remainingItems = order.items.filter(
+        (_, idx) => idx !== itemIndex || item.itemStatus !== 'Cancelled'
+      );
+
+      if (remainingItems.length === 0) {
+        // If no items left, cancel entire order
+        order.orderStatus = 'Cancelled';
+        order.cancelledAt = new Date();
+        order.cancellationReason = reason;
+        order.cancellationReasonCode = reasonCode;
+      } else {
+        // Recalculate totals based on remaining items
+        const newSubtotal = remainingItems.reduce((sum, i) => sum + i.total, 0);
+        const newTax = (newSubtotal / order.subtotal) * order.tax;
+        const newDiscount = (newSubtotal / order.subtotal) * order.discount;
+        const newShipping = order.shipping; // Keep shipping same or recalculate
+        
+        order.subtotal = newSubtotal;
+        order.tax = newTax;
+        order.discount = newDiscount;
+        order.finalAmount = newSubtotal + newTax - newDiscount + newShipping;
+      }
+
+      // Handle refund for this item if payment was made
+      if (
+        (order.paymentMethod === 'Wallet' || order.paymentMethod === 'Razorpay') &&
+        order.paymentStatus === 'Paid'
+      ) {
+        // Calculate refund amount for this specific item (excluding tax/shipping proportion)
+        const refundAmount = Math.max(item.total - ((item.total / order.subtotal) * order.discount), 0);
+        
+        const wallet = await Wallet.findOne({ user: order.user });
+        if (wallet) {
+          wallet.balance += refundAmount;
+          wallet.transactions.push({
+            amount: refundAmount,
+            type: "credit",
+            description: `Refund for cancelled item in order ${order.orderNumber}`,
+            status: "success",
+            payment_method: "wallet",
+            createdAt: new Date()
+          });
+          await wallet.save();
+        }
+      }
+
+      // Add to status history
+      order.statusHistory.push({
+        status: 'Item Cancelled',
+        changedAt: new Date(),
+        notes: `Item cancelled by user. Reason: ${reason}`,
+        changedBy: userId,
+        itemId: itemId
+      });
+
+    } else {
+      // Original full order cancellation logic (keep as fallback)
+      const allowedStatuses = ['Placed', 'Confirmed'];
+      if (!allowedStatuses.includes(order.orderStatus)) {
+        return res.status(400).json({
+          success: false,
+          message: `Cannot cancel order with status: ${order.orderStatus}`
+        });
+      }
+
+      order.orderStatus = 'Cancelled';
+      order.items.forEach(item => {
+        item.itemStatus = 'Cancelled';
+        item.cancelledAt = new Date();
+      });
+
+      order.cancelledAt = new Date();
+      order.cancellationReason = reason;
+      order.cancellationReasonCode = reasonCode;
+
+      order.statusHistory.push({
+        status: 'Cancelled',
+        changedAt: new Date(),
+        notes: `Cancelled by user. Reason: ${reason}`,
+        changedBy: userId
+      });
+
+      // Handle refund for full order
+      if (order.paymentMethod === 'COD') {
+        order.paymentStatus = 'Refunded';
+      }
+
+      if (
+        (order.paymentMethod === 'Wallet' || order.paymentMethod === 'Razorpay') &&
+        order.paymentStatus === 'Paid'
+      ) {
+        const refundAmount = Math.max(order.subtotal - order.discount, 0);
+        const wallet = await Wallet.findOne({ user: order.user });
+        if (wallet) {
+          wallet.balance += refundAmount;
+          wallet.transactions.push({
+            amount: refundAmount,
+            type: "credit",
+            description: `Refund for cancelled order ${order.orderNumber}`,
+            status: "success",
+            payment_method: "wallet",
+            createdAt: new Date()
+          });
+          await wallet.save();
+        }
+        order.paymentStatus = "Refunded";
+      }
+
+      // Restore stock for all items
+      for (const item of order.items) {
+        await Variant.findByIdAndUpdate(
+          item.variant,
+          { $inc: { stock: item.quantity } }
+        );
+      }
     }
 
     await order.save();
 
     return res.json({
       success: true,
-      message: "Order cancelled successfully",
+      message: itemId ? "Item cancelled successfully" : "Order cancelled successfully",
       data: {
         orderId: order._id,
+        itemId: itemId,
         status: order.orderStatus,
         reason: reason
       }
     });
-
 
   } catch (error) {
     console.error("Cancel Order Error:", error);
