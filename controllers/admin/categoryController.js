@@ -1,7 +1,7 @@
 import mongoose from 'mongoose';
 import Product from "../../models/Product.js";
 import Category from "../../models/Category.js";
-
+import logger from "../../middlewares/user/logor.js"
 export const loadCategoryPage = async (req, res) => {
   try {
     res.render('admin/category', {
@@ -49,31 +49,31 @@ export const getData = async (req, res) => {
       filter.active = false;
     }
     
-    console.log('[DEBUG] Filters:', filter);
-    console.log('[DEBUG] Sort parameter:', sort);
+   logger.info('[DEBUG] Filters:', filter);
+    logger.info('[DEBUG] Sort parameter:', sort);
     
     
     let sortOrder = {};
     switch(sort.toLowerCase()) {
       case 'a-z':
         sortOrder = { name: 1 }; 
-        console.log('[DEBUG] Sorting by: name A-Z');
+        logger.info('[DEBUG] Sorting by: name A-Z');
         break;
       case 'z-a':
         sortOrder = { name: -1 };
-        console.log('[DEBUG] Sorting by: name Z-A');
+       logger.info('[DEBUG] Sorting by: name Z-A');
         break;
       case 'latest':
         sortOrder = { createdAt: -1 }; 
-        console.log('[DEBUG] Sorting by: latest first');
+        logger.info('[DEBUG] Sorting by: latest first');
         break;
       case 'oldest':
         sortOrder = { createdAt: 1 };
-        console.log('[DEBUG] Sorting by: oldest first');
+      logger.info('[DEBUG] Sorting by: oldest first');
         break;
       default:
         sortOrder = { createdAt: -1 }; 
-        console.log('[DEBUG] Sorting by: default (latest)');
+       logger.info('[DEBUG] Sorting by: default (latest)');
     }
     
     const totalItems = await Category.countDocuments(filter).catch(() => 0);
@@ -93,9 +93,9 @@ export const getData = async (req, res) => {
     
    
     if (categories.length > 0) {
-      console.log('[DEBUG] First 3 categories (for sorting verification):');
+     logger.info('[DEBUG] First 3 categories (for sorting verification):');
       categories.slice(0, 3).forEach((cat, index) => {
-        console.log(`  ${index + 1}. ${cat.name} - Active: ${cat.active} - Created: ${cat.createdAt}`);
+       logger.info(`  ${index + 1}. ${cat.name} - Active: ${cat.active} - Created: ${cat.createdAt}`);
       });
     }
     
@@ -122,7 +122,7 @@ export const getData = async (req, res) => {
 
 export const createCategory = async (req, res) => {
   try {
-    console.log('CREATE CATEGORY HIT! Body:', req.body, 'file:', req.file);
+   logger.info('CREATE CATEGORY HIT! Body:', req.body, 'file:', req.file);
 
     const { name, description } = req.body;
     if (!name || name.trim().length < 2) {
@@ -155,7 +155,7 @@ export const createCategory = async (req, res) => {
     });
 
     const saved = await newCat.save();
-    console.log('SAVED TO MONGODB:', saved);
+    logger.info('SAVED TO MONGODB:', saved);
     res.status(201).json({
       success: true,
       message: 'Category created!',

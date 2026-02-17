@@ -5,7 +5,7 @@ import { getUsersWithFilters } from "../../services/userServices.js";
 const { loadLoginPage } = userController;
 import Admin from "../../models/Admin.js";
 import bcrypt from "bcrypt";
-
+import logger from "../../middlewares/user/logor.js"
 const loadDashboard = async (req, res) => {
   try {
     return res.render('admin/dashboard', {
@@ -14,7 +14,7 @@ const loadDashboard = async (req, res) => {
     user: req.user
   });
   } catch (error) {
-    console.log(error);
+     logger.error(error);
     res.status(500).send("Server error");
   }
 };
@@ -33,7 +33,7 @@ const loadLogin = async (req, res) => {
     });
 
   } catch (errors) {
-    console.log(errors);
+     logger.error(errors);
     return res.status(500).send('Server error');
   }
 };
@@ -54,7 +54,7 @@ const login = async (req, res) => {
     
     return req.session.save(() => res.redirect('/admin/reports/dash'));
   } catch (err) {
-    console.error(err);
+     logger.error(err);
     return res.redirect('/admin/login?error=' + encodeURIComponent('Server error'));
   }
 };
@@ -78,7 +78,7 @@ const login = async (req, res) => {
     });
 
   } catch (error) {
-    console.error("loadUsers error:", error);
+     logger.error("loadUsers error:", error);
 
     return res.status(500).send("Internal Server Error");
   }
@@ -159,7 +159,7 @@ const blockUnblockUser = async (req, res) => {
     );
 
 
-    console.log(`User ${actionType}ed:`, {
+    logger.info(`User ${actionType}ed:`, {
       userId: id,
       userName: user.fullName,
       action: actionType,
