@@ -553,25 +553,19 @@ await internalOrder.save();
 
 
 
-    const order = await razorpay.orders.create({
-      amount: amountInPaise,
-      currency: "INR",
-      receipt: internalOrder.orderNumber,
-      payment_capture: 1
-    });
-    internalOrder.razorpayOrderId = order.id;
-await internalOrder.save();
+
+    
     return res.json({
-      success: true,
-      message: "Razorpay order created successfully",
-      data: {
-        id: order.id,
-         internalOrderId: internalOrder._id,
-        amount: order.amount,
-        currency: order.currency,
-        key_id: process.env.RAZORPAY_KEY_ID
-      }
-    });
+  success: true,
+  message: "Razorpay order created successfully",
+  data: {
+    id: razorpayOrder.id,
+    internalOrderId: internalOrder._id,
+    amount: razorpayOrder.amount,
+    currency: razorpayOrder.currency,
+    key_id: process.env.RAZORPAY_KEY_ID
+  }
+});
 
   } catch (error) {
     console.error(" Razorpay order creation error:", error);
@@ -618,30 +612,17 @@ export const markPaymentFailed = async (req, res) => {
 export const verifyRazorpayPayment = async (req, res) => {
   try {
     const userId = req.session.userId;
-    const {
-      razorpay_order_id,
-      razorpay_payment_id,
-      razorpay_signature
-    } = req.body;
-
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        message: "Please login"
-      });
-    }
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
     const body = razorpay_order_id + "|" + razorpay_payment_id;
+
     const expectedSignature = crypto
       .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
       .update(body)
       .digest("hex");
 
     if (expectedSignature !== razorpay_signature) {
-      return res.status(400).json({
-        success: false,
-        message: "Payment verification failed"
-      });
+      return res.status(400).json({ success: false, message: "Payment verification failed" });
     }
 
     const order = await Order.findOne({
@@ -650,43 +631,41 @@ export const verifyRazorpayPayment = async (req, res) => {
     });
 
     if (!order) {
-      return res.status(404).json({
-        success: false,
-        message: "Order not found"
-      });
+      return res.status(404).json({ success: false, message: "Order not found" });
     }
 
     if (order.paymentStatus === "Paid") {
-      return res.json({
-        success: true,
-        message: "Payment already processed",
-        orderId: order._id
-      });
+      return res.json({ success: true, message: "Already processed", orderId: order._id });
     }
 
+    // reduce stock first
+    for (const item of order.items) {
+      const updatedVariant = await Variant.findOneAndUpdate(
+        { _id: item.variant, stock: { $gte: item.quantity } },
+        { $inc: { stock: -item.quantity } },
+        { new: true }
+      );
+
+      if (!updatedVariant) {
+        order.paymentStatus = "Failed";
+        order.orderStatus = "Pending Payment";
+        await order.save();
+
+        return res.status(400).json({
+          success: false,
+          message: "Stock not available. Payment will be refunded."
+        });
+      }
+    }
+
+    // mark paid
     order.paymentStatus = "Paid";
     order.orderStatus = "Placed";
     order.razorpayPaymentId = razorpay_payment_id;
     order.razorpaySignature = razorpay_signature;
 
-    order.statusHistory.push({
-      status: "Payment Success",
-      changedAt: new Date(),
-      notes: "Razorpay payment successful",
-      changedBy: userId
-    });
-
     await order.save();
 
-    // ✅ Reduce stock ONLY NOW
-    for (const item of order.items) {
-      await Variant.findByIdAndUpdate(
-        item.variant,
-        { $inc: { stock: -item.quantity } }
-      );
-    }
-
-    // ✅ Clear cart
     await Cart.deleteOne({ user: userId });
 
     return res.json({
@@ -697,12 +676,10 @@ export const verifyRazorpayPayment = async (req, res) => {
 
   } catch (error) {
     console.error("Verify Razorpay Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Payment verification failed"
-    });
+    res.status(500).json({ success: false, message: "Payment verification failed" });
   }
 };
+
 
 
 
@@ -775,10 +752,16 @@ async function createOrderAfterPayment(userId, addressId, paymentMethod, payment
     order.orderNumber = `ORD-${order._id.toString().slice(-8).toUpperCase()}`;
     await order.save();
 
-    await Variant.findByIdAndUpdate(
-      cartItem.variant._id,
-      { $inc: { stock: -cartItem.quantity } }
-    );
+   const updatedVariant = await Variant.findOneAndUpdate(
+  { _id: cartItem.variant._id, stock: { $gte: cartItem.quantity } },
+  { $inc: { stock: -cartItem.quantity } },
+  { new: true }
+);
+
+if (!updatedVariant) {
+  throw new Error("Stock not available");
+}
+
 
     createdOrders.push(order);
   }
@@ -1362,7 +1345,15 @@ export const placeOrder = async (req, res) => {
       const tax = subtotal * 0.1;
       const shipping = subtotal >= 500 ? 0 : 50;
       const finalAmount = subtotal + tax + shipping - discount;
+       const updatedVariant = await Variant.findOneAndUpdate(
+  { _id: variant._id, stock: { $gte: item.quantity } },   // ✅ stock check
+  { $inc: { stock: -item.quantity } },
+  { new: true }
+);
 
+if (!updatedVariant) {
+  throw new Error(`Only limited stock available for ${product.name}`);
+}
       const order = await Order.create({
         user: userId,
         address: {
@@ -1396,10 +1387,7 @@ export const placeOrder = async (req, res) => {
       order.orderNumber = `ORD-${order._id.toString().slice(-8).toUpperCase()}`;
       await order.save();
 
-      await Variant.findByIdAndUpdate(
-        variant._id,
-        { $inc: { stock: -item.quantity } }
-      );
+   
 
       createdOrders.push({
         orderId: order._id,
