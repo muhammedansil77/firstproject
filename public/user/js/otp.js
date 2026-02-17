@@ -58,7 +58,7 @@
     }
 
     // Configuration
-    const TIMER_DURATION = 60; // seconds
+    const TIMER_DURATION = 600; // seconds
     let timeLeft = TIMER_DURATION;
     let timerInterval = null;
 
