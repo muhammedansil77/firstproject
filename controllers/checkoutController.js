@@ -1224,6 +1224,29 @@ export const placeOrder = async (req, res) => {
           });
         }
       }
+// ✅ Validate coupon also
+if (req.session.appliedCoupon) {
+  const couponCheck = await Coupon.findOne({
+    code: req.session.appliedCoupon.code,
+    isDeleted: false
+  });
+
+  if (!couponCheck) {
+    delete req.session.appliedCoupon;
+    return res.status(400).json({
+      success: false,
+      message: "Coupon removed"
+    });
+  }
+
+  if (!couponCheck.isActive) {
+    delete req.session.appliedCoupon;
+    return res.status(400).json({
+      success: false,
+      message: "Coupon blocked by admin"
+    });
+  }
+}
 
       return res.json({
         success: true,
@@ -1296,55 +1319,84 @@ export const placeOrder = async (req, res) => {
     let coupon = null;
     let totalCouponDiscount = 0;
 
-    if (req.session.appliedCoupon) {
-      coupon = await Coupon.findOne({
-        code: req.session.appliedCoupon.code,
-        isActive: true,
-        isDeleted: false
-      });
+   if (req.session.appliedCoupon) {
 
-      if (coupon) {
-        // Validate coupon
-        if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) {
-          delete req.session.appliedCoupon;
-          return res.status(400).json({
-            success: false,
-            message: "This coupon has reached its usage limit"
-          });
-        }
+  coupon = await Coupon.findOne({
+    code: req.session.appliedCoupon.code,
+    isDeleted: false
+  });
 
-        const userUsage = coupon.usersUsed.filter(
-          u => u.user.toString() === userId.toString()
-        ).length;
+  // Coupon removed
+  if (!coupon) {
+    delete req.session.appliedCoupon;
+    return res.status(400).json({
+      success: false,
+      message: "Coupon not found or removed"
+    });
+  }
 
-        if (coupon.perUserLimit > 0 && userUsage >= coupon.perUserLimit) {
-          delete req.session.appliedCoupon;
-          return res.status(400).json({
-            success: false,
-            message: "You have already used this coupon"
-          });
-        }
+  // Coupon blocked by admin
+  if (!coupon.isActive) {
+    delete req.session.appliedCoupon;
+    return res.status(400).json({
+      success: false,
+      message: "This coupon is blocked by admin"
+    });
+  }
 
-        // Calculate total coupon discount
-        if (totalSubtotal >= coupon.minPurchaseAmount) {
-          totalCouponDiscount =
-            coupon.discountType === "percentage"
-              ? (totalSubtotal * coupon.discountValue) / 100
-              : coupon.discountValue;
+  // Coupon expired or not started
+  const now = new Date();
+  if (now < coupon.startDate || now > coupon.endDate) {
+    delete req.session.appliedCoupon;
+    return res.status(400).json({
+      success: false,
+      message: "Coupon is expired or not active"
+    });
+  }
 
-          if (coupon.maxDiscountAmount) {
-            totalCouponDiscount = Math.min(
-              totalCouponDiscount,
-              coupon.maxDiscountAmount
-            );
-          }
-          
-          totalCouponDiscount = Math.min(totalCouponDiscount, totalSubtotal);
-        }
-      } else {
-        delete req.session.appliedCoupon;
-      }
-    }
+  // Usage limit
+  if (coupon.usageLimit > 0 && coupon.usedCount >= coupon.usageLimit) {
+    delete req.session.appliedCoupon;
+    return res.status(400).json({
+      success: false,
+      message: "This coupon has reached its usage limit"
+    });
+  }
+
+  // Per user limit
+  const userUsage = coupon.usersUsed.filter(
+    u => u.user.toString() === userId.toString()
+  ).length;
+
+  if (coupon.perUserLimit > 0 && userUsage >= coupon.perUserLimit) {
+    delete req.session.appliedCoupon;
+    return res.status(400).json({
+      success: false,
+      message: "You have already used this coupon"
+    });
+  }
+
+  // Minimum purchase check
+  if (totalSubtotal < coupon.minPurchaseAmount) {
+    return res.status(400).json({
+      success: false,
+      message: `Minimum purchase ₹${coupon.minPurchaseAmount} required`
+    });
+  }
+
+  // Calculate discount
+  totalCouponDiscount =
+    coupon.discountType === "percentage"
+      ? (totalSubtotal * coupon.discountValue) / 100
+      : coupon.discountValue;
+
+  if (coupon.maxDiscountAmount) {
+    totalCouponDiscount = Math.min(totalCouponDiscount, coupon.maxDiscountAmount);
+  }
+
+  totalCouponDiscount = Math.min(totalCouponDiscount, totalSubtotal);
+}
+
 
     // Distribute coupon discount proportionally
     const itemsWithDiscounts = [];
@@ -1374,8 +1426,10 @@ export const placeOrder = async (req, res) => {
     }
 
     // Create separate orders for each product
-    const createdOrders = [];
-    const paymentStatus = paymentMethod === "COD" ? "Pending" : "Paid";
+   const paymentStatus =
+  paymentMethod === "COD" ? "Pending" :
+  paymentMethod === "Razorpay" ? "Paid" :
+  paymentMethod === "Wallet" ? "Paid" : "Pending";
 
     for (const item of itemsWithDiscounts) {
       const product = item.product;

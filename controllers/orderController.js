@@ -202,7 +202,7 @@ export const loadOrderDetails = async (req, res) => {
   try {
     const userId = req.session.userId;
     const orderId = req.params.orderId;
-    const itemId = req.query.itemId; // Get itemId from query parameter
+    const itemId = req.query.itemId; 
 
     if (!userId) {
       req.flash("error", "Please login to view order");
@@ -233,24 +233,24 @@ export const loadOrderDetails = async (req, res) => {
       return res.redirect("/orders");
     }
 
-    // Find the specific item if itemId is provided
+  
     let selectedItem = null;
     let otherItems = [];
     
     if (itemId) {
-      // Find the specific item by orderItemId or index
+     
       selectedItem = order.items.find(item => 
         item.orderItemId === itemId || 
         item._id?.toString() === itemId
       );
       
-      // Get all other items (for "Other items in this order" section)
+   
       otherItems = order.items.filter(item => 
         item.orderItemId !== itemId && 
         item._id?.toString() !== itemId
       );
     } else {
-      // If no itemId, default to first item (backward compatibility)
+    
       selectedItem = order.items[0] || null;
       otherItems = order.items.slice(1);
     }
@@ -260,7 +260,7 @@ export const loadOrderDetails = async (req, res) => {
       return res.redirect("/orders");
     }
 
-    // Format the selected item
+  
     const product = selectedItem.product || {};
     const variant = selectedItem.variant || {};
     
@@ -294,7 +294,7 @@ export const loadOrderDetails = async (req, res) => {
       orderItemId: selectedItem.orderItemId || selectedItem._id
     };
 
-    // Format other items (for the sidebar)
+   
     const formattedOtherItems = otherItems.map(item => {
       const prod = item.product || {};
       const varit = item.variant || {};
@@ -315,7 +315,7 @@ export const loadOrderDetails = async (req, res) => {
       };
     });
 
-    // Get refund information
+  
     const refund = await RefundRequest.findOne({
       order: orderId,
       user: userId
@@ -340,7 +340,7 @@ export const loadOrderDetails = async (req, res) => {
       };
     }
 
-    // Format address
+  
     let displayAddress = {};
     if (order.address && typeof order.address === 'object') {
       displayAddress = {
@@ -355,29 +355,24 @@ export const loadOrderDetails = async (req, res) => {
       };
     }
 
-    // Create safe order object with selected item
     const safeOrder = {
       ...order.toObject(),
       orderNumber: order.orderNumber || `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
       address: displayAddress,
       
-      // Main selected item
       item: formattedSelectedItem,
       
-      // Other items in this order
       otherItems: formattedOtherItems,
       otherItemsCount: otherItems.length,
       
-      // Order totals
       subtotal: order.subtotal || 0,
       tax: order.tax || 0,
       discount: order.discount || 0,
       shipping: order.shipping || 0,
       finalAmount: order.finalAmount || 0,
       
-      // Item-specific totals? You might want to show only this item's contribution
       itemSubtotal: formattedSelectedItem.total,
-      itemTax: (formattedSelectedItem.total * 0.1), // Calculate tax for this item
+      itemTax: (formattedSelectedItem.total * 0.1), 
       itemDiscount: order.discount ? (formattedSelectedItem.total / order.subtotal) * order.discount : 0,
       itemShipping: order.shipping ? (formattedSelectedItem.total / order.subtotal) * order.shipping : 0,
       itemFinalAmount: formattedSelectedItem.total + (formattedSelectedItem.total * 0.1) - 
@@ -452,9 +447,7 @@ export const loadMyOrders = async (req, res) => {
       .limit(limit)
       .lean();
 
-    // Format orders properly - show ALL items, not just the first one
     const formattedOrders = orders.map(order => {
-      // Format each item in the order
       const formattedItems = order.items.map(item => {
         const variant = item.variant || {};
         const product = item.product || { name: "Product" };
@@ -482,9 +475,9 @@ export const loadMyOrders = async (req, res) => {
       return {
         ...order,
         orderNumber: order.orderNumber || `ORD-${order._id.toString().slice(-8).toUpperCase()}`,
-        items: formattedItems, // Now contains ALL items, not just first one
+        items: formattedItems, 
         itemCount: order.items.length,
-        // Keep first item for backward compatibility if needed
+       
         firstItem: formattedItems[0] || null
       };
     });
@@ -537,7 +530,7 @@ export const cancelUserOrder = async (req, res) => {
   try {
     const userId = req.session.userId;
     const orderId = req.params.orderId;
-    const { reason, reasonCode, itemId } = req.body; // Add itemId
+    const { reason, reasonCode, itemId } = req.body; 
 
     if (!userId) {
       return res.status(401).json({
@@ -562,14 +555,14 @@ export const cancelUserOrder = async (req, res) => {
       });
     }
 
-    // Check if refund already processed
+   
     if (order.refundStatus === 'Refunded') {
       return res.status(400).json({ message: "Order already refunded" });
     }
 
-    // If itemId is provided, cancel only that item
+    
     if (itemId) {
-      // Find the specific item
+     
       const itemIndex = order.items.findIndex(
         item => item._id.toString() === itemId || item.orderItemId === itemId
       );
@@ -583,7 +576,7 @@ export const cancelUserOrder = async (req, res) => {
 
       const item = order.items[itemIndex];
 
-      // Check if item can be cancelled
+    
       const allowedStatuses = ['Placed', 'Confirmed'];
       const itemStatus = item.itemStatus || order.orderStatus;
       
@@ -594,25 +587,25 @@ export const cancelUserOrder = async (req, res) => {
         });
       }
 
-      // Mark this specific item as cancelled
+    
       item.itemStatus = 'Cancelled';
       item.cancelledAt = new Date();
       item.cancellationReason = reason;
       item.cancellationReasonCode = reasonCode;
 
-      // Restore stock for this item
+     
       await Variant.findByIdAndUpdate(
         item.variant,
         { $inc: { stock: item.quantity } }
       );
 
-      // Recalculate order totals (remove this item's contribution)
+     
       const remainingItems = order.items.filter(
         (_, idx) => idx !== itemIndex || item.itemStatus !== 'Cancelled'
       );
 
       if (remainingItems.length === 0) {
-        // If no items left, cancel entire order
+      
         order.orderStatus = 'Cancelled';
         order.cancelledAt = new Date();
         order.cancellationReason = reason;
