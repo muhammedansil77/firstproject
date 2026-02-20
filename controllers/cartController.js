@@ -1,16 +1,19 @@
 import mongoose from "mongoose";
 import Cart from "../models/cart.js";
+import Category  from "../models/Category.js";
 import Product from '../models/Product.js';
 import Variant from '../models/Variant.js';
 import { getBestOfferForProduct } from "../helpers/offerHelper.js";
 import { isCategoryBlocked } from '../helpers/categoryGuard.js';
-
+import { viewCartService,
+  updateCartQtyService  
+ } from "../services/user/cartService.js";
 
 function toNum(v) {
   const n = Number(v);
   return Number.isFinite(n) ? n : 0;
 }
-// helper to fix image paths (local + cloudinary)
+
 function resolveImage(img) {
   if (!img) return '/uploads/placeholder.png';
   if (typeof img === 'string' && img.startsWith('http')) return img;
@@ -59,6 +62,7 @@ if (!product) {
 if (
   product.isDeleted === true ||
   product.status === 'blocked' ||
+  
   await isCategoryBlocked(product.category)
 ) {
   return res.status(400).json({
@@ -153,7 +157,7 @@ if (
   }
 };
 
-export const viewCart = async (req, res) => {
+export const viewCart = async (req, res, next) => {
   try {
     const userId = req.user?._id;
 
@@ -161,142 +165,16 @@ export const viewCart = async (req, res) => {
       return res.redirect("/auth/login?returnTo=/cart");
     }
 
-    console.log(" Loading cart for user:", userId);
-
-
-    const cart = await Cart.findOne({ user: userId })
-      .populate({
-        path: "items.product",
-        select: "name images slug category status isDeleted"
-      })
-      .populate({
-        path: "items.variant",
-        select: "color colorCode images price salePrice stock"
-      })
-      .lean();
-
-    console.log(" Cart data found:", !!cart);
-
-    let items = [];
-    let total = 0;
-    let cartCount = 0;
-    let outOfStockCount = 0;
-    let blockedProductCount = 0;
-
-    if (cart?.items?.length) {
-      for (const i of cart.items) {
-        const product = i.product || {};
-        const variant = i.variant || {};
-
-
-        const categoryBlocked = await isCategoryBlocked(product.category);
-
-const isProductBlocked =
-  product.status === 'blocked' ||
-  product.isDeleted === true ||
-  categoryBlocked;
-        const isOutOfStock = variant.stock === 0 || isProductBlocked;
-        const isProductAvailable = !isProductBlocked;
-
-
-        let basePrice = 0;
-        let discountAmount = 0;
-        let finalPrice = 0;
-        let offer = null;
-        let subtotal = 0;
-
-        if (isProductAvailable && !isOutOfStock) {
-          basePrice = toNum(variant.salePrice) || toNum(variant.price) || 0;
-
-
-          offer = await getBestOfferForProduct({
-            _id: product._id,
-            category: product.category,
-            price: basePrice
-          });
-
-          if (offer) {
-            discountAmount =
-              offer.discountType === "percentage"
-                ? (basePrice * offer.discountValue) / 100
-                : offer.discountValue;
-
-            if (offer.maxDiscountAmount) {
-              discountAmount = Math.min(discountAmount, offer.maxDiscountAmount);
-            }
-
-            finalPrice = basePrice - discountAmount;
-          } else {
-            finalPrice = basePrice;
-          }
-
-          subtotal = finalPrice * i.quantity;
-          total += subtotal;
-          cartCount += i.quantity;
-        }
-
-        if (isOutOfStock) {
-          outOfStockCount++;
-        }
-
-        if (isProductBlocked) {
-          blockedProductCount++;
-        }
-
-
-        const image =
-          resolveImage(
-            variant?.images?.[0] ||
-            product?.images?.[0]
-          );
-
-        items.push({
-          productId: product._id,
-          name: product.name || "Unknown Product",
-          slug: product.slug,
-          variantId: variant._id,
-          color: variant.color || "Default",
-          colorCode: variant.colorCode || "#808080",
-          image,
-          basePrice,
-          finalPrice,
-          discountAmount,
-          offer,
-          quantity: i.quantity,
-          subtotal,
-          stock: variant.stock || 0,
-          isOutOfStock,
-          isProductBlocked,
-          productStatus: product.status || 'active',
-          productDeleted: product.isDeleted || false
-        });
-      }
-    }
-
-
-
-
-    if (blockedProductCount > 0) {
-      setTimeout(async () => {
-        try {
-          await Cart.updateOne(
-            { user: userId },
-            { $pull: { items: { product: { $in: items.filter(i => i.isProductBlocked).map(i => i.productId) } } } }
-          );
-        } catch (err) {
-          console.error("Error cleaning blocked products:", err);
-        }
-      }, 1000);
-    }
+    const result = await viewCartService(userId);
 
     return res.render("user/pages/cart", {
       pageTitle: "Your Shopping Cart",
-      items,
-      total,
-      cartCount,
-      cartEmpty: items.length === 0,
-      hasOutOfStockItems: outOfStockCount > 0,
-      hasBlockedProducts: blockedProductCount > 0,
+      items: result.items,
+      total: result.total,
+      cartCount: result.cartCount,
+      cartEmpty: result.items.length === 0,
+      hasOutOfStockItems: result.outOfStockCount > 0,
+      hasBlockedProducts: result.blockedProductCount > 0,
       pageJs: "cart.js"
     });
 
@@ -309,77 +187,26 @@ const isProductBlocked =
 export const updateCartQty = async (req, res) => {
   try {
     const { variantId, quantity } = req.body;
-    const userId = req.user._id;
+    const userId = req.user?._id;
 
-    if (!userId) {
-      return res.status(401).json({ ok: false, message: "Login required" });
+    const result = await updateCartQtyService(
+      userId,
+      variantId,
+      quantity
+    );
+
+    if (result.status) {
+      return res.status(result.status).json(result);
     }
 
-    const cart = await Cart.findOne({ user: userId });
-    if (!cart) return res.json({ ok: false, message: "Cart not found" });
-
-    const item = cart.items.find(i => String(i.variant) === String(variantId));
-    if (!item) return res.json({ ok: false, message: "Item not found in cart" });
-
-
-    const variant = await Variant.findById(variantId);
-    if (!variant) {
-
-      await Cart.updateOne(
-        { user: userId },
-        { $pull: { items: { variant: variantId } } }
-      );
-      return res.json({
-        ok: false,
-        message: "This item is no longer available"
-      });
-    }
-
-
-    if (variant.stock === 0) {
-
-      await Cart.updateOne(
-        { user: userId },
-        { $pull: { items: { variant: variantId } } }
-      );
-      return res.json({
-        ok: false,
-        message: "This product is out of stock and has been removed from your cart"
-      });
-    }
-
-
-    if (variant.stock < quantity) {
-      return res.json({
-        ok: false,
-        message: `Only ${variant.stock} items available`
-      });
-    }
-
-    item.quantity = Math.max(1, Number(quantity));
-    await cart.save();
-
-
-    const itemPrice = toNum(variant.salePrice) || toNum(variant.price) || 0;
-    const itemSubtotal = itemPrice * item.quantity;
-
-    const cartTotal = cart.items.reduce((sum, item) => {
-      const variantPrice = toNum(item.variant?.salePrice) || toNum(item.variant?.price) || 0;
-      return sum + (variantPrice * item.quantity);
-    }, 0);
-
-    res.json({
-      ok: true,
-      subtotal: itemSubtotal,
-      total: cartTotal,
-      quantity: item.quantity,
-      stock: variant.stock,
-      isOutOfStock: variant.stock === 0
-    });
+    return res.json(result);
 
   } catch (err) {
     console.error("updateCartQty error:", err);
-    res.status(500).json({ ok: false, message: "Server error" });
+    return res.status(500).json({
+      ok: false,
+      message: "Server error"
+    });
   }
 };
 
@@ -457,9 +284,13 @@ export const validateCheckout = async (req, res) => {
       });
     }
    const product = await Product.find()
-    const cart = await Cart.findOne({ user: userId })
-    .populate('items.variant')
-    .populate("items.product");
+   const cart = await Cart.findOne({ user: userId })
+  .populate({
+    path: "items.product",
+    populate: { path: "category" }
+  })
+  .populate("items.variant");
+
     
 
     if (!cart || cart.items.length === 0) {
@@ -474,16 +305,23 @@ export const validateCheckout = async (req, res) => {
     for (const item of cart.items) {
       const variant = item.variant;
          const product = item.product;
-
+          const category = product.category;
+      
       if (!variant) {
         errors.push('Some products are no longer available');
         continue;
       }
+      if (category.active === false ) {
+  errors.push(`${category.name} category is currently unavailable`);
+  continue;
+}
 
+      
        if (product.status === "blocked" || product.isDeleted === true) {
         errors.push(`${product.name} is currently unavailable`);
         continue;
       }
+     
 
       if (variant.stock < item.quantity) {
         errors.push(

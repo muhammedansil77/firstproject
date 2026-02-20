@@ -12,3 +12,136 @@
 2026-02-18 10:28:44 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
 2026-02-18 10:28:44 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
 2026-02-18 10:28:44 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:00:23 [INFO]: [DEBUG] Filters:
+2026-02-18 16:00:23 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:00:23 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:00:23 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:00:23 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:00:23 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:00:23 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:00:30 [INFO]: [DEBUG] Filters:
+2026-02-18 16:00:30 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:00:30 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:00:31 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:00:31 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:00:31 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:00:31 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:00:57 [INFO]: [DEBUG] Filters:
+2026-02-18 16:00:57 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:00:57 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:00:58 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:00:58 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:00:58 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:00:58 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:02:17 [INFO]: [DEBUG] Filters:
+2026-02-18 16:02:17 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:02:17 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:02:17 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:02:17 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:02:17 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:02:17 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:02:39 [INFO]: [DEBUG] Filters:
+2026-02-18 16:02:39 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:02:39 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:02:39 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:02:39 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:02:39 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:02:39 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:02:51 [INFO]: [DEBUG] Filters:
+2026-02-18 16:02:51 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:02:51 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:02:51 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:02:51 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:02:51 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:02:51 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:03:03 [INFO]: [DEBUG] Filters:
+2026-02-18 16:03:03 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:03:03 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:03:03 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:03:03 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:03:03 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:03:03 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:05:08 [INFO]: [DEBUG] Filters:
+2026-02-18 16:05:08 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:05:08 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:05:09 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:05:09 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:05:09 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:05:09 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:06:04 [INFO]: [DEBUG] Filters:
+2026-02-18 16:06:04 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:06:04 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:06:04 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:06:04 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:06:04 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:06:04 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:10:07 [INFO]: [DEBUG] Filters:
+2026-02-18 16:10:07 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:10:07 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:10:08 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:10:08 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:10:08 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:10:08 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:10:34 [INFO]: [DEBUG] Filters:
+2026-02-18 16:10:34 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:10:34 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:10:34 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:10:34 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:10:34 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:10:34 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-18 16:13:52 [INFO]: [DEBUG] Filters:
+2026-02-18 16:13:52 [INFO]: [DEBUG] Sort parameter:
+2026-02-18 16:13:52 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-18 16:13:52 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-18 16:13:52 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-18 16:13:52 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-18 16:13:52 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-20 21:58:46 [INFO]: [DEBUG] Filters:
+2026-02-20 21:58:46 [INFO]: [DEBUG] Sort parameter:
+2026-02-20 21:58:46 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-20 21:58:46 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-20 21:58:46 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-20 21:58:46 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-20 21:58:46 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-20 22:01:50 [INFO]: [DEBUG] Filters:
+2026-02-20 22:01:50 [INFO]: [DEBUG] Sort parameter:
+2026-02-20 22:01:50 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-20 22:01:50 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-20 22:01:50 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-20 22:01:50 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-20 22:01:50 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-20 22:02:24 [INFO]: [DEBUG] Filters:
+2026-02-20 22:02:24 [INFO]: [DEBUG] Sort parameter:
+2026-02-20 22:02:24 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-20 22:02:24 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-20 22:02:24 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-20 22:02:24 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-20 22:02:24 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-20 22:02:37 [INFO]: [DEBUG] Filters:
+2026-02-20 22:02:37 [INFO]: [DEBUG] Sort parameter:
+2026-02-20 22:02:37 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-20 22:02:37 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-20 22:02:37 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-20 22:02:37 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-20 22:02:37 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-20 22:04:21 [INFO]: [DEBUG] Filters:
+2026-02-20 22:04:21 [INFO]: [DEBUG] Sort parameter:
+2026-02-20 22:04:21 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-20 22:04:21 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-20 22:04:21 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-20 22:04:21 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-20 22:04:21 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-20 22:04:44 [INFO]: [DEBUG] Filters:
+2026-02-20 22:04:44 [INFO]: [DEBUG] Sort parameter:
+2026-02-20 22:04:44 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-20 22:04:44 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-20 22:04:44 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-20 22:04:44 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-20 22:04:44 [INFO]:   3. Mens - Active: false - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
+2026-02-20 22:04:49 [INFO]: [DEBUG] Filters:
+2026-02-20 22:04:49 [INFO]: [DEBUG] Sort parameter:
+2026-02-20 22:04:49 [INFO]: [DEBUG] Sorting by: latest first
+2026-02-20 22:04:49 [INFO]: [DEBUG] First 3 categories (for sorting verification):
+2026-02-20 22:04:49 [INFO]:   1. women2 - Active: true - Created: Mon Feb 09 2026 08:16:51 GMT+0530 (India Standard Time)
+2026-02-20 22:04:49 [INFO]:   2. unique - Active: true - Created: Tue Feb 03 2026 10:45:26 GMT+0530 (India Standard Time)
+2026-02-20 22:04:49 [INFO]:   3. Mens - Active: true - Created: Thu Jan 22 2026 11:11:05 GMT+0530 (India Standard Time)
