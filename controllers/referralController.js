@@ -246,3 +246,5 @@ export const copyReferralLink = async (req, res) => {
         res.json({ success: false, message: 'Error copying link' });
     }
 };
+
+

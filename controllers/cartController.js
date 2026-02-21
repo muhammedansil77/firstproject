@@ -457,10 +457,12 @@ export const validateCheckout = async (req, res) => {
       });
     }
    const product = await Product.find()
-    const cart = await Cart.findOne({ user: userId })
-    .populate('items.variant')
-    .populate("items.product");
-    
+     const cart = await Cart.findOne({ user: userId })
+  .populate({
+    path: "items.product",
+    populate: { path: "category" }
+  })
+  .populate("items.variant");
 
     if (!cart || cart.items.length === 0) {
       return res.json({
@@ -474,12 +476,16 @@ export const validateCheckout = async (req, res) => {
     for (const item of cart.items) {
       const variant = item.variant;
          const product = item.product;
+         const category = product.category;
 
       if (!variant) {
         errors.push('Some products are no longer available');
         continue;
       }
-
+  if (category.active === false ) {
+  errors.push(`${category.name} category is currently unavailable`);
+  continue;
+}
        if (product.status === "blocked" || product.isDeleted === true) {
         errors.push(`${product.name} is currently unavailable`);
         continue;

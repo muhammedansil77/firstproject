@@ -328,45 +328,52 @@ if (wishlistBtn) {
 
 
  
-  const mainImageWrapper = document.getElementById('main-image-wrapper');
-  if (mainImageWrapper && mainImage) {
-    mainImageWrapper.addEventListener('mouseenter', () => {
-      mainImage.style.transform = 'scale(1.1)';
-      mainImage.style.transition = 'transform 0.5s ease';
+const mainImageWrapper = document.getElementById("main-image-wrapper");
+
+if (mainImageWrapper && mainImage) {
+
+  mainImageWrapper.addEventListener("mousemove", (e) => {
+    const rect = mainImageWrapper.getBoundingClientRect();
+
+    const x = ((e.clientX - rect.left) / rect.width) * 100;
+    const y = ((e.clientY - rect.top) / rect.height) * 100;
+
+    mainImage.style.transformOrigin = `${x}% ${y}%`;
+    mainImage.style.transform = "scale(2)";
+  });
+
+  mainImageWrapper.addEventListener("mouseleave", () => {
+    mainImage.style.transform = "scale(1)";
+    mainImage.style.transformOrigin = "center center";
+  });
+
+  // ✅ Click popup (inside same block)
+  mainImageWrapper.addEventListener("click", () => {
+    const modal = document.createElement("div");
+    modal.className =
+      "fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4";
+
+    modal.innerHTML = `
+      <div class="relative max-w-4xl max-h-full">
+        <img src="${mainImage.src}" class="max-w-full max-h-screen object-contain rounded-lg">
+        <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2">
+          ✕
+        </button>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+
+    modal.querySelector("button").addEventListener("click", () => {
+      document.body.removeChild(modal);
     });
 
-    mainImageWrapper.addEventListener('mouseleave', () => {
-      mainImage.style.transform = 'scale(1)';
+    modal.addEventListener("click", (e) => {
+      if (e.target === modal) document.body.removeChild(modal);
     });
+  });
 
-    
-    mainImageWrapper.addEventListener('click', () => {
-      const modal = document.createElement('div');
-      modal.className = 'fixed inset-0 bg-black bg-opacity-90 z-50 flex items-center justify-center p-4';
-      modal.innerHTML = `
-        <div class="relative max-w-4xl max-h-full">
-          <img src="${mainImage.src}" alt="Enlarged view" class="max-w-full max-h-screen object-contain rounded-lg">
-          <button class="absolute top-4 right-4 text-white bg-black bg-opacity-50 rounded-full p-2 hover:bg-opacity-70 transition">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-            </svg>
-          </button>
-        </div>
-      `;
-      
-      document.body.appendChild(modal);
-      
-      modal.querySelector('button').addEventListener('click', () => {
-        document.body.removeChild(modal);
-      });
-      
-      modal.addEventListener('click', (e) => {
-        if (e.target === modal) {
-          document.body.removeChild(modal);
-        }
-      });
-    });
-  }
+}
 
  
   const writeReviewBtn = document.getElementById('write-review-btn');

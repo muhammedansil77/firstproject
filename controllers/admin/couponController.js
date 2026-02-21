@@ -1,4 +1,8 @@
 import Coupon from '../../models/Coupon.js';
+import { getCouponStatsService,
+    getAllCouponsService ,
+    createCouponService 
+ } from "../../services/couponService.js";
 
 
 const generateCouponCode = (prefix = '') => {
@@ -15,114 +19,47 @@ const generateCouponCode = (prefix = '') => {
 
 
 export const renderCouponPage = async (req, res) => {
-    try {
-     
-        const today = new Date();
-        
-        const initialStats = {
-            totalCoupons: await Coupon.countDocuments({ isDeleted: false }),
-            activeCoupons: await Coupon.countDocuments({ 
-                isActive: true, 
-                isDeleted: false,
-                startDate: { $lte: today },
-                endDate: { $gte: today }
-            }),
-            expiredCoupons: await Coupon.countDocuments({ 
-                isDeleted: false,
-                endDate: { $lt: today }
-            }),
-            expiringSoon: await Coupon.countDocuments({
-                isDeleted: false,
-                isActive: true,
-                endDate: { 
-                    $gte: today,
-                    $lte: new Date(today.getTime() + 7 * 24 * 60 * 60 * 1000)
-                }
-            })
-        };
-        
-        res.render('admin/coupons', {
-            title: 'Coupon Management',
-            user: req.session.user,
-            initialStats: initialStats,
-            success: req.flash('success'),
-            error: req.flash('error'),
-            pageJS: 'coupon.js',
-             cssFile: '/admin/css/coupon.css'
-        });
-    } catch (error) {
-        console.error('Error rendering coupon page:', error);
-        res.status(500).render('admin/error', {
-            title: 'Error',
-            message: 'Failed to load coupon management page'
-        });
-    }
+  try {
+    const initialStats = await getCouponStatsService();
+
+    return res.render("admin/coupons", {
+      title: "Coupon Management",
+      user: req.session.user,
+      initialStats,
+      success: req.flash("success"),
+      error: req.flash("error"),
+      pageJS: "coupon.js",
+      cssFile: "/admin/css/coupon.css"
+    });
+
+  } catch (error) {
+    console.error("Error rendering coupon page:", error);
+
+    return res.status(500).render("admin/error", {
+      title: "Error",
+      message: "Failed to load coupon management page"
+    });
+  }
 };
 
-
 export const getAllCoupons = async (req, res) => {
-    try {
-        const { 
-            page = 1, 
-            limit = 10, 
-            status, 
-            search,
-            sortBy = 'createdAt',
-            sortOrder = 'desc'
-        } = req.query;
-        
-        const query = { isDeleted: false };
-        
-      
-        if (status === 'active') {
-            query.isActive = true;
-            query.startDate = { $lte: new Date() };
-            query.endDate = { $gte: new Date() };
-        } else if (status === 'inactive') {
-            query.isActive = false;
-        } else if (status === 'expired') {
-            query.endDate = { $lt: new Date() };
-        } else if (status === 'upcoming') {
-            query.startDate = { $gt: new Date() };
-        }
-        
-  
-        if (search) {
-            query.$or = [
-                { code: { $regex: search, $options: 'i' } },
-                { name: { $regex: search, $options: 'i' } },
-                { description: { $regex: search, $options: 'i' } }
-            ];
-        }
-        
-     
-        const skip = (page - 1) * limit;
-        const sort = {};
-        sort[sortBy] = sortOrder === 'desc' ? -1 : 1;
-        
-        const coupons = await Coupon.find(query)
-            .sort(sort)
-            .skip(skip)
-            .limit(parseInt(limit));
-            
-        const total = await Coupon.countDocuments(query);
-        
-        res.json({
-            success: true,
-            data: coupons,
-            pagination: {
-                total,
-                page: parseInt(page),
-                limit: parseInt(limit),
-                pages: Math.ceil(total / limit)
-            }
-        });
-    } catch (error) {
-        res.status(500).json({
-            success: false,
-            error: error.message
-        });
-    }
+  try {
+    const result = await getAllCouponsService(req.query);
+
+    return res.json({
+      success: true,
+      data: result.coupons,
+      pagination: result.pagination
+    });
+
+  } catch (error) {
+    console.error("getAllCoupons error:", error);
+
+    return res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
 };
 
 
@@ -150,181 +87,32 @@ export const getCouponById = async (req, res) => {
 };
 
 export const createCoupon = async (req, res) => {
-    try {
-        const {
-            name,
-            code,
-            description,
-            discountType,
-            discountValue,
-            minPurchaseAmount,
-            maxDiscountAmount,
-            startDate,
-            endDate,
-            usageLimit,
-            perUserLimit,
-            isActive = true,
-            couponType = 'single',
-            bulkCount = 1,
-            bulkPrefix = ''
-        } = req.body;
-        console.log("RAW BODY:", req.body);
-console.log("usageLimit:", req.body.usageLimit, typeof req.body.usageLimit);
-console.log("perUserLimit:", req.body.perUserLimit, typeof req.body.perUserLimit);
+  try {
+    const result = await createCouponService(req.body);
 
-     
-const parsedUsageLimit =
-  usageLimit === '' || usageLimit === undefined
-    ? 0
-    : Number(usageLimit);
+    if (result.type === "bulk") {
+      return res.status(201).json({
+        success: true,
+        message: `Successfully created ${result.count} coupons!`,
+        data: result.coupons
+      });
+    }
 
-const parsedPerUserLimit =
-  perUserLimit === '' || perUserLimit === undefined
-    ? 1
-    : Number(perUserLimit);
-
-   
-const parsedDiscountValue = Number(discountValue);
-const parsedMinPurchase = Number(minPurchaseAmount) || 0;
-const parsedMaxDiscount = maxDiscountAmount ? Number(maxDiscountAmount) : null;
-
-if (parsedMinPurchase < 0) {
-    return res.status(400).json({
-        success: false,
-        error: 'Minimum purchase amount cannot be negative'
+    return res.status(201).json({
+      success: true,
+      message: "Coupon created successfully!",
+      data: result.coupons
     });
-}
 
-if (discountType === 'percentage') {
-    if (parsedDiscountValue <= 0 || parsedDiscountValue > 100) {
-        return res.status(400).json({
-            success: false,
-            error: 'Percentage discount must be between 1 and 100'
-        });
-    }
+  } catch (error) {
+    console.error("Error creating coupon:", error);
 
-    if (parsedMaxDiscount !== null && parsedMaxDiscount <= 0) {
-        return res.status(400).json({
-            success: false,
-            error: 'Max discount amount must be greater than 0'
-        });
-    }
-}
-
-if (discountType === 'fixed') {
-    if (parsedDiscountValue <= 0) {
-        return res.status(400).json({
-            success: false,
-            error: 'Fixed discount amount must be greater than 0'
-        });
-    }
-
-    if (parsedMinPurchase > 0 && parsedDiscountValue > parsedMinPurchase) {
-        return res.status(400).json({
-            success: false,
-            error: 'Fixed discount cannot be greater than minimum purchase amount'
-        });
-    }
-}
-
-
-        if (new Date(startDate) >= new Date(endDate)) {
-            return res.status(400).json({
-                success: false,
-                error: 'End date must be after start date'
-            });
-        }
-        
-        let couponCode = code;
-        let coupons = [];
-        
-        if (couponType === 'bulk' && bulkCount > 1) {
-          
-            const generatedCoupons = [];
-            for (let i = 0; i < bulkCount; i++) {
-                const uniqueCode = bulkPrefix ? 
-                    `${bulkPrefix}-${generateCouponCode()}` : 
-                    generateCouponCode();
-                const coupon = new Coupon({
-                    code: uniqueCode,
-                    name: `${name} #${i + 1}`,
-                    description,
-                    discountType,
-                    discountValue,
-                    minPurchaseAmount: minPurchaseAmount || 0,
-                    maxDiscountAmount: maxDiscountAmount || null,
-                    startDate,
-                    endDate,
-                   usageLimit: parsedUsageLimit,
-perUserLimit: parsedPerUserLimit,
-
-                    isActive
-                });
-                generatedCoupons.push(coupon);
-            }
-            
-          
-            await Coupon.insertMany(generatedCoupons);
-            
-            return res.status(201).json({
-                success: true,
-                message: `Successfully created ${bulkCount} coupons!`,
-                data: generatedCoupons
-            });
-            
-        } else {
-           
-            if (!couponCode) {
-                couponCode = generateCouponCode();
-            }
-            
-          
-            const existingCoupon = await Coupon.findOne({ 
-                code: couponCode.toUpperCase(),
-                isDeleted: false 
-            });
-            
-            if (existingCoupon) {
-                return res.status(400).json({
-                    success: false,
-                    error: 'Coupon code already exists'
-                });
-            }
-            
-            const coupon = new Coupon({
-                code: couponCode,
-                name,
-                description,
-                discountType,
-                discountValue,
-                minPurchaseAmount: minPurchaseAmount || 0,
-                maxDiscountAmount: maxDiscountAmount || null,
-                startDate,
-                endDate,
-                usageLimit: parsedUsageLimit,
-perUserLimit: parsedPerUserLimit,
-
-                isActive
-            });
-            
-            await coupon.save();
-            
-            return res.status(201).json({
-                success: true,
-                message: 'Coupon created successfully!',
-                data: coupon
-            });
-        }
-        
-    } catch (error) {
-        console.error('Error creating coupon:', error);
-        return res.status(500).json({
-            success: false,
-            error: 'Failed to create coupon'
-        });
-    }
+    return res.status(400).json({
+      success: false,
+      error: error.message || "Failed to create coupon"
+    });
+  }
 };
-
 
 export const updateCoupon = async (req, res) => {
     try {

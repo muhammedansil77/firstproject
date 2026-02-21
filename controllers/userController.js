@@ -12,25 +12,7 @@ import Wallet from "../models/Wallet.js";
 
 const generateOTP = () => Math.floor(100000 + Math.random() * 900000).toString();
 
-function loadModel(relPath) {
-  try {
-    const abs = path.join(process.cwd(), relPath);
-    const mod = require(abs);
-    return mod?.default || mod;
-  } catch (err) {
 
-    try {
-      const modelName = path.basename(relPath).replace(/\.js$/, '');
-      if (mongoose.modelNames().includes(modelName)) {
-        return mongoose.model(modelName);
-      }
-    } catch (e) {
-
-    }
-    console.warn('loadModel failed for', relPath, err && err.message);
-    return null;
-  }
-}
 
 
 const login = async (req, res) => {

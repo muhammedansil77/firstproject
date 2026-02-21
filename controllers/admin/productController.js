@@ -3,6 +3,10 @@ import mongoose from 'mongoose';
 import Product from "../../models/Product.js";
 import Category from "../../models/Category.js";
 import Variant from "../../models/Variant.js";
+import { listProductsService,
+  createProductService ,
+  patchProductService 
+ } from "../../services/productServices.js";
 import {
   upload,
   processProductImages,
@@ -76,139 +80,21 @@ export const renderManageProducts = async (req, res) => {
 
 export async function listProducts(req, res) {
   try {
-    const page = Math.max(1, parseInt(req.query.page || '1', 10));
-    const limit = Math.max(1, Math.min(100, parseInt(req.query.limit || '10', 10)));
-    const q = (req.query.q || '').trim();
-    const category = (req.query.category || '').trim();
-    const status = (req.query.status || '').trim();
-    const sort = (req.query.sort || '').trim(); 
-
-    const filter = { isDeleted: false };
-
-    
-    if (status && status !== 'all') {
-     
-      if (!['name_asc', 'name_desc', 'newest', 'oldest', 'price_low', 'price_high'].includes(status)) {
-        filter.status = status;
-      }
-    }
-
-
-    if (q) {
-      filter.$or = [
-        { name: { $regex: escapeRegex(q), $options: 'i' } },
-        { description: { $regex: escapeRegex(q), $options: 'i' } }
-      ];
-    }
-     
-    if (category && category !== 'all') {
-      if (mongoose.Types.ObjectId.isValid(category)) {
-        filter.category = new mongoose.Types.ObjectId(category);
-      } else {
-        let resolved = null;
-        try {
-          resolved = await Category.findOne(
-            { name: { $regex: '^' + escapeRegex(category) + '$', $options: 'i' } },
-            { _id: 1 }
-          ).lean();
-        } catch (e) {
-          console.warn('listProducts: category resolve error', e && e.message);
-        }
-        if (resolved && resolved._id) {
-          filter.category = resolved._id;
-        } else {
-          filter.category = { $regex: '^' + escapeRegex(category) + '$', $options: 'i' };
-        }
-      }
-    }
-  // const menCategory = await Category.findOne({name:"Men"}).lean();
-  // if(menCategory){
-  //   filter.category=menCategory._id;
-  // }
-    const skip = (page - 1) * limit;
-
-   
-    let sortOption = { createdAt: -1 }; 
-    
-    switch(sort) {
-      case 'newest':
-        sortOption = { createdAt: -1 };
-        break;
-      case 'oldest':
-        sortOption = { createdAt: 1 };
-        break;
-      case 'name_asc':
-        sortOption = { name: 1 };
-        break;
-      case 'name_desc':
-        sortOption = { name: -1 };
-        break;
-      case 'price_low':
-        sortOption = { 'variants.price': 1 };
-        break;
-      case 'price_high':
-        sortOption = { 'variants.price': -1 };
-        break;
-      default:
-        sortOption = { createdAt: -1 };
-    }
-
-  
-    if (['name_asc', 'name_desc', 'newest', 'oldest', 'price_low', 'price_high'].includes(status)) {
-  
-      switch(status) {
-        case 'name_asc':
-          sortOption = { name: 1 };
-          break;
-        case 'name_desc':
-          sortOption = { name: -1 };
-          break;
-        case 'newest':
-          sortOption = { createdAt: -1 };
-          break;
-        case 'oldest':
-          sortOption = { createdAt: 1 };
-          break;
-        case 'price_low':
-          sortOption = { 'variants.price': 1 };
-          break;
-        case 'price_high':
-          sortOption = { 'variants.price': -1 };
-          break;
-      }
-    }
-
-    const [total, products] = await Promise.all([
-      Product.countDocuments(filter),
-      Product.find(filter)
-        .populate({ path: 'category', select: 'name' })
-        .populate({
-          path: 'variants',
-          select: 'images color stock price salePrice isListed'
-        })
-        .sort(sortOption) 
-        .skip(skip)
-        .limit(limit)
-        .sort(sortOption)
-        .lean()
-    ]);
-
-    const pages = Math.max(1, Math.ceil(total / limit));
+    const result = await listProductsService(req.query);
 
     return res.json({
       success: true,
-      products,
-      pagination: {
-        total,
-        page,
-        pages,
-        limit
-      }
+      products: result.products,
+      pagination: result.pagination
     });
 
   } catch (err) {
-    console.error('listProducts (paginated) error:', err);
-    return res.status(500).json({ success: false, message: 'Server error listing products' });
+    console.error("listProducts error:", err);
+
+    return res.status(500).json({
+      success: false,
+      message: "Server error listing products"
+    });
   }
 }
 
@@ -272,7 +158,7 @@ export const renderCreateProductPage = async (req, res) => {
     const categories = await Category.find({}).sort({ name: 1 }).lean();
      let product = null;
 
-  // 👇 THIS IS THE KEY
+
   if (req.params.id) {
     product = await Product.findById(req.params.id)
       .populate('variants')
@@ -285,7 +171,7 @@ export const renderCreateProductPage = async (req, res) => {
       categories,
          product,
       pageJS: 'product-create.js',
-      // optional (reuse existing)
+  
     });
 
   } catch (err) {
@@ -333,158 +219,19 @@ export const renderEditProductPage = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    const { name, description, category } = req.body;
-
-    /* ===============================
-       PRODUCT VALIDATION
-    =============================== */
-    if (!name || !name.trim()) {
-      return res.status(400).json({
-        success: false,
-        errors: { name: 'Product name is required' }
-      });
-    }
-
-    const exists = await Product.findOne({
-      name: new RegExp(`^${escapeRegex(name.trim())}$`, 'i'),
-      isDeleted: false
-    });
-
-    if (exists) {
-      return res.status(400).json({
-        success: false,
-        errors: { name: 'Product with this name already exists' }
-      });
-    }
-
-    const variantsInput = req.body.variants || {};
-
-    const variantIndices = Object.keys(variantsInput);
-
-    if (!variantIndices.length) {
-      return res.status(400).json({
-        success: false,
-        errors: {
-          variants: { _form: 'At least one variant is required' }
-        }
-      });
-    }
-
-    /* ===============================
-       VARIANT VALIDATION (NO DB WRITE)
-    =============================== */
-    for (const idx of variantIndices) {
-      const v = variantsInput[idx];
-
-      if (!v.color || !v.color.trim()) {
-        return res.status(400).json({
-          success: false,
-          errors: { variants: { [idx]: { color: 'Color is required' } } }
-        });
-      }
-
-      const stock = Number(v.stock);
-      if (!Number.isFinite(stock) || stock < 0) {
-        return res.status(400).json({
-          success: false,
-          errors: { variants: { [idx]: { stock: 'Stock cannot be negative' } } }
-        });
-      }
-
-      const price = Number(v.price);
-      if (!Number.isFinite(price) || price <= 0) {
-        return res.status(400).json({
-          success: false,
-          errors: { variants: { [idx]: { price: 'Price must be greater than 0' } } }
-        });
-      }
-    }
-const allFiles = Array.isArray(req.files)
-  ? req.files
-  : Object.values(req.files || {}).flat();
-
-const variantFilesMap = {};
-
-for (const file of allFiles) {
-  const match = file.fieldname.match(/^variants\[(\d+)\]\[image\]/);
-  if (!match) continue;
-
-  const idx = match[1];
-  variantFilesMap[idx] = variantFilesMap[idx] || [];
-  variantFilesMap[idx].push(file);
-}
-for (const idx of variantIndices) {
-  const files = variantFilesMap[idx] || [];
-
-  if (files.length < 3) {
-    return res.status(400).json({
-      success: false,
-      errors: {
-        variants: {
-          [idx]: { images: 'Minimum 3 images required' }
-        }
-      }
-    });
-  }
-}
-
-
-    /* ===============================
-       CREATE PRODUCT
-    =============================== */
-    const product = await Product.create({
-      name: name.trim(),
-      description: description || '',
-      category: category || null
-    });
-
-    /* ===============================
-       CREATE VARIANTS
-    =============================== */
-  const createdVariantIds = [];
-
-for (const idx of variantIndices) {
-  const v = variantsInput[idx];
-  const files = variantFilesMap[idx] || [];
-
-  const imagePaths = [];
-  for (const file of files) {
-    const savedPath = await processVariantImage(file); // your existing helper
-    if (savedPath) imagePaths.push(savedPath);
-  }
-
-  const variant = await Variant.create({
-    product: product._id,
-    color: v.color.trim(),
-    stock: Number(v.stock),
-    price: Number(v.price),
-    salePrice: v.salePrice ? Number(v.salePrice) : null,
-    images: imagePaths, // ✅ NOW IMAGES ARE SAVED
-    isListed: true
-  });
-
-  createdVariantIds.push(variant._id);
-}
-
-
-    /* ===============================
-       LINK VARIANTS TO PRODUCT
-    =============================== */
-    await Product.updateOne(
-      { _id: product._id },
-      { $set: { variants: createdVariantIds } }
-    );
+    await createProductService(req.body, req.files);
 
     return res.json({
       success: true,
-      message: 'Product created successfully'
+      message: "Product created successfully"
     });
 
   } catch (err) {
-    console.error('createProduct error:', err);
-    return res.status(500).json({
+    console.error("createProduct error:", err);
+
+    return res.status(400).json({
       success: false,
-      message: 'Server error while creating product'
+      message: err.message || "Server error while creating product"
     });
   }
 };
@@ -581,231 +328,22 @@ export const deleteVariant = async (req, res) => {
 
 export async function patchProduct(req, res) {
   try {
-
-    
-    console.log('REQ BODY KEYS:', Object.keys(req.body));
-console.log('REQ FILES:', req.files?.map(f => f.fieldname));
     const productId = req.params.id;
-    if (!productId) {
-      return res.status(400).json({ success: false, message: 'Product id required' });
-    }
 
-    const product = await Product.findById(productId);
-    if (!product) {
-      return res.status(404).json({ success: false, message: 'Product not found' });
-    }
-    // ✅ PRODUCT NAME VALIDATION
-if (!req.body.name || !req.body.name.trim()) {
-  return res.status(400).json({
-    success: false,
-    message: 'Product name is required'
-  });
-}
-
-
-  
-    const { name, description, category } = req.body;
-
-    if (name !== undefined && name.trim() !== '') {
-      product.name = name.trim();
-    }
-    
-    if (description !== undefined) {
-      product.description = description;
-    }
-
-  // ✅ CATEGORY VALIDATION
-if (!category) {
-  return res.status(400).json({
-    success: false,
-    message: 'Category is required'
-  });
-}
-
-const categoryDoc = await Category.findOne({
-  _id: category,
-  active: true,
-  isDeleted: false
-});
-
-if (!categoryDoc) {
-  return res.status(400).json({
-    success: false,
-    message: 'Invalid or inactive category'
-  });
-}
-
-product.category = categoryDoc._id;
-
-
-
-    const allFilesFlat = Array.isArray(req.files) ? req.files : (req.files ? Object.values(req.files).flat() : []);
-    const productFiles = allFilesFlat.filter(f => ['images', 'images[]', 'productImages', 'productImages[]'].includes(f.fieldname));
-    
-    if (productFiles.length > 0) {
-      const newImages = [];
-      for (const f of productFiles) {
-        try {
-         const saved = await processProductImages([f]);
-if (saved && saved[0]) {
-  newImages.push(saved[0]); 
-}
-        } catch (e) {
-          console.warn('Failed to process product image:', e.message);
-        }
-      }
-      if (newImages.length) {
-        product.images = [...product.images, ...newImages];
-      }
-    }
-
-   
-    await product.save();
-
-  /* ===============================
-   NORMALIZE VARIANTS INPUT
-=============================== */
-let variantsInput = {};
-
-if (req.body.variants && typeof req.body.variants === 'object') {
-  // ✅ THIS IS YOUR CASE (EDIT)
-  variantsInput = req.body.variants;
-} else {
-  // fallback (flat keys)
-  for (const key in req.body) {
-    const m = key.match(/^variants\[(\d+)\]\[(.+)\]$/);
-    if (!m) continue;
-
-    const idx = m[1];
-    const field = m[2];
-
-    variantsInput[idx] = variantsInput[idx] || {};
-    variantsInput[idx][field] = req.body[key];
-  }
-}
-
-/* ===============================
-   MAP VARIANT FILES
-=============================== */
-const variantFilesMap = {};
-
-allFilesFlat.forEach(file => {
-  const m = file.fieldname.match(/^variants\[(\d+)\]\[image\]/);
-  if (!m) return;
-
-  const idx = m[1];
-  variantFilesMap[idx] = variantFilesMap[idx] || [];
-  variantFilesMap[idx].push(file);
-});
-
-/* ===============================
-   CREATE / UPDATE VARIANTS
-=============================== */
-for (const idx of Object.keys(variantsInput)) {
-  const v = variantsInput[idx];
-  let variant;
-const humanIndex = Number(idx) + 1;
-
-// ✅ COLOR
-if (!v.color || !v.color.trim()) {
-  return res.status(400).json({
-    success: false,
-    message: `Variant ${humanIndex}: Color is required`
-  });
-}
-
-// ✅ STOCK
-const stock = Number(v.stock);
-if (!Number.isInteger(stock) || stock < 0) {
-  return res.status(400).json({
-    success: false,
-    message: `Variant ${humanIndex}: Stock must be 0 or more`
-  });
-}
-
-// ✅ PRICE
-const price = Number(v.price);
-if (isNaN(price) || price <= 0) {
-  return res.status(400).json({
-    success: false,
-    message: `Variant ${humanIndex}: Price must be greater than 0`
-  });
-}
-
-  // EXISTING VARIANT
-  if (v._id && mongoose.Types.ObjectId.isValid(v._id)) {
-    variant = await Variant.findById(v._id);
-    if (!variant) continue;
-  }
-  // NEW VARIANT
-  else {
-    variant = new Variant({
-      product: productId,
-      images: []
-    });
-
-    if (!product.variants.includes(variant._id)) {
-      product.variants.push(variant._id);
-    }
-  }
-
-variant.color = v.color.trim();
-variant.stock = stock;
-variant.price = price;
-variant.salePrice = v.salePrice ? Number(v.salePrice) : null;
-variant.isListed = stock > 0;
-
-
-  // ADD IMAGES
-  const files = variantFilesMap[idx] || [];
-  // ✅ IMAGE COUNT VALIDATION (MIN 3)
-const existingImages = variant.images.length;
-const newImages = files.length;
-
-if (existingImages + newImages < 3) {
-  return res.status(400).json({
-    success: false,
-    message: `Variant ${humanIndex}: Minimum 3 images required`
-  });
-}
-
-  for (const file of files) {
-    const saved = await processVariantImage(file);
-    if (saved) variant.images.push(saved);
-  }
-
-  await variant.save();
-}
-
-// save product once
-await product.save();
-
-
-
-  
-   
-
- 
- 
-
- 
-    const updated = await Product.findById(productId)
-      .populate('category')
-      .populate('variants')
-      .lean();
+    const updatedProduct = await patchProductService(productId, req.body, req.files);
 
     return res.json({
       success: true,
-      message: 'Product & variants updated successfully',
-      product: updated
+      message: "Product & variants updated successfully",
+      product: updatedProduct
     });
 
   } catch (err) {
-    console.error('PATCH PRODUCT ERROR:', err);
-    return res.status(500).json({
+    console.error("PATCH PRODUCT ERROR:", err);
+
+    return res.status(400).json({
       success: false,
-      message: 'Server error updating product',
-      error: err.message
+      message: err.message || "Server error updating product"
     });
   }
 }

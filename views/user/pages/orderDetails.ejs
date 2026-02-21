@@ -92,6 +92,8 @@
         
         <!-- Order Items Card -->
       <!-- Replace the Order Items section with: -->
+<!-- Order Items Card - Show ALL Products -->
+<!-- Order Items Card - Show ONLY Selected Product -->
 <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
   <div class="p-6 border-b border-[#2a2a2a]">
     <h2 class="text-xl font-bold text-white flex items-center gap-3">
@@ -101,6 +103,11 @@
         </svg>
       </div>
       Product Details
+      <% if (order.otherItemsCount > 0) { %>
+        <span class="text-sm font-normal text-gray-400 ml-2">
+          (1 of <%= order.otherItemsCount + 1 %> items)
+        </span>
+      <% } %>
     </h2>
   </div>
   
@@ -114,7 +121,7 @@
             <img src="<%= order.item.imageSrc %>" 
                  alt="<%= order.item.product.name %>"
                  class="w-full h-full object-cover"
-                 onerror="this.onerror=null; this.style.display='none'; this.parentElement.innerHTML='<div class=\"w-full h-full bg-[#1a1a1a] rounded-lg flex items-center justify-center\"><svg class=\"w-16 h-16 text-gray-600\" fill=\"none\" stroke=\"currentColor\" viewBox=\"0 0 24 24\"><path stroke-linecap=\"round\" stroke-linejoin=\"round\" stroke-width=\"1\" d=\"M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z\"/></svg></div>';">
+                 onerror="this.onerror=null; this.src='/uploads/placeholder.png';">
           <% } else { %>
             <div class="w-full h-full flex items-center justify-center">
               <svg class="w-16 h-16 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,6 +135,17 @@
       <!-- Product Info -->
       <div class="w-full md:w-2/3">
         <h3 class="text-2xl font-bold text-white mb-4"><%= order.item.product.name %></h3>
+        
+        <!-- Item Status Badge -->
+        <% if (order.item.itemStatus) { %>
+          <span class="inline-block mb-4 px-3 py-1 rounded-full text-xs font-semibold 
+            <%= order.item.itemStatus === 'Delivered' ? 'bg-green-500/15 text-green-400 border border-green-400/40' : 
+               order.item.itemStatus === 'Cancelled' ? 'bg-red-500/15 text-red-400 border border-red-400/40' : 
+               order.item.itemStatus === 'Shipped' ? 'bg-purple-500/15 text-purple-400 border border-purple-400/40' : 
+               'bg-yellow-500/15 text-yellow-400 border border-yellow-400/40' %>">
+            <%= order.item.itemStatus %>
+          </span>
+        <% } %>
         
         <!-- Variant Details -->
         <% if (order.item.variant) { %>
@@ -163,18 +181,18 @@
         </div>
         <% } %>
         
-        <!-- Price Details -->
-        <div class="space-y-3 mb-6">
+        <!-- Price Details for this item -->
+        <div class="space-y-3 mb-6 bg-[#1a1a1a] p-4 rounded-lg">
           <div class="flex justify-between">
             <span class="text-gray-400">Unit Price</span>
             <span class="text-[#d4af37] font-bold">
-              ₹<%= order.item.price.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+              ₹<%= (order.item.price || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
             </span>
           </div>
-          <div class="flex justify-between">
-            <span class="text-gray-400">Total Price</span>
-            <span class="text-[#d4af37] font-bold">
-              ₹<%= order.item.total.toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+          <div class="flex justify-between border-t border-[#2a2a2a] pt-2">
+            <span class="text-gray-400">Item Total</span>
+            <span class="text-[#d4af37] font-bold text-lg">
+              ₹<%= (order.item.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
             </span>
           </div>
         </div>
@@ -186,39 +204,70 @@
           <p class="text-gray-300"><%= order.item.product.description %></p>
         </div>
         <% } %>
-        
-        <!-- Order Info -->
-        <div class="bg-[#1a1a1a] border border-[#2a2a2a] rounded-lg p-4">
-          <div class="grid grid-cols-2 gap-4">
-            <div>
-              <p class="text-sm text-gray-400">Order Number</p>
-              <p class="font-bold text-white"><%= order.orderNumber %></p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-400">Order Date</p>
-              <p class="font-medium text-white">
-                <%= new Date(order.createdAt).toLocaleDateString('en-IN', {
-                  day: 'numeric',
-                  month: 'long',
-                  year: 'numeric'
-                }) %>
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
     <% } else { %>
     <div class="text-center py-12">
-      <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-[#d4af37]/10 flex items-center justify-center">
-        <svg class="w-8 h-8 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
-        </svg>
-      </div>
       <p class="text-gray-400">Product details not available</p>
     </div>
     <% } %>
   </div>
+</div>
+
+<!-- Other Items in This Order (Sidebar or Bottom Section) -->
+<% if (order.otherItems && order.otherItems.length > 0) { %>
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a] mt-8">
+  <div class="p-6 border-b border-[#2a2a2a]">
+    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7"/>
+        </svg>
+      </div>
+      Other Items in This Order (<%= order.otherItems.length %>)
+    </h2>
+  </div>
+  
+  <div class="divide-y divide-[#2a2a2a]">
+    <% order.otherItems.forEach(item => { %>
+    <div class="p-4 hover:bg-[#0f0f0f]/50 transition-colors">
+      <div class="flex items-center gap-4">
+        <!-- Thumbnail -->
+        <div class="w-16 h-16 rounded-lg overflow-hidden bg-[#1a1a1a] flex-shrink-0">
+          <img src="<%= item.product.image %>" 
+               alt="<%= item.product.name %>"
+               class="w-full h-full object-cover"
+               onerror="this.src='/uploads/placeholder.png';">
+        </div>
+        
+        <!-- Info -->
+        <div class="flex-1">
+          <h4 class="font-bold text-white"><%= item.product.name %></h4>
+          <p class="text-sm text-gray-400">
+            <%= item.variant.color || '' %> <%= item.variant.size ? '| ' + item.variant.size : '' %>
+          </p>
+          <p class="text-sm text-gray-400">Qty: <%= item.quantity %></p>
+        </div>
+        
+        <!-- Price -->
+        <div class="text-right">
+          <p class="text-[#d4af37] font-bold">₹<%= (item.total || 0).toLocaleString('en-IN') %></p>
+        </div>
+        
+        <!-- View Link -->
+        <a href="/orders/<%= order._id %>?itemId=<%= item.orderItemId || item._id %>" 
+           class="px-3 py-1 border border-[#2a2a2a] hover:border-[#d4af37]/30 rounded-lg text-sm text-gray-300 hover:text-[#d4af37] transition-all">
+          View
+        </a>
+      </div>
+    </div>
+    <% }); %>
+  </div>
+</div>
+<% } %>
+
+<!-- Update the Order Summary to show per-item breakdown -->
+
      <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
   <div class="p-6 border-b border-[#2a2a2a]">
     <h2 class="text-xl font-bold text-white flex items-center gap-3">
@@ -789,95 +838,128 @@
       <div class="space-y-8">
         
         <!-- Order Summary Card -->
-        <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
-          <div class="p-6 border-b border-[#2a2a2a]">
-            <h2 class="text-xl font-bold text-white flex items-center gap-3">
-              <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
-                <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
-                </svg>
-              </div>
-              Order Summary
-            </h2>
-          </div>
+      <!-- Order Summary Card - Show ONLY This Item's Contribution -->
+<div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
+  <div class="p-6 border-b border-[#2a2a2a]">
+    <h2 class="text-xl font-bold text-white flex items-center gap-3">
+      <div class="w-10 h-10 rounded-lg bg-[#d4af37]/10 flex items-center justify-center">
+        <svg class="w-5 h-5 text-[#d4af37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      Item Summary
+      <% if (order.otherItemsCount > 0) { %>
+        <span class="text-sm font-normal text-gray-400 ml-2">
+          (This item only)
+        </span>
+      <% } %>
+    </h2>
+  </div>
+  
+  <div class="p-6">
+    <div class="space-y-4">
+      <!-- Order Info -->
+      <div class="space-y-3 pb-4 border-b border-[#2a2a2a]">
+        <div class="flex justify-between">
+          <span class="text-gray-400">Order ID</span>
+          <span class="font-bold text-white">
+            <%= order.orderNumber || (order._id ? `ORD-${order._id.toString().slice(-8).toUpperCase()}` : 'N/A') %>
+          </span>
+        </div>
+        
+        <div class="flex justify-between">
+          <span class="text-gray-400">Order Date</span>
+          <span class="font-medium text-white">
+            <%= order.createdAt ? new Date(order.createdAt).toLocaleDateString('en-IN') : 'N/A' %>
+          </span>
+        </div>
+        
+        <div class="flex justify-between">
+          <span class="text-gray-400">Payment Method</span>
+          <span class="font-medium text-white">
+            <%= order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentMethod || 'N/A' %>
+          </span>
+        </div>
+        
+        <div class="flex justify-between">
+          <span class="text-gray-400">Payment Status</span>
+          <span class="font-medium <%= order.paymentStatus === 'Paid' ? 'text-green-400' : 'text-yellow-400' %>">
+            <%= order.paymentStatus || 'Pending' %>
+          </span>
+        </div>
+      </div>
+      
+      <!-- THIS ITEM's Price Breakdown -->
+      <div class="space-y-3 pt-4">
+        <div class="bg-[#1a1a1a] p-3 rounded-lg mb-2">
+          <p class="text-sm text-gray-400">Selected Item</p>
+          <p class="font-bold text-white truncate"><%= order.item.product.name %></p>
+        </div>
+        
+        <!-- Item Subtotal -->
+        <div class="flex justify-between">
+          <span class="text-gray-400">Item Subtotal</span>
+          <span class="text-white">₹<%= (order.item.total || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+        </div>
+        
+        <!-- Calculate proportional tax for this item -->
+        <% 
+          const itemSubtotal = order.item.total || 0;
+          const orderSubtotal = order.subtotal || 1; // Avoid division by zero
+          const proportion = itemSubtotal / orderSubtotal;
           
-          <div class="p-6">
-            <div class="space-y-4">
-              <!-- Order Info -->
-              <div class="space-y-3 pb-4 border-b border-[#2a2a2a]">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Order ID</span>
-                  <span class="font-bold text-white">
-                <%= order.orderNumber || (order._id ? `ORD-${order._id.toString().slice(-8).toUpperCase()}` : 'N/A') %>
-                  </span>
-                </div>
-                
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Order Date</span>
-                  <span class="font-medium text-white">
-                    <% if (order.createdAt) { %>
-                    <%= new Date(order.createdAt).toLocaleDateString('en-IN') %>
-                    <% } else { %>
-                    N/A
-                    <% } %>
-                  </span>
-                </div>
-                
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Payment Method</span>
-                  <span class="font-medium text-white">
-                    <%= order.paymentMethod === 'COD' ? 'Cash on Delivery' : order.paymentMethod || 'N/A' %>
-                  </span>
-                </div>
-                
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Payment Status</span>
-                  <span class="font-medium <%= (order.paymentStatus === 'Paid') ? 'text-green-400' : 'text-yellow-400' %>">
-                    <%= order.paymentStatus || 'Pending' %>
-                  </span>
-                </div>
-              </div>
-              
-              <!-- Price Breakdown -->
-              <div class="space-y-3 pt-4">
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Subtotal</span>
-                  <span class="text-white">₹<%= (order.subtotal || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
-                </div>
-                
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Tax (10% GST)</span>
-                  <span class="text-white">₹<%= (order.tax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
-                </div>
-                
-                <% if (order.discount > 0) { %>
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Discount</span>
-                  <span class="text-green-400">-₹<%= (order.discount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
-                </div>
-                <% } %>
-                
-                <div class="flex justify-between">
-                  <span class="text-gray-400">Shipping</span>
-                  <span class="<%= (order.shipping || 0) === 0 ? 'text-green-400' : 'text-white' %>">
-                    <% if ((order.shipping || 0) === 0) { %>
-                      FREE
-                    <% } else { %>
-                      ₹<%= (order.shipping || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
-                    <% } %>
-                  </span>
-                </div>
-                
-                <div class="pt-4 border-t border-[#2a2a2a]">
-                  <div class="flex justify-between text-lg font-bold">
-                    <span class="text-white">Total Amount</span>
-                    <span class="text-[#d4af37]">₹<%= (order.finalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
-                  </div>
-                </div>
-              </div>
-            </div>
+          const itemTax = (order.tax || 0) * proportion;
+          const itemDiscount = (order.discount || 0) * proportion;
+          const itemShipping = (order.shipping || 0) * proportion;
+          const itemFinalAmount = itemSubtotal + itemTax - itemDiscount + itemShipping;
+        %>
+        
+        <div class="flex justify-between">
+          <span class="text-gray-400">Tax (10% GST)</span>
+          <span class="text-white">₹<%= (itemTax || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+        </div>
+        
+        <% if (itemDiscount > 0) { %>
+        <div class="flex justify-between">
+          <span class="text-gray-400">Discount (proportional)</span>
+          <span class="text-green-400">-₹<%= (itemDiscount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+        </div>
+        <% } %>
+        
+        <div class="flex justify-between">
+          <span class="text-gray-400">Shipping (proportional)</span>
+          <span class="<%= (itemShipping || 0) === 0 ? 'text-green-400' : 'text-white' %>">
+            <% if ((itemShipping || 0) === 0) { %>
+              FREE
+            <% } else { %>
+              ₹<%= (itemShipping || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %>
+            <% } %>
+          </span>
+        </div>
+        
+        <div class="pt-4 border-t border-[#2a2a2a]">
+          <div class="flex justify-between text-lg font-bold">
+            <span class="text-white">Item Total</span>
+            <span class="text-[#d4af37]">₹<%= (itemFinalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
           </div>
         </div>
+        
+        <!-- Show full order total for reference -->
+        <% if (order.otherItemsCount > 0) { %>
+        <div class="mt-4 pt-4 border-t border-[#2a2a2a] border-dashed">
+          <div class="flex justify-between text-sm">
+            <span class="text-gray-500">Full Order Total (<%= order.otherItemsCount + 1 %> items)</span>
+            <span class="text-gray-400">₹<%= (order.finalAmount || 0).toLocaleString('en-IN', { minimumFractionDigits: 2 }) %></span>
+          </div>
+          <a href="/orders/<%= order._id %>" class="block text-center text-xs text-[#d4af37] mt-2 hover:underline">
+            View full order summary
+          </a>
+        </div>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
 
         <!-- Delivery Address Card -->
         <div class="bg-gradient-to-br from-[#0b0b0b] to-[#151515] rounded-2xl border border-[#2a2a2a]">
@@ -1065,18 +1147,37 @@
   </svg>
   View Invoice
 </a>
-
-           <% if (order.orderStatus === 'Placed' || order.orderStatus === 'Confirmed') { %>
-<button 
-  onclick="openCancelModal('<%= order._id %>')" 
-  class="w-full bg-gradient-to-r from-red-500/10 to-red-600/10 border border-red-500/30 text-red-400 hover:bg-red-500/20 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
->
-  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-  </svg>
-  Cancel Order
-</button>
-<% } %>
+<!-- In the action buttons section of orderDetails.ejs -->
+<div class="space-y-4">
+  <!-- Cancel THIS ITEM button (only for the selected item) -->
+  <% if ((order.orderStatus === 'Placed' || order.orderStatus === 'Confirmed') && 
+         (order.item.itemStatus === 'Placed' || order.item.itemStatus === 'Confirmed')) { %>
+  <button 
+    onclick="openCancelModal('<%= order._id %>', '<%= order.item.orderItemId || order.item._id %>', '<%= order.item.product.name %>')" 
+    class="w-full border border-red-500/30 text-red-400 hover:bg-red-500/10 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+    Cancel This Item
+  </button>
+  <% } %>
+  
+  <!-- Cancel Entire Order button (only show if multiple items and none cancelled) -->
+  <% if (order.otherItemsCount > 0 && order.orderStatus !== 'Cancelled') { %>
+  <button 
+    onclick="openCancelModal('<%= order._id %>')" 
+    class="w-full border border-red-500/30 text-red-400 hover:bg-red-500/10 font-semibold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-3"
+  >
+    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+    </svg>
+    Cancel Entire Order
+  </button>
+  <% } %>
+  
+  <!-- ... other buttons ... -->
+</div>
             
  <!-- Check if refund can be requested -->
 <% 
